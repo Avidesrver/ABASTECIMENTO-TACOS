@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Ruptura de Estoque · PCP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #0a0b0d;
+    --surface:   #111318;
+    --border:    #1e2128;
+    --border2:   #2a2f3a;
+    --text:      #e8eaf0;
+    --muted:     #5a6070;
+    --accent:    #f0c040;
+    --red:       #ff4757;
+    --orange:    #ff8c42;
+    --green:     #2ecc71;
+    --blue:      #4da6ff;
+    --radius:    6px;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
+    background-size: 40px 40px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border2);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .logo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--accent); }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .tag {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+  #last-updated { font-size: 11px; color: var(--muted); }
+
+  /* ── IMPORT PANEL ── */
+  #import-panel {
+    background: linear-gradient(135deg, #111318 0%, #0f1117 100%);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    margin: 24px 32px;
+    padding: 20px 24px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  #import-panel label {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  #sheet-url {
+    flex: 1;
+    min-width: 300px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #sheet-url:focus { border-color: var(--accent); }
+  #sheet-url::placeholder { color: var(--muted); }
+  .btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:active { transform: scale(0.97); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  #import-status { font-size: 11px; color: var(--muted); width: 100%; }
+  #import-status.error { color: var(--red); }
+  #import-status.success { color: var(--green); }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding: 0 32px 48px; }
+
+  /* ── KPI ROW ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi.danger::before   { background: var(--red); }
+  .kpi.warning::before  { background: var(--orange); }
+  .kpi.info::before     { background: var(--blue); }
+  .kpi.ok::before       { background: var(--green); }
+  .kpi-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .kpi-value {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi.danger .kpi-value   { color: var(--red); }
+  .kpi.warning .kpi-value  { color: var(--orange); }
+  .kpi.info .kpi-value     { color: var(--blue); }
+  .kpi.ok .kpi-value       { color: var(--green); }
+  .kpi-sub { font-size: 11px; color: var(--muted); }
+
+  /* ── TWO COL ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 1100px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .panel-badge {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .badge-red    { background: rgba(255,71,87,.15);  color: var(--red); }
+  .badge-orange { background: rgba(255,140,66,.15); color: var(--orange); }
+  .badge-blue   { background: rgba(77,166,255,.15); color: var(--blue); }
+  .badge-green  { background: rgba(46,204,113,.15); color: var(--green); }
+
+  /* ── SEMAPHORE TABLE ── */
+  .urgency-table { width: 100%; border-collapse: collapse; }
+  .urgency-table th {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .urgency-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .urgency-table tr:last-child td { border-bottom: none; }
+  .urgency-table tr:hover td { background: rgba(255,255,255,.025); }
+
+  .ref-code {
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .machine-tag {
+    display: inline-block;
+    background: var(--border2);
+    color: var(--muted);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-top: 2px;
+  }
+
+  .semaphore {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .semaphore-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+  .s-red    { background: var(--red);    box-shadow: 0 0 6px var(--red); }
+  .s-orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
+  .s-green  { background: var(--green);  box-shadow: 0 0 6px var(--green); animation: none; }
+  .s-yellow { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: none; }
+
+  .resolve-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .resolve-yes { background: rgba(46,204,113,.15);  color: var(--green); }
+  .resolve-no  { background: rgba(255,71,87,.15);   color: var(--red); }
+  .resolve-partial { background: rgba(255,140,66,.15); color: var(--orange); }
+
+  .day-num {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 20px;
+  }
+
+  /* ── CHART ── */
+  .chart-wrap {
+    padding: 20px;
+    height: 280px;
+    position: relative;
+  }
+
+  /* ── ALERT LIST ── */
+  .alert-list { padding: 0; }
+  .alert-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .alert-item:last-child { border-bottom: none; }
+  .alert-item:hover { background: rgba(255,255,255,.025); }
+  .alert-left { display: flex; align-items: center; gap: 12px; }
+  .alert-icon {
+    width: 32px; height: 32px;
+    background: rgba(255,140,66,.1);
+    border: 1px solid rgba(255,140,66,.3);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .alert-ref { font-weight: 500; font-size: 13px; color: var(--text); }
+  .alert-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .alert-stock {
+    text-align: right;
+  }
+  .alert-stock-val {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--orange);
+  }
+  .alert-stock-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ── WIDE PANEL ── */
+  .wide-panel { margin-bottom: 16px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-state-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state-text { font-size: 12px; letter-spacing: 0.06em; }
+
+  /* ── LOADING ── */
+  #loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,11,13,.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    display: none;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    margin-top: 8px;
+  }
+
+  .instructions-box {
+    background: rgba(240,192,64,.05);
+    border: 1px dashed rgba(240,192,64,.3);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .instructions-box strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="loading-overlay"><div class="spinner"></div></div>
+
+<header>
+  <div class="logo">PCP <span>·</span> Ruptura de Estoque</div>
+  <div class="header-meta">
+    <span class="tag">Dashboard Operacional</span>
+    <span id="last-updated">Aguardando dados...</span>
+  </div>
+</header>
+
+<!-- IMPORT PANEL -->
+<div id="import-panel">
+  <label>🔗 Fonte de Dados</label>
+  <input type="text" id="sheet-url" placeholder="Cole aqui a URL pública do Google Sheets (exportação CSV)..." />
+  <button class="btn" onclick="loadFromURL()">↓ Carregar</button>
+  <button class="btn-ghost" onclick="loadDemo()">▶ Dados Demo</button>
+  <div id="import-status">
+    Cole a URL do Google Sheets no formato de exportação CSV, ou clique em "Dados Demo" para ver o dashboard funcionando.
+  </div>
+  <div class="instructions-box">
+    <strong>Como publicar sua planilha:</strong><br>
+    1. No Google Sheets → Arquivo → Compartilhar → <strong>Publicar na Web</strong><br>
+    2. Selecione a aba <strong>CONSOLIDADO_FINAL</strong> → Formato <strong>CSV</strong> → Publicar<br>
+    3. Cole a URL gerada no campo acima e clique em Carregar.<br>
+    <strong>Alternativa:</strong> A planilha deve ser pública (Link de visualização ativo).
+  </div>
+</div>
+
+<main>
+  <!-- KPIs -->
+  <div class="section-title">Indicadores de Criticidade</div>
+  <div class="kpi-grid">
+    <div class="kpi danger">
+      <div class="kpi-label">Risco Crítico (&lt;7 dias)</div>
+      <div class="kpi-value" id="kpi-critical">—</div>
+      <div class="kpi-sub">Referências em ruptura iminente</div>
+    </div>
+    <div class="kpi warning">
+      <div class="kpi-label">Máquinas Paralisadas</div>
+      <div class="kpi-value" id="kpi-machines">—</div>
+      <div class="kpi-sub">Equipamentos afetados</div>
+    </div>
+    <div class="kpi info">
+      <div class="kpi-label">Aguardam Inspeção</div>
+      <div class="kpi-value" id="kpi-inspection">—</div>
+      <div class="kpi-sub">Itens em Estoque Compras</div>
+    </div>
+    <div class="kpi ok">
+      <div class="kpi-label">Resolvidos por Liberação</div>
+      <div class="kpi-value" id="kpi-resolved">—</div>
+      <div class="kpi-sub">Compras resolve a ruptura</div>
+    </div>
+  </div>
+
+  <!-- TOP 10 + CHART -->
+  <div class="two-col">
+    <!-- SEMAPHORE TABLE -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">⚠ Top 10 Referências Críticas</span>
+        <span class="panel-badge badge-red" id="badge-count">0 itens</span>
+      </div>
+      <div id="urgency-table-container">
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-text">Carregue os dados para visualizar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📈 Consumo Previsto — 30 dias</span>
+        <span class="panel-badge badge-blue">Fábrica Total</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="consumoChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSPECTION ALERT -->
+  <div class="panel wide-panel">
+    <div class="panel-header">
+      <span class="panel-title">🔬 Alerta de Inspeção — Ação Imediata da Qualidade</span>
+      <span class="panel-badge badge-orange" id="badge-inspection">0 itens</span>
+    </div>
+    <div id="alert-list-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔬</div>
+        <div class="empty-state-text">Carregue os dados para visualizar alertas de inspeção</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let chartInstance = null;
+const NUM_DAYS = 30;
+
+// ─────────────────────────────────────────────
+//  DEMO DATA GENERATOR
+// ─────────────────────────────────────────────
+function generateDemoData() {
+  const refs = [
+    {ref:'MT-0412', maq:'MAQUINA-03', seq:1, pcp:120, cmp:0},
+    {ref:'MT-0412', maq:'MAQUINA-07', seq:2, pcp:0,   cmp:0},
+    {ref:'CX-1180', maq:'MAQUINA-01', seq:1, pcp:45,  cmp:200},
+    {ref:'RX-3321', maq:'MAQUINA-05', seq:3, pcp:300, cmp:0},
+    {ref:'VL-0090', maq:'MAQUINA-02', seq:1, pcp:8,   cmp:50},
+    {ref:'TK-4422', maq:'MAQUINA-04', seq:2, pcp:600, cmp:0},
+    {ref:'TK-4422', maq:'MAQUINA-06', seq:1, pcp:0,   cmp:0},
+    {ref:'PS-8810', maq:'MAQUINA-01', seq:2, pcp:0,   cmp:75},
+    {ref:'GR-2200', maq:'MAQUINA-08', seq:1, pcp:180, cmp:0},
+    {ref:'NX-0055', maq:'MAQUINA-03', seq:4, pcp:22,  cmp:100},
+    {ref:'FE-7710', maq:'MAQUINA-09', seq:1, pcp:400, cmp:0},
+    {ref:'ZK-0301', maq:'MAQUINA-02', seq:3, pcp:5,   cmp:0},
+    {ref:'BM-1440', maq:'MAQUINA-05', seq:1, pcp:90,  cmp:120},
+    {ref:'QR-9900', maq:'MAQUINA-07', seq:3, pcp:250, cmp:0},
+    {ref:'LT-0022', maq:'MAQUINA-04', seq:1, pcp:15,  cmp:0},
+  ];
+
+  // attach daily consumption
+  const consumoBase = {
+    'MT-0412':30, 'CX-1180':20, 'RX-3321':15, 'VL-0090':3,
+    'TK-4422':40, 'PS-8810':12, 'GR-2200':10, 'NX-0055':8,
+    'FE-7710':18, 'ZK-0301':4,  'BM-1440':22, 'QR-9900':12,
+    'LT-0022':6
+  };
+
+  return refs.map(r => {
+    const base = consumoBase[r.ref] || 10;
+    const days = Array.from({length: NUM_DAYS}, (_, i) =>
+      Math.max(0, base + Math.floor((Math.random()-0.5)*base*0.4))
+    );
+    return {...r, days};
+  });
+}
+
+// ─────────────────────────────────────────────
+//  CSV PARSER
+// ─────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  // skip header row (row 0)
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g,'').trim());
+    if (!cols[0]) continue;
+    const ref  = cols[0];
+    const maq  = cols[1] || '';
+    const seq  = parseInt(cols[2]) || 0;
+    const pcp  = parseInt(cols[3]) || 0;
+    const cmp  = parseInt(cols[4]) || 0;
+    const days = [];
+    for (let d = 5; d < cols.length && d < 5 + NUM_DAYS; d++) {
+      days.push(parseInt(cols[d]) || 0);
+    }
+    // pad to 30 days
+    while (days.length < NUM_DAYS) days.push(0);
+    rows.push({ref, maq, seq, pcp, cmp, days});
+  }
+  return rows;
+}
+
+// ─────────────────────────────────────────────
+//  CORE ANALYSIS ENGINE
+// ─────────────────────────────────────────────
+function analyzeData(rows) {
+  // Group by reference
+  const byRef = {};
+  rows.forEach(r => {
+    if (!byRef[r.ref]) byRef[r.ref] = { pcp: 0, cmp: 0, machines: [], days: Array(NUM_DAYS).fill(0) };
+    const g = byRef[r.ref];
+    g.pcp += r.pcp;
+    g.cmp += r.cmp;
+    if (!g.machines.includes(r.maq)) g.machines.push(r.maq);
+    r.days.forEach((v, i) => g.days[i] += v);
+  });
+
+  const results = [];
+  Object.entries(byRef).forEach(([ref, g]) => {
+    let cumPCP = g.pcp, cumTotal = g.pcp + g.cmp;
+    let dayRupturaPCP = null, dayRupturaTotal = null;
+
+    for (let d = 0; d < NUM_DAYS; d++) {
+      cumPCP   -= g.days[d];
+      cumTotal -= g.days[d];
+      if (dayRupturaPCP   === null && cumPCP   < 0) dayRupturaPCP   = d + 1;
+      if (dayRupturaTotal === null && cumTotal < 0) dayRupturaTotal = d + 1;
+    }
+
+    results.push({
+      ref,
+      machines:       g.machines,
+      pcpStock:       g.pcp,
+      cmpStock:       g.cmp,
+      days:           g.days,
+      dayRupturaPCP,
+      dayRupturaTotal,
+      resolvedByCmp:  dayRupturaPCP !== null && dayRupturaTotal === null,
+      partialByCmp:   dayRupturaPCP !== null && dayRupturaTotal !== null &&
+                      dayRupturaTotal > dayRupturaPCP,
+    });
+  });
+
+  return results;
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function render(rows) {
+  const data = analyzeData(rows);
+
+  // KPIs
+  const critical   = data.filter(d => d.dayRupturaPCP !== null && d.dayRupturaPCP <= 7);
+  const machines   = [...new Set(critical.flatMap(d => d.machines))];
+  const inspection = data.filter(d => d.dayRupturaPCP !== null && d.cmpStock > 0 && d.dayRupturaTotal === null);
+  const resolved   = data.filter(d => d.resolvedByCmp);
+
+  document.getElementById('kpi-critical').textContent   = critical.length;
+  document.getElementById('kpi-machines').textContent   = machines.length;
+  document.getElementById('kpi-inspection').textContent = inspection.length;
+  document.getElementById('kpi-resolved').textContent   = resolved.length;
+
+  // TOP 10 TABLE
+  const top10 = data
+    .filter(d => d.dayRupturaPCP !== null)
+    .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP)
+    .slice(0, 10);
+
+  document.getElementById('badge-count').textContent = `${top10.length} itens`;
+
+  if (top10.length === 0) {
+    document.getElementById('urgency-table-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-text">Nenhuma ruptura identificada nos próximos 30 dias</div>
+      </div>`;
+  } else {
+    let html = `<table class="urgency-table">
+      <thead><tr>
+        <th>Referência</th>
+        <th>Máquinas</th>
+        <th>Status</th>
+        <th>Dia Ruptura PCP</th>
+        <th>Dia Ruptura Total</th>
+        <th>Liberação Resolve?</th>
+      </tr></thead><tbody>`;
+
+    top10.forEach(d => {
+      const dotClass = d.dayRupturaPCP <= 3 ? 's-red' : d.dayRupturaPCP <= 7 ? 's-orange' : 's-yellow';
+      const statusLabel = d.dayRupturaPCP <= 3 ? 'CRÍTICO' : d.dayRupturaPCP <= 7 ? 'URGENTE' : 'ATENÇÃO';
+
+      let resolveLabel, resolveClass;
+      if (d.resolvedByCmp)     { resolveLabel = '✓ Resolve Total'; resolveClass = 'resolve-yes'; }
+      else if (d.partialByCmp) { resolveLabel = '▲ Resolve Parcial'; resolveClass = 'resolve-partial'; }
+      else if (d.cmpStock > 0) { resolveLabel = '▲ Insuficiente'; resolveClass = 'resolve-partial'; }
+      else                      { resolveLabel = '✗ Não Resolve'; resolveClass = 'resolve-no'; }
+
+      html += `<tr>
+        <td><div class="ref-code">${d.ref}</div></td>
+        <td>${d.machines.map(m => `<span class="machine-tag">${m}</span>`).join(' ')}</td>
+        <td><span class="semaphore"><span class="semaphore-dot ${dotClass}"></span>${statusLabel}</span></td>
+        <td><span class="day-num" style="color:var(--red)">D${d.dayRupturaPCP}</span></td>
+        <td>${d.dayRupturaTotal ? `<span class="day-num" style="color:var(--orange)">D${d.dayRupturaTotal}</span>` : `<span style="color:var(--green);font-weight:600">—</span>`}</td>
+        <td><span class="resolve-badge ${resolveClass}">${resolveLabel}</span></td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('urgency-table-container').innerHTML = html;
+  }
+
+  // CHART
+  const dailyTotal = Array(NUM_DAYS).fill(0);
+  rows.forEach(r => r.days.forEach((v, i) => dailyTotal[i] += v));
+  const labels = Array.from({length: NUM_DAYS}, (_, i) => `D${i+1}`);
+
+  if (chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('consumoChart').getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 260);
+  grad.addColorStop(0, 'rgba(240,192,64,0.25)');
+  grad.addColorStop(1, 'rgba(240,192,64,0.02)');
+
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Consumo Total (un)',
+        data: dailyTotal,
+        backgroundColor: dailyTotal.map((v, i) => {
+          // Check if any critical item ruptures on this day
+          const hasCrit = top10.some(d => d.dayRupturaPCP === i + 1);
+          return hasCrit ? 'rgba(255,71,87,0.7)' : 'rgba(240,192,64,0.5)';
+        }),
+        borderColor: dailyTotal.map((v, i) => {
+          const hasCrit = top10.some(d => d.dayRupturaPCP === i + 1);
+          return hasCrit ? 'rgba(255,71,87,1)' : 'rgba(240,192,64,0.9)';
+        }),
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111318',
+          borderColor: '#2a2f3a',
+          borderWidth: 1,
+          titleColor: '#e8eaf0',
+          bodyColor: '#5a6070',
+          titleFont: { family: 'Syne', weight: '700', size: 12 },
+          bodyFont: { family: 'DM Mono', size: 11 },
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 } }
+        }
+      }
+    }
+  });
+
+  // INSPECTION ALERT LIST
+  const inspList = data
+    .filter(d => d.dayRupturaPCP !== null && d.cmpStock > 0)
+    .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP);
+
+  document.getElementById('badge-inspection').textContent = `${inspList.length} itens`;
+
+  if (inspList.length === 0) {
+    document.getElementById('alert-list-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-text">Nenhum item aguardando inspeção com ruptura prevista</div>
+      </div>`;
+  } else {
+    let html = '<div class="alert-list">';
+    inspList.forEach(d => {
+      const urgencyColor = d.resolvedByCmp ? 'var(--green)' : 'var(--orange)';
+      const action = d.resolvedByCmp
+        ? 'Liberar agora resolve a ruptura PCP completamente'
+        : d.partialByCmp
+          ? 'Liberar agora adia a ruptura total — verificar complemento'
+          : 'Estoque insuficiente — liberar e acionar compras urgente';
+      html += `<div class="alert-item">
+        <div class="alert-left">
+          <div class="alert-icon">🔬</div>
+          <div>
+            <div class="alert-ref">${d.ref}</div>
+            <div class="alert-detail">${d.machines.join(', ')} · Ruptura PCP: D${d.dayRupturaPCP} · ${action}</div>
+          </div>
+        </div>
+        <div class="alert-stock">
+          <div class="alert-stock-val" style="color:${urgencyColor}">${d.cmpStock.toLocaleString('pt-BR')}</div>
+          <div class="alert-stock-label">Un em Compras</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('alert-list-container').innerHTML = html;
+  }
+
+  document.getElementById('last-updated').textContent =
+    `Atualizado: ${new Date().toLocaleString('pt-BR')}`;
+}
+
+// ─────────────────────────────────────────────
+//  LOAD FROM URL
+// ─────────────────────────────────────────────
+async function loadFromURL() {
+  const raw = document.getElementById('sheet-url').value.trim();
+  if (!raw) { setStatus('Cole uma URL válida.', 'error'); return; }
+
+  // Convert standard share URL to CSV export
+  let url = raw;
+  const idMatch = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const gidMatch = raw.match(/[#&]gid=(\d+)/);
+  if (idMatch) {
+    const id = idMatch[1];
+    const gid = gidMatch ? gidMatch[1] : '0';
+    url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  }
+
+  showLoading(true);
+  setStatus('Buscando dados...', '');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTPS ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('Nenhum dado encontrado. Verifique se a aba está correta e publicada.');
+    render(rows);
+    setStatus(`✓ ${rows.length} linhas carregadas com sucesso.`, 'success');
+  } catch(e) {
+    setStatus(`✗ Erro: ${e.message}. Certifique-se que a planilha está publicada publicamente (Arquivo → Publicar na Web → CSV).`, 'error');
+  }
+  showLoading(false);
+}
+
+function loadDemo() {
+  showLoading(true);
+  setStatus('', '');
+  setTimeout(() => {
+    const rows = generateDemoData();
+    render(rows);
+    setStatus('✓ Dados demonstrativos carregados. Substitua pela sua planilha real.', 'success');
+    showLoading(false);
+  }, 400);
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('import-status');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+function showLoading(v) {
+  document.getElementById('loading-overlay').style.display = v ? 'flex' : 'none';
+}
+
+// Allow Enter key on URL input
+document.getElementById('sheet-url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadFromURL();
+});
+
+// Load demo on startup
+window.addEventListener('load', () => loadDemo());
+</script>
+</body>
+</html>
