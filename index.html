@@ -197,6 +197,19 @@
   .kpi.info .kpi-value     { color: var(--blue); }
   .kpi.ok .kpi-value       { color: var(--green); }
   .kpi-sub { font-size: 11px; color: var(--muted); }
+  .kpi-value-sm {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi.danger .kpi-value-sm   { color: var(--red); }
+  .kpi.warning .kpi-value-sm  { color: var(--orange); }
+  .kpi.info .kpi-value-sm     { color: var(--blue); }
+  .kpi.ok .kpi-value-sm       { color: var(--green); }
+  .kpi-detail { font-size: 10px; color: var(--muted); margin-top: 6px; border-top: 1px solid var(--border); padding-top: 8px; }
+  .kpi-detail span { color: var(--text); font-weight: 500; }
 
   /* ── TWO COL ── */
   .two-col {
@@ -476,6 +489,28 @@
     </div>
   </div>
 
+  <div class="section-title">Indicadores de Impacto</div>
+  <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="kpi danger">
+      <div class="kpi-label">⚠ Volume em Risco (30 dias)</div>
+      <div class="kpi-value-sm" id="kpi-volume-risco">—</div>
+      <div class="kpi-sub">Peças que deixarão de ser produzidas</div>
+      <div class="kpi-detail">Consumo previsto: <span id="kpi-consumo-total">—</span> un &nbsp;|&nbsp; Estoque disponível: <span id="kpi-estoque-total">—</span> un</div>
+    </div>
+    <div class="kpi warning">
+      <div class="kpi-label">📅 Cobertura Média (DOH)</div>
+      <div class="kpi-value-sm" id="kpi-doh">—</div>
+      <div class="kpi-sub">Dias médios de estoque (referências com ruptura)</div>
+      <div class="kpi-detail">Consumo médio/dia: <span id="kpi-consumo-dia">—</span> un &nbsp;|&nbsp; Pior cobertura: <span id="kpi-pior-doh">—</span> dias</div>
+    </div>
+    <div class="kpi info">
+      <div class="kpi-label">📦 Referências com Falta</div>
+      <div class="kpi-value-sm" id="kpi-refs-falta">—</div>
+      <div class="kpi-sub">SKUs com déficit nos próximos 30 dias</div>
+      <div class="kpi-detail">Déficit máximo: <span id="kpi-deficit-max">—</span> un &nbsp;|&nbsp; SKU mais crítico: <span id="kpi-sku-critico">—</span></div>
+    </div>
+  </div>
+
   <!-- TOP 10 + CHART -->
   <div class="two-col">
     <!-- SEMAPHORE TABLE -->
@@ -653,6 +688,54 @@ function render(rows) {
   document.getElementById('kpi-inspection').textContent = inspection.length;
   document.getElementById('kpi-resolved').textContent   = resolved.length;
 
+  // ── INDICADORES DE IMPACTO ──
+  // Volume em Risco: soma das peças em falta (déficit) de todas as refs com ruptura
+  let totalConsumo = 0, totalEstoque = 0, volumeRisco = 0;
+  let refsComFalta = 0, deficitMax = 0, skuCritico = '—';
+
+  data.forEach(d => {
+    const consumo30 = d.days.reduce((a,b) => a+b, 0);
+    const estoqueDisp = d.pcpStock + d.cmpStock;
+    totalConsumo += consumo30;
+    totalEstoque += estoqueDisp;
+    if (d.dayRupturaPCP !== null) {
+      const deficit = Math.max(0, consumo30 - estoqueDisp);
+      volumeRisco += deficit;
+      if (deficit > 0) {
+        refsComFalta++;
+        if (deficit > deficitMax) { deficitMax = deficit; skuCritico = d.ref; }
+      }
+    }
+  });
+
+  // DOH Médio: para cada ref com ruptura, DOH = estoque / consumo_medio_diario
+  const refsComRuptura = data.filter(d => d.dayRupturaPCP !== null);
+  let dohMedio = 0, piorDoh = 999, consumoMedioDia = 0;
+  if (refsComRuptura.length > 0) {
+    let sumDoh = 0;
+    refsComRuptura.forEach(d => {
+      const consumo30 = d.days.reduce((a,b) => a+b, 0);
+      const consumoDia = consumo30 / NUM_DAYS;
+      consumoMedioDia += consumoDia;
+      const doh = consumoDia > 0 ? (d.pcpStock + d.cmpStock) / consumoDia : 0;
+      sumDoh += doh;
+      if (doh < piorDoh) piorDoh = doh;
+    });
+    dohMedio = sumDoh / refsComRuptura.length;
+    consumoMedioDia = consumoMedioDia / refsComRuptura.length;
+  }
+
+  const fmt = n => n.toLocaleString('pt-BR');
+  document.getElementById('kpi-volume-risco').textContent   = fmt(Math.round(volumeRisco)) + ' un';
+  document.getElementById('kpi-consumo-total').textContent  = fmt(Math.round(totalConsumo));
+  document.getElementById('kpi-estoque-total').textContent  = fmt(Math.round(totalEstoque));
+  document.getElementById('kpi-doh').textContent            = Math.round(dohMedio) + ' dias';
+  document.getElementById('kpi-consumo-dia').textContent    = Math.round(consumoMedioDia).toLocaleString('pt-BR');
+  document.getElementById('kpi-pior-doh').textContent       = piorDoh === 999 ? '—' : Math.round(piorDoh);
+  document.getElementById('kpi-refs-falta').textContent     = refsComFalta;
+  document.getElementById('kpi-deficit-max').textContent    = fmt(deficitMax);
+  document.getElementById('kpi-sku-critico').textContent    = skuCritico;
+
   // TOP 10 TABLE
   const top10 = data
     .filter(d => d.dayRupturaPCP !== null)
@@ -675,6 +758,9 @@ function render(rows) {
         <th>Status</th>
         <th>Dia Ruptura PCP</th>
         <th>Dia Ruptura Total</th>
+        <th>Consumo 30d</th>
+        <th>Estoque Disp.</th>
+        <th>Falta (un)</th>
         <th>Liberação Resolve?</th>
       </tr></thead><tbody>`;
 
@@ -688,12 +774,19 @@ function render(rows) {
       else if (d.cmpStock > 0) { resolveLabel = '▲ Insuficiente'; resolveClass = 'resolve-partial'; }
       else                      { resolveLabel = '✗ Não Resolve'; resolveClass = 'resolve-no'; }
 
+      const consumo30 = d.days.reduce((a,b) => a+b, 0);
+      const estoqueDisp = d.pcpStock + d.cmpStock;
+      const falta = Math.max(0, consumo30 - estoqueDisp);
+
       html += `<tr>
         <td><div class="ref-code">${d.ref}</div></td>
         <td>${d.machines.map(m => `<span class="machine-tag">${m}</span>`).join(' ')}</td>
         <td><span class="semaphore"><span class="semaphore-dot ${dotClass}"></span>${statusLabel}</span></td>
         <td><span class="day-num" style="color:var(--red)">D${d.dayRupturaPCP}</span></td>
         <td>${d.dayRupturaTotal ? `<span class="day-num" style="color:var(--orange)">D${d.dayRupturaTotal}</span>` : `<span style="color:var(--green);font-weight:600">—</span>`}</td>
+        <td style="color:var(--text);font-weight:500">${consumo30.toLocaleString('pt-BR')}</td>
+        <td style="color:var(--blue);font-weight:500">${estoqueDisp.toLocaleString('pt-BR')}</td>
+        <td style="color:var(--red);font-weight:700">${falta > 0 ? falta.toLocaleString('pt-BR') : '<span style="color:var(--green)">—</span>'}</td>
         <td><span class="resolve-badge ${resolveClass}">${resolveLabel}</span></td>
       </tr>`;
     });
