@@ -539,31 +539,6 @@
     </div>
   </div>
 
-  <!-- NEW CHARTS ROW: Burn-down + Risk Projection -->
-  <div class="two-col">
-    <!-- BURN-DOWN -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📉 Burn-down de Estoque — Top 5 Críticos</span>
-        <span class="panel-badge badge-red">Cobertura por SKU</span>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="burndownChart"></canvas>
-      </div>
-    </div>
-
-    <!-- RISK PROJECTION -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📊 Projeção de Volume em Risco Acumulado</span>
-        <span class="panel-badge badge-orange">Déficit Cumulativo</span>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="riskChart"></canvas>
-      </div>
-    </div>
-  </div>
-
   <!-- INSPECTION ALERT -->
   <div class="panel wide-panel">
     <div class="panel-header">
@@ -584,8 +559,6 @@
 //  STATE
 // ─────────────────────────────────────────────
 let chartInstance = null;
-let burndownChartInstance = null;
-let riskChartInstance = null;
 const NUM_DAYS = 30;
 
 // ─────────────────────────────────────────────
@@ -881,173 +854,7 @@ function render(rows) {
     }
   });
 
-  // ── BURN-DOWN CHART (Top 5 críticos) ──
-  // For each top-5 critical SKU, plot remaining stock over time
-  const top5 = data
-    .filter(d => d.dayRupturaPCP !== null)
-    .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP)
-    .slice(0, 5);
-
-  const burndownColors = [
-    { line: 'rgba(255,71,87,1)',   fill: 'rgba(255,71,87,0.08)' },
-    { line: 'rgba(255,140,66,1)',  fill: 'rgba(255,140,66,0.08)' },
-    { line: 'rgba(240,192,64,1)', fill: 'rgba(240,192,64,0.08)' },
-    { line: 'rgba(77,166,255,1)', fill: 'rgba(77,166,255,0.08)' },
-    { line: 'rgba(46,204,113,1)', fill: 'rgba(46,204,113,0.08)' },
-  ];
-
-  const burndownDatasets = top5.map((d, i) => {
-    const c = burndownColors[i];
-    let stock = d.pcpStock + d.cmpStock;
-    const stockOverTime = [stock];
-    for (let day = 0; day < NUM_DAYS - 1; day++) {
-      stock = Math.max(stock - d.days[day], 0);
-      stockOverTime.push(stock);
-    }
-    return {
-      label: d.ref,
-      data: stockOverTime,
-      borderColor: c.line,
-      backgroundColor: c.fill,
-      borderWidth: 2,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      fill: true,
-      tension: 0.3,
-    };
-  });
-
-  if (burndownChartInstance) burndownChartInstance.destroy();
-  const ctxBd = document.getElementById('burndownChart').getContext('2d');
-  burndownChartInstance = new Chart(ctxBd, {
-    type: 'line',
-    data: { labels, datasets: burndownDatasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, boxWidth: 12, padding: 10 }
-        },
-        tooltip: {
-          backgroundColor: '#111318', borderColor: '#2a2f3a', borderWidth: 1,
-          titleColor: '#e8eaf0', bodyColor: '#5a6070',
-          titleFont: { family: 'Syne', weight: '700', size: 12 },
-          bodyFont: { family: 'DM Mono', size: 11 },
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} un`
-          }
-        },
-        annotation: {}
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 }
-        },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 } },
-          title: { display: true, text: 'Estoque restante (un)', color: '#5a6070', font: { family: 'DM Mono', size: 9 } }
-        }
-      }
-    }
-  });
-
-  // ── RISK PROJECTION CHART (cumulative deficit over time) ──
-  // Day by day: sum all deficits across all refs with ruptura
-  const dailyDeficit = Array(NUM_DAYS).fill(0);
-  data.forEach(d => {
-    if (d.dayRupturaPCP === null) return;
-    let stock = d.pcpStock + d.cmpStock;
-    for (let day = 0; day < NUM_DAYS; day++) {
-      stock -= d.days[day];
-      if (stock < 0) { dailyDeficit[day] += Math.abs(stock); stock = 0; }
-    }
-  });
-
-  // Make it cumulative
-  const cumulativeRisk = [];
-  let cumSum = 0;
-  dailyDeficit.forEach(v => { cumSum += v; cumulativeRisk.push(cumSum); });
-
-  // Daily incremental deficit
-  const riskGrad = ctxBd; // reuse var name pattern
-  const ctxRisk = document.getElementById('riskChart').getContext('2d');
-  const areaGrad = ctxRisk.createLinearGradient(0, 0, 0, 260);
-  areaGrad.addColorStop(0, 'rgba(255,71,87,0.35)');
-  areaGrad.addColorStop(1, 'rgba(255,71,87,0.02)');
-
-  if (riskChartInstance) riskChartInstance.destroy();
-  riskChartInstance = new Chart(ctxRisk, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Déficit Acumulado (un)',
-          data: cumulativeRisk,
-          borderColor: 'rgba(255,71,87,1)',
-          backgroundColor: areaGrad,
-          borderWidth: 2.5,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          fill: true,
-          tension: 0.4,
-          yAxisID: 'y',
-        },
-        {
-          label: 'Déficit Diário (un)',
-          data: dailyDeficit,
-          borderColor: 'rgba(255,140,66,0.8)',
-          backgroundColor: 'rgba(255,140,66,0.15)',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          type: 'bar',
-          yAxisID: 'y2',
-        }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: true, position: 'top',
-          labels: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, boxWidth: 12, padding: 10 }
-        },
-        tooltip: {
-          backgroundColor: '#111318', borderColor: '#2a2f3a', borderWidth: 1,
-          titleColor: '#e8eaf0', bodyColor: '#5a6070',
-          titleFont: { family: 'Syne', weight: '700', size: 12 },
-          bodyFont: { family: 'DM Mono', size: 11 },
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y).toLocaleString('pt-BR')} un`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 }
-        },
-        y: {
-          position: 'left',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#ff4757', font: { family: 'DM Mono', size: 10 } },
-          title: { display: true, text: 'Acumulado (un)', color: '#ff4757', font: { family: 'DM Mono', size: 9 } }
-        },
-        y2: {
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          ticks: { color: '#ff8c42', font: { family: 'DM Mono', size: 10 } },
-          title: { display: true, text: 'Diário (un)', color: '#ff8c42', font: { family: 'DM Mono', size: 9 } }
-        }
-      }
-    }
-  });
+  // INSPECTION ALERT LIST
   const inspList = data
     .filter(d => d.dayRupturaPCP !== null && d.cmpStock > 0)
     .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP);
