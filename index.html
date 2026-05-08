@@ -535,9 +535,22 @@ document.getElementById('today-label').textContent = new Date().toLocaleDateStri
 
 function parseDate(str) {
   if (!str) return null;
-  const p = str.split('/');
-  if (p.length === 3) return new Date(+p[2], +p[1]-1, +p[0]);
-  return new Date(str);
+  // Formato do Google Sheets GViz: "Date(2024,3,15)" — mês é base 0
+  const gviz = str.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (gviz) return new Date(+gviz[1], +gviz[2], +gviz[3]);
+  // Formato dd/mm/yyyy
+  const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+  // Formato yyyy-mm-dd
+  const ymd = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return new Date(+ymd[1], +ymd[2]-1, +ymd[3]);
+  return null;
+}
+
+function formatDateDisplay(str) {
+  const d = parseDate(str);
+  if (!d || isNaN(d)) return str || '—';
+  return d.toLocaleDateString('pt-BR');
 }
 
 function daysDiff(dateStr) {
@@ -580,6 +593,16 @@ async function loadData() {
       .filter(r => r && r.c && r.c[0] && r.c[0].v)
       .map(r => {
         const v = i => (r.c[i] && r.c[i].v != null) ? String(r.c[i].v).trim() : '';
+        // Lê data do GViz: pode vir como objeto Date(y,m,d) ou string formatada
+        const vDate = i => {
+          if (!r.c[i] || r.c[i].v == null) return '';
+          // GViz retorna datas como string "Date(yyyy,m,d)"
+          const raw = String(r.c[i].v).trim();
+          if (raw.startsWith('Date(')) return raw;
+          // Tenta pegar o label formatado (f) se disponível
+          if (r.c[i].f) return r.c[i].f.trim();
+          return raw;
+        };
         return {
           fornecedor: v(0),
           tipo:       v(1),
@@ -589,7 +612,7 @@ async function loadData() {
           volRep:     parseFloat(v(5)) || 0,
           volFalt:    parseFloat(v(6)) || 0,
           ins100:     v(7),
-          dtEntrega:  v(8),
+          dtEntrega:  vDate(8),
           linkForm:   v(9),
           codigo:     v(10),
           obsRec:     v(11),
@@ -757,7 +780,7 @@ function renderTable() {
       <td style="text-align:right;font-weight:${r.volRep>0?'500':'400'};color:${r.volRep>0?'#c0392b':'#9e9e98'}">${r.volRep > 0 ? r.volRep.toLocaleString('pt-BR') : '—'}</td>
       <td style="text-align:right;font-weight:${r.volFalt>0?'500':'400'};color:${r.volFalt>0?'#c0392b':'#9e9e98'}">${r.volFalt > 0 ? r.volFalt.toLocaleString('pt-BR') : '—'}</td>
       <td style="text-align:center">${r.ins100 && r.ins100.toLowerCase().includes('sim') ? '<span class="badge badge-amber">Sim</span>' : '—'}</td>
-      <td style="white-space:nowrap;font-size:12px">${r.dtEntrega || '—'}${dias > 20 ? `<br><span style="font-size:10px;color:#c0392b">${dias}d atrás</span>` : ''}</td>
+      <td style="white-space:nowrap;font-size:12px">${formatDateDisplay(r.dtEntrega)}${dias > 20 ? `<br><span style="font-size:10px;color:#c0392b">${dias}d atrás</span>` : ''}</td>
       <td>${statusBadge(r.status, r.statusRaw)}</td>
       <td class="obs-cell" onclick="showDetail(${idx})" title="${(r.obsRec||'').replace(/"/g,'&quot;')}">${r.obsRec || '<span style="color:#c8c8c0">—</span>'}</td>
       <td class="obs-cell" onclick="showDetail(${idx})" title="${(r.obsComp||'').replace(/"/g,'&quot;')}">${r.obsComp || '<span style="color:#c0392b;font-size:11px">Sem retorno</span>'}</td>
@@ -786,7 +809,7 @@ function showDetail(idx) {
       <div class="modal-field"><label>Vol. reprovado</label><span style="color:${r.volRep>0?'#c0392b':'inherit'};font-weight:${r.volRep>0?500:400}">${r.volRep > 0 ? r.volRep.toLocaleString('pt-BR') + ' un.' : 'nenhum'}</span></div>
       <div class="modal-field"><label>Vol. faltante</label><span style="color:${r.volFalt>0?'#c0392b':'inherit'};font-weight:${r.volFalt>0?500:400}">${r.volFalt > 0 ? r.volFalt.toLocaleString('pt-BR') + ' un.' : 'nenhum'}</span></div>
       <div class="modal-field"><label>Inspeção 100%</label><span>${r.ins100 || '—'}</span></div>
-      <div class="modal-field"><label>Data de entrega</label><span>${r.dtEntrega || '—'}${dias > 0 ? ' <span style="color:#9a6200;font-size:11px">('+dias+'d)</span>' : ''}</span></div>
+      <div class="modal-field"><label>Data de entrega</label><span>${formatDateDisplay(r.dtEntrega)}${dias > 0 ? ' <span style="color:#9a6200;font-size:11px">('+dias+'d)</span>' : ''}</span></div>
       <div class="modal-field" style="grid-column:span 2"><label>Status compras</label><span>${statusBadge(r.status, r.statusRaw)}</span></div>
     </div>
     <hr class="modal-divider">
