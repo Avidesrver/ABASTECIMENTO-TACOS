@@ -535,14 +535,15 @@ document.getElementById('today-label').textContent = new Date().toLocaleDateStri
 
 function parseDate(str) {
   if (!str) return null;
-  // Formato GViz: "Date(2026,2,15)" — mês base 0
-  const gviz = String(str).match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  const s = String(str).trim();
+  // Formato GViz: Date(2026,3,7) — mês base 0
+  const gviz = s.match(/^Date\((\d+),(\d+),(\d+)\)$/);
   if (gviz) return new Date(+gviz[1], +gviz[2], +gviz[3]);
   // Formato dd/mm/yyyy
-  const dmy = String(str).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
   // Formato yyyy-mm-dd
-  const ymd = String(str).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (ymd) return new Date(+ymd[1], +ymd[2]-1, +ymd[3]);
   return null;
 }
@@ -550,7 +551,7 @@ function parseDate(str) {
 function formatDateDisplay(str) {
   if (!str) return '—';
   const d = parseDate(str);
-  if (!d || isNaN(d)) return String(str);
+  if (!d || isNaN(d.getTime())) return String(str);
   return d.toLocaleDateString('pt-BR');
 }
 
@@ -590,18 +591,15 @@ async function loadData() {
     const cols = json.table.cols;
     const rows = json.table.rows;
 
-    // DEBUG removido
-
     allRows = rows
       .filter(r => r && r.c && r.c[0] && r.c[0].v)
       .map(r => {
         const v = i => (r.c[i] && r.c[i].v != null) ? String(r.c[i].v).trim() : '';
-        // Lê data: prioriza o label formatado (f) do GViz, depois o valor bruto (v)
+        // Para datas: usa o .v bruto que vem como "Date(yyyy,m,d)"
         const vDate = i => {
           const cel = r.c[i];
           if (!cel || cel.v == null) return '';
-          if (cel.f) return String(cel.f).trim();       // ex: "15/03/2026"
-          return String(cel.v).trim();                  // ex: "Date(2026,2,15)"
+          return String(cel.v).trim(); // ex: "Date(2026,3,7)"
         };
         return {
           fornecedor: v(0),
