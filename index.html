@@ -3,1155 +3,2273 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard · Ruptura de Estoque · PCP</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Notas Paradas — Tratativas Compras</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg:        #0a0b0d;
-    --surface:   #111318;
-    --border:    #1e2128;
-    --border2:   #2a2f3a;
-    --text:      #e8eaf0;
-    --muted:     #5a6070;
-    --accent:    #f0c040;
-    --red:       #ff4757;
-    --orange:    #ff8c42;
-    --green:     #2ecc71;
-    --blue:      #4da6ff;
-    --radius:    6px;
-    --font-head: 'Syne', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --text: #1a1a18;
+    --text2: #6b6b66;
+    --text3: #9e9e98;
+    --red: #c0392b;
+    --red-bg: #fdf0ef;
+    --amber: #9a6200;
+    --amber-bg: #fef8ec;
+    --green: #2d6a1f;
+    --green-bg: #edf6e8;
+    --blue: #1a4f8a;
+    --blue-bg: #eaf1fb;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
   body {
+    font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 13px;
     min-height: 100vh;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
-      repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
-    background-size: 40px 40px;
   }
 
   /* ── HEADER ── */
-  header {
+  .header {
     background: var(--surface);
-    border-bottom: 1px solid var(--border2);
-    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
-    z-index: 100;
-    backdrop-filter: blur(10px);
+    z-index: 50;
   }
-  .logo {
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 18px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: #1a1a18;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
   }
-  .logo span { color: var(--accent); }
-  .header-meta {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+  .header-logo svg { width: 20px; height: 20px; fill: #f7f6f2; }
+  .header-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+  .header-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .badge-date { font-size: 12px; color: var(--text2); background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; }
+  #btn-reload {
+    font-size: 12px; font-weight: 500;
+    background: #1a1a18; color: #f7f6f2;
+    border: none; border-radius: var(--radius-sm);
+    padding: 7px 16px; cursor: pointer;
+    transition: opacity .15s;
   }
-  .tag {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border: 1px solid var(--border2);
-    padding: 4px 10px;
-    border-radius: 2px;
-  }
-  #last-updated { font-size: 11px; color: var(--muted); }
+  #btn-reload:hover { opacity: 0.8; }
 
-  /* ── IMPORT PANEL ── */
-  #import-panel {
-    background: linear-gradient(135deg, #111318 0%, #0f1117 100%);
-    border: 1px solid var(--border2);
-    border-left: 3px solid var(--accent);
-    margin: 24px 32px;
-    padding: 20px 24px;
-    border-radius: var(--radius);
+  /* ── TABS ── */
+  .tabs-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
     display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 0;
   }
-  #import-panel label {
-    font-family: var(--font-head);
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent);
+  .tab-btn {
+    font-size: 13px; font-weight: 500;
+    padding: 12px 18px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all .15s;
     white-space: nowrap;
   }
-  #sheet-url {
-    flex: 1;
-    min-width: 300px;
-    background: var(--bg);
-    border: 1px solid var(--border2);
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: #1a1a18; }
+
+  /* ── MAIN ── */
+  .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── LOADING ── */
+  #loading {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 300px; gap: 16px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border2);
+    border-top-color: #1a1a18;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { font-size: 14px; color: var(--text2); }
+
+  #error-msg {
+    display: none;
+    background: var(--red-bg);
+    border: 1px solid #f5c6c3;
     border-radius: var(--radius);
+    padding: 20px 24px;
+    color: var(--red);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  #content { display: none; }
+
+  /* ── PERIOD FILTER BAR (global) ── */
+  .period-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .period-bar-label { font-size: 12px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .period-inputs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .period-field { display: flex; align-items: center; gap: 6px; }
+  .period-field label { font-size: 11px; color: var(--text3); font-weight: 500; }
+  .period-field input[type="date"] {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    background: var(--surface2);
     color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    padding: 10px 14px;
     outline: none;
-    transition: border-color 0.2s;
-  }
-  #sheet-url:focus { border-color: var(--accent); }
-  #sheet-url::placeholder { color: var(--muted); }
-  .btn {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: var(--radius);
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 10px 20px;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
   }
-  .btn:hover { opacity: 0.85; }
-  .btn:active { transform: scale(0.97); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
+  .period-field input[type="date"]:focus { border-color: #1a1a18; }
+  .period-clear-btn {
+    font-size: 11px; font-weight: 500;
     border: 1px solid var(--border2);
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    padding: 5px 12px;
     cursor: pointer;
-    border-radius: var(--radius);
-    transition: color 0.2s, border-color 0.2s;
+    background: var(--red-bg);
+    color: var(--red);
+    transition: all .12s;
   }
-  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-  #import-status { font-size: 11px; color: var(--muted); width: 100%; }
-  #import-status.error { color: var(--red); }
-  #import-status.success { color: var(--green); }
+  .period-clear-btn:hover { background: #f5c6c3; }
+  .period-presets { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .period-preset {
+    font-size: 11px; font-weight: 500;
+    border: 1px solid var(--border2);
+    border-radius: 99px;
+    padding: 4px 11px;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--text2);
+    transition: all .12s;
+    white-space: nowrap;
+  }
+  .period-preset:hover, .period-preset.active { background: #1a1a18; color: #f7f6f2; border-color: #1a1a18; }
+  .period-active-badge {
+    display: none;
+    font-size: 11px; font-weight: 500;
+    background: var(--blue-bg);
+    color: var(--blue);
+    border: 1px solid #b5d4f4;
+    border-radius: 99px;
+    padding: 3px 10px;
+  }
 
-  /* ── MAIN LAYOUT ── */
-  main { padding: 0 32px 48px; }
-
-  /* ── KPI ROW ── */
+  /* ── KPI CARDS ── */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 12px;
     margin-bottom: 24px;
   }
   .kpi {
     background: var(--surface);
-    border: 1px solid var(--border2);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px 24px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
+    padding: 16px 18px;
   }
-  .kpi::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-  .kpi.danger::before   { background: var(--red); }
-  .kpi.warning::before  { background: var(--orange); }
-  .kpi.info::before     { background: var(--blue); }
-  .kpi.ok::before       { background: var(--green); }
-  .kpi-label {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-  .kpi-value {
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 40px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .kpi.danger .kpi-value   { color: var(--red); }
-  .kpi.warning .kpi-value  { color: var(--orange); }
-  .kpi.info .kpi-value     { color: var(--blue); }
-  .kpi.ok .kpi-value       { color: var(--green); }
-  .kpi-sub { font-size: 11px; color: var(--muted); }
-  .kpi-value-sm {
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 28px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .kpi.danger .kpi-value-sm   { color: var(--red); }
-  .kpi.warning .kpi-value-sm  { color: var(--orange); }
-  .kpi.info .kpi-value-sm     { color: var(--blue); }
-  .kpi.ok .kpi-value-sm       { color: var(--green); }
-  .kpi-detail { font-size: 10px; color: var(--muted); margin-top: 6px; border-top: 1px solid var(--border); padding-top: 8px; }
-  .kpi-detail span { color: var(--text); font-weight: 500; }
+  .kpi-label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .kpi-value { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.blue { color: var(--blue); }
 
-  /* ── TWO COL ── */
-  .two-col {
+  /* ── VOL POR STATUS ── */
+  .vol-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 600px) { .vol-status-grid { grid-template-columns: 1fr; } }
+  .vol-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .vol-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .vol-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .vol-card-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; }
+  .vol-rows { display: flex; flex-direction: column; gap: 6px; }
+  .vol-row { display: flex; justify-content: space-between; align-items: center; }
+  .vol-row-label { font-size: 11px; color: var(--text3); }
+  .vol-row-val { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
+  .vol-row-val.red { color: var(--red); }
+  .vol-row-val.neutral { color: var(--text2); }
+  .vol-bar-wrap { height: 4px; background: var(--surface2); border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .vol-bar { height: 100%; border-radius: 99px; transition: width .4s; }
+
+  /* ── CHARTS ROW ── */
+  .charts-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 14px;
+    margin-bottom: 24px;
   }
-  @media (max-width: 1100px) { .two-col { grid-template-columns: 1fr; } }
-
-  /* ── PANEL ── */
-  .panel {
+  @media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
+  .chart-card {
     background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .chart-card h3 { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    font-size: 12px; font-weight: 500;
     border: 1px solid var(--border2);
+    border-radius: 99px;
+    padding: 5px 14px;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text2);
+    transition: all .12s;
+  }
+  .filter-btn:hover { background: var(--surface2); }
+  .filter-btn.active { background: #1a1a18; color: #f7f6f2; border-color: #1a1a18; }
+  .filter-btn .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .search-wrap { margin-left: auto; }
+  .search-wrap input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    background: var(--surface);
+    color: var(--text);
+    width: 200px;
+    outline: none;
+  }
+  .search-wrap input:focus { border-color: #1a1a18; }
+
+  /* ── TABLE ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
   }
-  .panel-header {
+  .table-header {
     padding: 14px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
-  .panel-title {
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .panel-badge {
-    font-size: 10px;
+  .table-header h2 { font-size: 14px; font-weight: 600; }
+  .table-count { font-size: 12px; color: var(--text2); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.1em;
     text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 2px;
-  }
-  .badge-red    { background: rgba(255,71,87,.15);  color: var(--red); }
-  .badge-orange { background: rgba(255,140,66,.15); color: var(--orange); }
-  .badge-blue   { background: rgba(77,166,255,.15); color: var(--blue); }
-  .badge-green  { background: rgba(46,204,113,.15); color: var(--green); }
-
-  /* ── SEMAPHORE TABLE ── */
-  .urgency-table { width: 100%; border-collapse: collapse; }
-  .urgency-table th {
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 10px 16px;
+    letter-spacing: .04em;
+    padding: 10px 14px;
     text-align: left;
-    border-bottom: 1px solid var(--border);
     white-space: nowrap;
+    border-bottom: 1px solid var(--border);
   }
-  .urgency-table td {
-    padding: 11px 16px;
+  td {
+    padding: 10px 14px;
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
-  }
-  .urgency-table tr:last-child td { border-bottom: none; }
-  .urgency-table tr:hover td { background: rgba(255,255,255,.025); }
-
-  .ref-code {
-    font-weight: 500;
     color: var(--text);
-    letter-spacing: 0.05em;
   }
-  .machine-tag {
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafaf8; }
+  tr.row-critico td { background: #fdf5f4; }
+  tr.row-critico:hover td { background: #faecea; }
+  .mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  /* ── BADGES ── */
+  .badge {
     display: inline-block;
-    background: var(--border2);
-    color: var(--muted);
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 2px;
-    margin-top: 2px;
-  }
-
-  .semaphore {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
+    font-size: 11px;
     font-weight: 500;
-    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    white-space: nowrap;
   }
-  .semaphore-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
-  .s-red    { background: var(--red);    box-shadow: 0 0 6px var(--red); }
-  .s-orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: none; }
-  .s-green  { background: var(--green);  box-shadow: 0 0 6px var(--green); animation: none; }
-  .s-yellow { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: none; }
-
-  .resolve-badge {
+  .badge-red    { background: var(--red-bg);   color: var(--red); }
+  .badge-amber  { background: var(--amber-bg); color: var(--amber); }
+  .badge-green  { background: var(--green-bg); color: var(--green); }
+  .badge-blue   { background: var(--blue-bg);  color: var(--blue); }
+  .badge-gray   { background: var(--surface2); color: var(--text2); }
+  .critico-tag {
+    display: inline-block;
     font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 2px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-  }
-  .resolve-yes { background: rgba(46,204,113,.15);  color: var(--green); }
-  .resolve-no  { background: rgba(255,71,87,.15);   color: var(--red); }
-  .resolve-partial { background: rgba(255,140,66,.15); color: var(--orange); }
-
-  .day-num {
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 20px;
-  }
-
-  /* ── CHART ── */
-  .chart-wrap {
-    padding: 20px;
-    height: 280px;
-    position: relative;
-  }
-
-  /* ── ALERT LIST ── */
-  .alert-list { padding: 0; }
-  .alert-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-  .alert-item:last-child { border-bottom: none; }
-  .alert-item:hover { background: rgba(255,255,255,.025); }
-  .alert-left { display: flex; align-items: center; gap: 12px; }
-  .alert-icon {
-    width: 32px; height: 32px;
-    background: rgba(255,140,66,.1);
-    border: 1px solid rgba(255,140,66,.3);
+    font-weight: 600;
+    padding: 2px 6px;
     border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    flex-shrink: 0;
+    background: var(--red);
+    color: #fff;
+    margin-left: 5px;
+    vertical-align: middle;
+    letter-spacing: .03em;
   }
-  .alert-ref { font-weight: 500; font-size: 13px; color: var(--text); }
-  .alert-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .alert-stock {
-    text-align: right;
-  }
-  .alert-stock-val {
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 18px;
-    color: var(--orange);
-  }
-  .alert-stock-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 
-  /* ── WIDE PANEL ── */
-  .wide-panel { margin-bottom: 16px; }
-
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--muted);
+  /* ── OBS CELL ── */
+  .obs-cell {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
   }
-  .empty-state-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
-  .empty-state-text { font-size: 12px; letter-spacing: 0.06em; }
+  .obs-cell:hover { color: var(--blue); text-decoration: underline; }
 
-  /* ── LOADING ── */
-  #loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(10,11,13,.8);
-    backdrop-filter: blur(4px);
-    display: flex;
+  /* ── LINK BTN ── */
+  .link-btn {
+    font-size: 11px;
+    color: var(--blue);
+    border: 1px solid #b5d4f4;
+    border-radius: 5px;
+    padding: 2px 8px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .link-btn:hover { background: var(--blue-bg); }
+
+  /* ── MODAL ── */
+  #modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 100;
     align-items: center;
     justify-content: center;
-    z-index: 999;
-    display: none;
+    padding: 24px;
   }
-  .spinner {
-    width: 40px; height: 40px;
-    border: 2px solid var(--border2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+  #modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 28px 28px 24px;
+    max-width: 480px;
+    width: 100%;
+    border: 1px solid var(--border2);
+    max-height: 90vh;
+    overflow-y: auto;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .modal-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .modal-title { font-size: 16px; font-weight: 600; line-height: 1.3; }
+  .modal-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .modal-close {
+    background: var(--surface2); border: none;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-size: 16px; cursor: pointer; color: var(--text2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-left: 12px; line-height: 1;
+  }
+  .modal-close:hover { background: var(--border2); }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .modal-field label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 3px; }
+  .modal-field span { font-size: 13px; color: var(--text); }
+  .modal-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .modal-obs-block { margin-bottom: 12px; }
+  .modal-obs-block label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 4px; }
+  .modal-obs-block p { font-size: 13px; color: var(--text); line-height: 1.6; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .modal-critico-alert {
+    background: var(--red-bg);
+    border: 1px solid #f5c6c3;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--red);
+    font-weight: 500;
+    margin-top: 14px;
+  }
 
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  /* ── EMPTY ── */
+  .empty-row td { text-align: center; padding: 40px; color: var(--text3); font-size: 14px; }
 
-  .section-title {
-    font-family: var(--font-head);
-    font-weight: 700;
+  /* ── EVOLUÇÃO MENSAL ── */
+  .evolucao-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .evolucao-header h2 { font-size: 16px; font-weight: 600; }
+  .evolucao-header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .evolucao-toggle {
+    display: flex;
+    gap: 6px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+  .evolucao-toggle-btn {
+    font-size: 12px; font-weight: 500;
+    padding: 5px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+    color: var(--text2);
+    transition: all .12s;
+  }
+  .evolucao-toggle-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+  .evolucao-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 800px) { .evolucao-charts-grid { grid-template-columns: 1fr; } }
+
+  .evolucao-full-chart {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .evolucao-full-chart h3 { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+
+  .metas-section { margin-top: 24px; }
+  .metas-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .metas-section-header h3 { font-size: 14px; font-weight: 600; }
+  .metas-hint { font-size: 12px; color: var(--text3); background: var(--amber-bg); border: 1px solid #f5d98a; border-radius: var(--radius-sm); padding: 6px 12px; }
+
+  .metas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .meta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .meta-card-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+  .meta-progress-wrap { position: relative; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+  .meta-progress-bar { height: 100%; border-radius: 99px; transition: width .5s; }
+  .meta-info { display: flex; justify-content: space-between; align-items: center; }
+  .meta-atual { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .meta-alvo { font-size: 12px; color: var(--text3); }
+  .meta-pct { font-size: 12px; font-weight: 600; }
+
+  .meta-input-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .meta-input-group label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .meta-input-group input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    width: 80px;
+    outline: none;
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .meta-input-group input:focus { border-color: #1a1a18; }
+  .meta-save-btn {
+    font-size: 11px; font-weight: 500;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    cursor: pointer;
+    background: #1a1a18;
+    color: #f7f6f2;
+    transition: opacity .12s;
+  }
+  .meta-save-btn:hover { opacity: 0.8; }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 24px 32px;
     font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
+    color: var(--text3);
+    border-top: 1px solid var(--border);
     margin-top: 8px;
   }
-
-  .instructions-box {
-    background: rgba(240,192,64,.05);
-    border: 1px dashed rgba(240,192,64,.3);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    margin-top: 10px;
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-  .instructions-box strong { color: var(--accent); }
 </style>
 </head>
 <body>
 
-<div id="loading-overlay"><div class="spinner"></div></div>
-
-<header>
-  <div class="logo">PCP <span>·</span> Ruptura de Estoque</div>
-  <div class="header-meta">
-    <span class="tag">Dashboard Operacional</span>
-    <span id="last-updated">Aguardando dados...</span>
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <svg viewBox="0 0 20 20"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h9v2H3v-2z"/></svg>
+    </div>
+    <div>
+      <div class="header-title">Notas paradas — tratativas compras</div>
+      <div class="header-sub" id="sheet-name">Carregando planilha...</div>
+    </div>
   </div>
-</header>
-
-<!-- IMPORT PANEL -->
-<div id="import-panel">
-  <label>🔗 Fonte de Dados</label>
-  <input type="text" id="sheet-url" placeholder="Cole aqui a URL pública do Google Sheets (exportação CSV)..." />
-  <button class="btn" onclick="loadFromURL()">↓ Carregar</button>
-  <button class="btn-ghost" onclick="loadDemo()">▶ Dados Demo</button>
-  <div id="import-status">
-    Cole a URL do Google Sheets no formato de exportação CSV, ou clique em "Dados Demo" para ver o dashboard funcionando.
-  </div>
-  <div class="instructions-box">
-    <strong>Como publicar sua planilha:</strong><br>
-    1. No Google Sheets → Arquivo → Compartilhar → <strong>Publicar na Web</strong><br>
-    2. Selecione a aba <strong>CONSOLIDADO_FINAL</strong> → Formato <strong>CSV</strong> → Publicar<br>
-    3. Cole a URL gerada no campo acima e clique em Carregar.<br>
-    <strong>Alternativa:</strong> A planilha deve ser pública (Link de visualização ativo).
+  <div class="header-right">
+    <span class="badge-date" id="today-label"></span>
+    <button id="btn-reload" onclick="loadData()">Atualizar dados</button>
   </div>
 </div>
 
-<main>
-  <!-- KPIs -->
-  <div class="section-title">Indicadores de Criticidade</div>
-  <div class="kpi-grid">
-    <div class="kpi danger">
-      <div class="kpi-label">Risco Crítico (&lt;7 dias)</div>
-      <div class="kpi-value" id="kpi-critical">—</div>
-      <div class="kpi-sub">Referências em ruptura iminente</div>
-    </div>
-    <div class="kpi warning">
-      <div class="kpi-label">Máquinas Paralisadas</div>
-      <div class="kpi-value" id="kpi-machines">—</div>
-      <div class="kpi-sub">Equipamentos afetados</div>
-    </div>
-    <div class="kpi info">
-      <div class="kpi-label">Aguardam Inspeção</div>
-      <div class="kpi-value" id="kpi-inspection">—</div>
-      <div class="kpi-sub">Itens em Estoque Compras</div>
-    </div>
-    <div class="kpi ok">
-      <div class="kpi-label">Resolvidos por Liberação</div>
-      <div class="kpi-value" id="kpi-resolved">—</div>
-      <div class="kpi-sub">Compras resolve a ruptura</div>
-    </div>
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('visao-geral', this)">Visão geral</button>
+  <button class="tab-btn" onclick="switchTab('evolucao', this)">Evolução mensal</button>
+  <button class="tab-btn" onclick="switchTab('tabela', this)">Tabela detalhada</button>
+  <button class="tab-btn" id="tab-btn-acao" onclick="switchTab('acao', this)" style="color:#c0392b;font-weight:600">🚨 Central de Ação</button>
+</div>
+
+<div class="main">
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Buscando dados da planilha...</p>
   </div>
 
-  <div class="section-title">Indicadores de Impacto</div>
-  <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
-    <div class="kpi danger">
-      <div class="kpi-label">⚠ Volume em Risco (30 dias)</div>
-      <div class="kpi-value-sm" id="kpi-volume-risco">—</div>
-      <div class="kpi-sub">Peças que deixarão de ser produzidas</div>
-      <div class="kpi-detail">Consumo previsto: <span id="kpi-consumo-total">—</span> un &nbsp;|&nbsp; Estoque disponível: <span id="kpi-estoque-total">—</span> un</div>
-    </div>
-    <div class="kpi warning">
-      <div class="kpi-label">📅 Cobertura Média (DOH)</div>
-      <div class="kpi-value-sm" id="kpi-doh">—</div>
-      <div class="kpi-sub">Dias médios de estoque (referências com ruptura)</div>
-      <div class="kpi-detail">Consumo médio/dia: <span id="kpi-consumo-dia">—</span> un &nbsp;|&nbsp; Pior cobertura: <span id="kpi-pior-doh">—</span> dias</div>
-    </div>
-    <div class="kpi info">
-      <div class="kpi-label">📦 Referências com Falta</div>
-      <div class="kpi-value-sm" id="kpi-refs-falta">—</div>
-      <div class="kpi-sub">SKUs com déficit nos próximos 30 dias</div>
-      <div class="kpi-detail">Déficit máximo: <span id="kpi-deficit-max">—</span> un &nbsp;|&nbsp; SKU mais crítico: <span id="kpi-sku-critico">—</span></div>
-    </div>
-  </div>
+  <div id="error-msg"></div>
 
-  <!-- TOP 10 + CHART -->
-  <div class="two-col">
-    <!-- SEMAPHORE TABLE -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">⚠ Top 10 Referências Críticas</span>
-        <span class="panel-badge badge-red" id="badge-count">0 itens</span>
+  <div id="content">
+
+    <!-- FILTRO DE PERÍODO GLOBAL -->
+    <div class="period-bar">
+      <span class="period-bar-label">📅 Período:</span>
+      <div class="period-inputs">
+        <div class="period-field">
+          <label for="global-from">De</label>
+          <input type="date" id="global-from" onchange="applyPeriodFilter()">
+        </div>
+        <div class="period-field">
+          <label for="global-to">Até</label>
+          <input type="date" id="global-to" onchange="applyPeriodFilter()">
+        </div>
+        <button class="period-clear-btn" onclick="clearPeriodFilter()" id="btn-clear-period" style="display:none">Limpar</button>
+        <span class="period-active-badge" id="period-active-badge">Período filtrado</span>
       </div>
-      <div id="urgency-table-container">
-        <div class="empty-state">
-          <div class="empty-state-icon">📊</div>
-          <div class="empty-state-text">Carregue os dados para visualizar</div>
+      <div class="period-presets">
+        <button class="period-preset" onclick="setPeriodPreset('week', this)">Esta semana</button>
+        <button class="period-preset" onclick="setPeriodPreset('month', this)">Este mês</button>
+        <button class="period-preset" onclick="setPeriodPreset('last30', this)">Últimos 30d</button>
+        <button class="period-preset" onclick="setPeriodPreset('last60', this)">Últimos 60d</button>
+        <button class="period-preset" onclick="setPeriodPreset('last90', this)">Últimos 90d</button>
+        <button class="period-preset" onclick="setPeriodPreset('all', this)">Tudo</button>
+      </div>
+    </div>
+
+    <!-- ==================== ABA: VISÃO GERAL ==================== -->
+    <div id="tab-visao-geral" class="tab-content active">
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- VOLUME POR STATUS -->
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Volume por status de tratativa</div>
+      <div class="vol-status-grid" id="vol-status-grid"></div>
+
+      <!-- CHARTS -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Notas por fornecedor</h3>
+          <div style="position:relative;height:220px;">
+            <canvas id="chart-forn"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Status de tratativa</h3>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;" id="legend-status"></div>
+          <div style="position:relative;height:190px;">
+            <canvas id="chart-status"></canvas>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- CHART -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📈 Consumo Previsto — 30 dias</span>
-        <span class="panel-badge badge-blue">Fábrica Total</span>
+    <!-- ==================== ABA: EVOLUÇÃO MENSAL ==================== -->
+    <div id="tab-evolucao" class="tab-content">
+      <div class="evolucao-header">
+        <div>
+          <h2>Evolução mensal</h2>
+          <p>Compare mês a mês: o que entrou, o que resolvemos e o que ficou pendente.</p>
+        </div>
+        <div class="evolucao-toggle">
+          <button class="evolucao-toggle-btn active" onclick="setEvolucaoMode('qtd', this)">Quantidade</button>
+          <button class="evolucao-toggle-btn" onclick="setEvolucaoMode('vol', this)">Volume</button>
+        </div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="consumoChart"></canvas>
-      </div>
-    </div>
-  </div>
 
-  <!-- NEW CHARTS ROW: Burn-down + Risk Projection -->
-  <div class="two-col">
-    <!-- BURN-DOWN -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📉 Burn-down de Estoque — Top 5 Críticos</span>
-        <span class="panel-badge badge-red">Cobertura por SKU</span>
+      <!-- Gráfico principal: barras empilhadas por status/mês -->
+      <div class="evolucao-full-chart">
+        <h3 id="evol-chart-title">Notas por mês e status</h3>
+        <div style="position:relative;height:280px;">
+          <canvas id="chart-evol-stack"></canvas>
+        </div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="burndownChart"></canvas>
+
+      <!-- Gráfico de linhas: fluxo (entradas vs resoluções) -->
+      <div class="evolucao-full-chart">
+        <h3 id="evol-flux-title">Fluxo mensal — entradas vs resoluções</h3>
+        <div style="position:relative;height:240px;">
+          <canvas id="chart-evol-flux"></canvas>
+        </div>
+      </div>
+
+      <!-- METAS -->
+      <div class="metas-section">
+        <div class="metas-section-header">
+          <h3>Metas de resolução</h3>
+          <span class="metas-hint">💡 Defina suas metas abaixo e acompanhe o progresso</span>
+        </div>
+        <div class="metas-grid" id="metas-grid"></div>
       </div>
     </div>
 
-    <!-- RISK PROJECTION -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-title">📊 Projeção de Volume em Risco Acumulado</span>
-        <span class="panel-badge badge-orange">Déficit Cumulativo</span>
+    <!-- ==================== ABA: TABELA ==================== -->
+    <div id="tab-tabela" class="tab-content">
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Todas</button>
+        <button class="filter-btn" data-filter="pendente" onclick="setFilter('pendente',this)"><span class="dot" style="background:#c0392b"></span>Pendentes</button>
+        <button class="filter-btn" data-filter="andamento" onclick="setFilter('andamento',this)"><span class="dot" style="background:#9a6200"></span>Em andamento</button>
+        <button class="filter-btn" data-filter="concluido" onclick="setFilter('concluido',this)"><span class="dot" style="background:#2d6a1f"></span>Concluídas</button>
+        <button class="filter-btn" data-filter="critico" onclick="setFilter('critico',this)"><span class="dot" style="background:#c0392b"></span>Críticas +20d</button>
+        <div class="search-wrap">
+          <input type="text" id="search-input" placeholder="Buscar fornecedor, NF, desc..." oninput="renderTable()">
+        </div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="riskChart"></canvas>
-      </div>
-    </div>
-  </div>
 
-  <!-- INSPECTION ALERT -->
-  <div class="panel wide-panel">
-    <div class="panel-header">
-      <span class="panel-title">🔬 Alerta de Inspeção — Ação Imediata da Qualidade</span>
-      <span class="panel-badge badge-orange" id="badge-inspection">0 itens</span>
-    </div>
-    <div id="alert-list-container">
-      <div class="empty-state">
-        <div class="empty-state-icon">🔬</div>
-        <div class="empty-state-text">Carregue os dados para visualizar alertas de inspeção</div>
+      <div class="table-card">
+        <div class="table-header">
+          <h2>Registro de notas paradas</h2>
+          <span class="table-count" id="table-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fornecedor</th>
+                <th>Tipo</th>
+                <th>Nota fiscal</th>
+                <th>Item</th>
+                <th>Descrição</th>
+                <th style="text-align:right">Vol. reprov.</th>
+                <th style="text-align:right">Vol. faltante</th>
+                <th>Insp. 100%</th>
+                <th>Dt. entrega</th>
+                <th>Status compras</th>
+                <th>Obs. recebimento</th>
+                <th>Obs. compras</th>
+                <th>Formulário</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
+
+    <!-- ==================== ABA: CENTRAL DE AÇÃO ==================== -->
+    <div id="tab-acao" class="tab-content">
+
+      <!-- ALERTA CRÍTICO -->
+      <div id="acao-alerta" style="background:#fdf0ef;border:1px solid #f5c6c3;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:28px">🚨</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#c0392b" id="acao-alerta-titulo">Carregando...</div>
+          <div style="font-size:12px;color:#6b6b66;margin-top:2px" id="acao-alerta-sub"></div>
+        </div>
+        <button onclick="renderAcao()" style="margin-left:auto;font-size:12px;font-weight:500;background:#c0392b;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;">↻ Atualizar</button>
+      </div>
+
+      <!-- GERADOR DE AÇÕES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;" id="acao-gerador-grid">
+
+        <!-- PLANO DE AÇÃO -->
+        <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:18px 20px;">
+          <div style="font-size:12px;font-weight:600;color:#6b6b66;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">📋 Plano de ação</div>
+          <div style="font-size:13px;color:#1a1a18;margin-bottom:14px;">Priorizado por dias parado × volume</div>
+          <button onclick="gerarPlanoAcao()" style="width:100%;font-size:13px;font-weight:500;background:#1a1a18;color:#f7f6f2;border:none;border-radius:6px;padding:9px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Gerar plano agora</button>
+        </div>
+
+        <!-- EMAILS -->
+        <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:18px 20px;">
+          <div style="font-size:12px;font-weight:600;color:#6b6b66;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">✉️ E-mails de cobrança</div>
+          <div style="font-size:13px;color:#1a1a18;margin-bottom:14px;">Por setor: compras, recebimento, qualidade</div>
+          <button onclick="gerarEmails()" style="width:100%;font-size:13px;font-weight:500;background:#1a4f8a;color:#fff;border:none;border-radius:6px;padding:9px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Gerar e-mails</button>
+        </div>
+
+        <!-- REUNIÃO -->
+        <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:18px 20px;">
+          <div style="font-size:12px;font-weight:600;color:#6b6b66;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">📅 Pauta de reunião</div>
+          <div style="font-size:13px;color:#1a1a18;margin-bottom:14px;">Estruturada para cobrar cada setor</div>
+          <button onclick="gerarReuniao()" style="width:100%;font-size:13px;font-weight:500;background:#2d6a1f;color:#fff;border:none;border-radius:6px;padding:9px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Gerar pauta</button>
+        </div>
+      </div>
+
+      <!-- ÁREA DE OUTPUT -->
+      <div id="acao-output" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:600;" id="acao-output-titulo"></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="copiarOutput()" style="font-size:12px;font-weight:500;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 14px;cursor:pointer;background:#fff;color:#1a1a18;">📋 Copiar</button>
+            <button onclick="fecharOutput()" style="font-size:12px;font-weight:500;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 14px;cursor:pointer;background:#fff;color:#6b6b66;">✕ Fechar</button>
+          </div>
+        </div>
+        <div id="acao-output-conteudo" style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:24px;font-size:13px;line-height:1.8;color:#1a1a18;white-space:pre-wrap;max-height:600px;overflow-y:auto;font-family:'DM Mono',monospace;"></div>
+      </div>
+
+      <!-- PLANOS DE AÇÃO HIERÁRQUICOS -->
+      <div style="margin-top:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#1a1a18;">Planos de ação</div>
+            <div style="font-size:12px;color:#6b6b66;margin-top:2px;">Cada plano agrupa o problema principal e as tarefas de cada responsável</div>
+          </div>
+          <button onclick="abrirModalPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#f7f6f2;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:16px;line-height:1">+</span> Novo plano
+          </button>
+        </div>
+
+        <!-- RESUMO RÁPIDO -->
+        <div id="planos-resumo" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;"></div>
+
+        <!-- LISTA DE PLANOS -->
+        <div id="lista-planos"></div>
+      </div>
+
+    </div><!-- /tab-acao -->
+
+    <!-- ══ MODAL NOVO/EDITAR PLANO ══ -->
+    <div id="modal-plano" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+        <div style="padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:16px;font-weight:700;" id="modal-plano-titulo">Novo plano de ação</div>
+          <button onclick="fecharModalPlano()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f0efe9;font-size:18px;cursor:pointer;color:#6b6b66;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <div style="padding:20px 24px 24px;">
+
+          <!-- Título do plano -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Título do problema / plano</label>
+            <input id="mp-titulo" type="text" placeholder="Ex: NF 0042 – EBATA LTDA – volume reprovado parado há 30 dias" style="width:100%;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;">
+          </div>
+
+          <!-- Descrição -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Descrição do problema</label>
+            <textarea id="mp-desc" rows="2" placeholder="Qual é o impacto? O que está bloqueado?" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;resize:vertical;"></textarea>
+          </div>
+
+          <!-- Linha: prazo inicial + prioridade -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Prazo inicial (fixo) 🔒</label>
+              <input id="mp-prazo" type="date" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;outline:none;background:#fafaf8;">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Prioridade</label>
+              <select id="mp-prior" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;outline:none;background:#fafaf8;color:#1a1a18;">
+                <option value="critica">🔴 Crítica — agir hoje</option>
+                <option value="alta">🟠 Alta — esta semana</option>
+                <option value="media" selected>🟡 Média — este mês</option>
+                <option value="baixa">🟢 Baixa — quando possível</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TAREFAS -->
+          <div style="border-top:1px solid rgba(0,0,0,.08);padding-top:18px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <label style="font-size:12px;font-weight:700;color:#1a1a18;text-transform:uppercase;letter-spacing:.04em;">Tarefas do plano</label>
+              <button onclick="adicionarTarefaForm()" style="font-size:12px;font-weight:500;background:#f0efe9;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:5px 12px;cursor:pointer;color:#1a1a18;">+ Tarefa</button>
+            </div>
+            <div id="mp-tarefas-lista"></div>
+          </div>
+
+          <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid rgba(0,0,0,.08);padding-top:16px;">
+            <button onclick="fecharModalPlano()" style="font-size:13px;border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:9px 20px;cursor:pointer;background:#fff;color:#6b6b66;">Cancelar</button>
+            <button onclick="salvarPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#f7f6f2;border:none;border-radius:8px;padding:9px 24px;cursor:pointer;">Salvar plano</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL CONCLUIR PLANO ══ -->
+    <div id="modal-concluir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+        <div style="padding:24px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Concluir plano</div>
+          <div style="font-size:13px;color:#6b6b66;margin-bottom:18px;" id="mc-subtitulo"></div>
+          <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Data de conclusão</label>
+          <input id="mc-data" type="date" style="width:100%;font-family:'DM Sans',sans-serif;font-size:14px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;margin-bottom:18px;">
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button onclick="fecharModalConcluir()" style="font-size:13px;border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:8px 18px;cursor:pointer;background:#fff;color:#6b6b66;">Cancelar</button>
+            <button onclick="confirmarConclusao()" style="font-size:13px;font-weight:600;background:#2d6a1f;color:#fff;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;">✓ Confirmar conclusão</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#content -->
+</div>
+
+<div class="footer" id="footer-info"></div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title" id="m-title"></div>
+        <div class="modal-sub" id="m-sub"></div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">×</button>
+    </div>
+    <div id="m-body"></div>
   </div>
-</main>
+</div>
 
 <script>
-// ─────────────────────────────────────────────
-//  STATE
-// ─────────────────────────────────────────────
-let chartInstance = null;
-let burndownChartInstance = null;
-let riskChartInstance = null;
-const NUM_DAYS = 30;
+const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
+const GID      = '1456714907';
 
-// ─────────────────────────────────────────────
-//  DEMO DATA GENERATOR
-// ─────────────────────────────────────────────
-function generateDemoData() {
-  const refs = [
-    {ref:'MT-0412', maq:'MAQUINA-03', seq:1, pcp:120, cmp:0},
-    {ref:'MT-0412', maq:'MAQUINA-07', seq:2, pcp:0,   cmp:0},
-    {ref:'CX-1180', maq:'MAQUINA-01', seq:1, pcp:45,  cmp:200},
-    {ref:'RX-3321', maq:'MAQUINA-05', seq:3, pcp:300, cmp:0},
-    {ref:'VL-0090', maq:'MAQUINA-02', seq:1, pcp:8,   cmp:50},
-    {ref:'TK-4422', maq:'MAQUINA-04', seq:2, pcp:600, cmp:0},
-    {ref:'TK-4422', maq:'MAQUINA-06', seq:1, pcp:0,   cmp:0},
-    {ref:'PS-8810', maq:'MAQUINA-01', seq:2, pcp:0,   cmp:75},
-    {ref:'GR-2200', maq:'MAQUINA-08', seq:1, pcp:180, cmp:0},
-    {ref:'NX-0055', maq:'MAQUINA-03', seq:4, pcp:22,  cmp:100},
-    {ref:'FE-7710', maq:'MAQUINA-09', seq:1, pcp:400, cmp:0},
-    {ref:'ZK-0301', maq:'MAQUINA-02', seq:3, pcp:5,   cmp:0},
-    {ref:'BM-1440', maq:'MAQUINA-05', seq:1, pcp:90,  cmp:120},
-    {ref:'QR-9900', maq:'MAQUINA-07', seq:3, pcp:250, cmp:0},
-    {ref:'LT-0022', maq:'MAQUINA-04', seq:1, pcp:15,  cmp:0},
+let allRows = [];
+let filteredRows = []; // rows após filtro de período
+let currentFilter = 'all';
+let currentEvolucaoMode = 'qtd';
+let charts = {};
+let metas = JSON.parse(localStorage.getItem('notas-metas') || '{"concluir_mes":10,"reduzir_pendente":5,"reduzir_vol":1000}');
+
+document.getElementById('today-label').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+
+// ── TABS ──
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'evolucao') renderEvolucao();
+}
+
+// ── DATE UTILS ──
+function parseDate(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  const gviz = s.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (gviz) return new Date(+gviz[1], +gviz[2], +gviz[3]);
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return new Date(+ymd[1], +ymd[2]-1, +ymd[3]);
+  return null;
+}
+
+function formatDateDisplay(str) {
+  if (!str) return '—';
+  const d = parseDate(str);
+  if (!d || isNaN(d.getTime())) return String(str);
+  return d.toLocaleDateString('pt-BR');
+}
+
+function daysDiff(dateStr) {
+  const d = parseDate(dateStr);
+  if (!d || isNaN(d)) return 0;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function isCritico(r) {
+  const status = (r.status || '').toLowerCase();
+  if (status.includes('conclu')) return false;
+  return daysDiff(r.dtEntrega) > 20;
+}
+
+function normalizeStatus(raw) {
+  if (!raw) return 'pendente';
+  const s = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if (s.includes('conclu')) return 'concluido';
+  if (s.includes('andamento') || s.includes('progress') || s.includes('tratando') || s.includes('em trat')) return 'andamento';
+  return 'pendente';
+}
+
+// ── PERÍODO GLOBAL ──
+function getGlobalPeriod() {
+  const fromVal = document.getElementById('global-from').value;
+  const toVal   = document.getElementById('global-to').value;
+  return {
+    from: fromVal ? new Date(fromVal + 'T00:00:00') : null,
+    to:   toVal   ? new Date(toVal   + 'T23:59:59') : null,
+  };
+}
+
+function applyPeriodFilter() {
+  const { from, to } = getGlobalPeriod();
+  const hasFilter = from || to;
+
+  document.getElementById('btn-clear-period').style.display = hasFilter ? 'inline-block' : 'none';
+  document.getElementById('period-active-badge').style.display = hasFilter ? 'inline-block' : 'none';
+
+  filteredRows = allRows.filter(r => {
+    if (!hasFilter) return true;
+    const d = parseDate(r.dtEntrega);
+    if (!d || isNaN(d)) return false;
+    if (from && d < from) return false;
+    if (to   && d > to)   return false;
+    return true;
+  });
+
+  renderKPIs();
+  renderCharts();
+  renderTable();
+  if (document.getElementById('tab-evolucao').classList.contains('active')) renderEvolucao();
+}
+
+function clearPeriodFilter() {
+  document.getElementById('global-from').value = '';
+  document.getElementById('global-to').value   = '';
+  document.querySelectorAll('.period-preset').forEach(b => b.classList.remove('active'));
+  applyPeriodFilter();
+}
+
+function setPeriodPreset(p, el) {
+  const now   = new Date();
+  const today = now.toISOString().slice(0,10);
+  let from = '', to = today;
+
+  if (p === 'all') { from = ''; to = ''; }
+  else if (p === 'week') {
+    const d = new Date(now); d.setDate(d.getDate() - d.getDay());
+    from = d.toISOString().slice(0,10);
+  } else if (p === 'month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  } else if (p === 'last30') {
+    const d = new Date(now); d.setDate(d.getDate() - 30);
+    from = d.toISOString().slice(0,10);
+  } else if (p === 'last60') {
+    const d = new Date(now); d.setDate(d.getDate() - 60);
+    from = d.toISOString().slice(0,10);
+  } else if (p === 'last90') {
+    const d = new Date(now); d.setDate(d.getDate() - 90);
+    from = d.toISOString().slice(0,10);
+  }
+
+  document.getElementById('global-from').value = from;
+  document.getElementById('global-to').value   = to;
+  document.querySelectorAll('.period-preset').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  applyPeriodFilter();
+}
+
+// ── LOAD DATA ──
+async function loadData() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('content').style.display  = 'none';
+  document.getElementById('error-msg').style.display = 'none';
+
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+
+    const rows = json.table.rows;
+
+    allRows = rows
+      .filter(r => r && r.c && r.c[0] && r.c[0].v)
+      .map(r => {
+        const v = i => (r.c[i] && r.c[i].v != null) ? String(r.c[i].v).trim() : '';
+        const vDate = i => {
+          const cel = r.c[i];
+          if (!cel || cel.v == null) return '';
+          return String(cel.v).trim();
+        };
+        return {
+          fornecedor: v(0),
+          tipo:       v(1),
+          nf:         v(2),
+          item:       v(3),
+          desc:       v(4),
+          volRep:     parseFloat(v(5)) || 0,
+          volFalt:    parseFloat(v(6)) || 0,
+          ins100:     v(7),
+          dtEntrega:  vDate(8),
+          linkForm:   v(9),
+          codigo:     v(10),
+          obsRec:     v(11),
+          obsComp:    v(12),
+          statusRaw:  v(13),
+          status:     normalizeStatus(v(13)),
+        };
+      });
+
+    filteredRows = [...allRows];
+
+    document.getElementById('sheet-name').textContent = 'Tratativa — Fornecedor (Compras) · ' + allRows.length + ' registros carregados';
+    document.getElementById('footer-info').textContent = 'Dados atualizados em ' + new Date().toLocaleString('pt-BR') + ' · Planilha ID ' + SHEET_ID;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display  = 'block';
+
+    renderKPIs();
+    renderVolumeStatus();
+    renderCharts();
+    renderTable();
+
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    const err = document.getElementById('error-msg');
+    err.style.display = 'block';
+    err.innerHTML = `<strong>Não foi possível carregar os dados.</strong><br>Verifique se a planilha está pública (Compartilhar → qualquer pessoa com o link).<br><br>Detalhe: ${e.message}`;
+  }
+}
+
+// ── RENDER KPIs (usa filteredRows) ──
+function renderKPIs() {
+  const rows = filteredRows;
+  const total     = rows.length;
+  const pendente  = rows.filter(r => r.status === 'pendente').length;
+  const andamento = rows.filter(r => r.status === 'andamento').length;
+  const concluido = rows.filter(r => r.status === 'concluido').length;
+  const critico   = rows.filter(isCritico).length;
+  const totalRep  = rows.reduce((a, r) => a + r.volRep, 0);
+  const totalFalt = rows.reduce((a, r) => a + r.volFalt, 0);
+
+  const { from, to } = getGlobalPeriod();
+  const filtrado = from || to;
+
+  const cards = [
+    { label: 'Total de notas',    value: total,                             cls: 'blue',  sub: filtrado ? 'no período' : 'em tratativa' },
+    { label: 'Pendentes',         value: pendente,                          cls: 'red',   sub: 'sem ação de compras' },
+    { label: 'Em andamento',      value: andamento,                         cls: 'amber', sub: 'aguardando retorno' },
+    { label: 'Concluídas',        value: concluido,                         cls: 'green', sub: 'resolvidas' },
+    { label: 'Críticas (+20d)',   value: critico,                           cls: 'red',   sub: 'sem solução há 20+ dias' },
+    { label: 'Vol. reprovado',    value: totalRep.toLocaleString('pt-BR'),  cls: 'amber', sub: 'volume reprovado' },
+    { label: 'Vol. faltante',     value: totalFalt.toLocaleString('pt-BR'),cls: 'red',   sub: 'volume faltante' },
   ];
 
-  // attach daily consumption
-  const consumoBase = {
-    'MT-0412':30, 'CX-1180':20, 'RX-3321':15, 'VL-0090':3,
-    'TK-4422':40, 'PS-8810':12, 'GR-2200':10, 'NX-0055':8,
-    'FE-7710':18, 'ZK-0301':4,  'BM-1440':22, 'QR-9900':12,
-    'LT-0022':6
+  document.getElementById('kpi-grid').innerHTML = cards.map(c =>
+    `<div class="kpi">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value ${c.cls}">${c.value}</div>
+      <div class="kpi-sub">${c.sub}</div>
+    </div>`
+  ).join('');
+
+  renderVolumeStatus();
+}
+
+// ── VOLUME POR STATUS ──
+function renderVolumeStatus() {
+  const rows = filteredRows;
+
+  const groups = {
+    pendente:  { label: 'Pendente',      color: '#c0392b', colorBar: '#c0392b' },
+    andamento: { label: 'Em andamento',  color: '#9a6200', colorBar: '#e8a000' },
+    concluido: { label: 'Concluído',     color: '#2d6a1f', colorBar: '#3a8a28' },
   };
 
-  return refs.map(r => {
-    const base = consumoBase[r.ref] || 10;
-    const days = Array.from({length: NUM_DAYS}, (_, i) =>
-      Math.max(0, base + Math.floor((Math.random()-0.5)*base*0.4))
-    );
-    return {...r, days};
+  const data = {};
+  Object.keys(groups).forEach(k => {
+    const sub = rows.filter(r => r.status === k);
+    data[k] = {
+      count: sub.length,
+      volRep:  sub.reduce((a, r) => a + r.volRep, 0),
+      volFalt: sub.reduce((a, r) => a + r.volFalt, 0),
+    };
   });
+
+  const maxVol = Math.max(1, ...Object.values(data).map(d => d.volRep + d.volFalt));
+
+  document.getElementById('vol-status-grid').innerHTML = Object.entries(groups).map(([k, g]) => {
+    const d = data[k];
+    const totalVol = d.volRep + d.volFalt;
+    const pct = Math.round((totalVol / maxVol) * 100);
+    return `
+      <div class="vol-card">
+        <div class="vol-card-header">
+          <span class="vol-dot" style="background:${g.color}"></span>
+          <span class="vol-card-label">${g.label}</span>
+          <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text2)">${d.count} nota${d.count !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="vol-rows">
+          <div class="vol-row">
+            <span class="vol-row-label">Vol. reprovado</span>
+            <span class="vol-row-val ${d.volRep > 0 ? 'red' : 'neutral'}">${d.volRep > 0 ? d.volRep.toLocaleString('pt-BR') : '—'}</span>
+          </div>
+          <div class="vol-row">
+            <span class="vol-row-label">Vol. faltante</span>
+            <span class="vol-row-val ${d.volFalt > 0 ? 'red' : 'neutral'}">${d.volFalt > 0 ? d.volFalt.toLocaleString('pt-BR') : '—'}</span>
+          </div>
+          <div class="vol-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:2px">
+            <span class="vol-row-label" style="font-weight:600;color:var(--text2)">Total volume</span>
+            <span class="vol-row-val" style="color:${g.color}">${totalVol > 0 ? totalVol.toLocaleString('pt-BR') : '—'}</span>
+          </div>
+        </div>
+        <div class="vol-bar-wrap">
+          <div class="vol-bar" style="width:${pct}%;background:${g.colorBar}"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-// ─────────────────────────────────────────────
-//  CSV PARSER
-// ─────────────────────────────────────────────
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  // skip header row (row 0)
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g,'').trim());
-    if (!cols[0]) continue;
-    const ref  = cols[0];
-    const maq  = cols[1] || '';
-    const seq  = parseInt(cols[2]) || 0;
-    const pcp  = parseInt(cols[3]) || 0;
-    const cmp  = parseInt(cols[4]) || 0;
-    const days = [];
-    for (let d = 5; d < cols.length && d < 5 + NUM_DAYS; d++) {
-      days.push(parseInt(cols[d]) || 0);
-    }
-    // pad to 30 days
-    while (days.length < NUM_DAYS) days.push(0);
-    rows.push({ref, maq, seq, pcp, cmp, days});
-  }
-  return rows;
-}
+// ── RENDER CHARTS (usa filteredRows) ──
+function renderCharts() {
+  const rows = filteredRows;
 
-// ─────────────────────────────────────────────
-//  CORE ANALYSIS ENGINE
-// ─────────────────────────────────────────────
-function analyzeData(rows) {
-  // Group by reference
-  const byRef = {};
-  rows.forEach(r => {
-    if (!byRef[r.ref]) byRef[r.ref] = { pcp: 0, cmp: 0, machines: [], days: Array(NUM_DAYS).fill(0) };
-    const g = byRef[r.ref];
-    g.pcp += r.pcp;
-    g.cmp += r.cmp;
-    if (!g.machines.includes(r.maq)) g.machines.push(r.maq);
-    r.days.forEach((v, i) => g.days[i] += v);
-  });
+  // Fornecedor
+  const fornMap = {};
+  rows.forEach(r => { fornMap[r.fornecedor] = (fornMap[r.fornecedor]||0) + 1; });
+  const fornSorted = Object.entries(fornMap).sort((a,b) => b[1]-a[1]).slice(0,10);
 
-  const results = [];
-  Object.entries(byRef).forEach(([ref, g]) => {
-    let cumPCP = g.pcp, cumTotal = g.pcp + g.cmp;
-    let dayRupturaPCP = null, dayRupturaTotal = null;
-
-    for (let d = 0; d < NUM_DAYS; d++) {
-      cumPCP   -= g.days[d];
-      cumTotal -= g.days[d];
-      if (dayRupturaPCP   === null && cumPCP   < 0) dayRupturaPCP   = d + 1;
-      if (dayRupturaTotal === null && cumTotal < 0) dayRupturaTotal = d + 1;
-    }
-
-    results.push({
-      ref,
-      machines:       g.machines,
-      pcpStock:       g.pcp,
-      cmpStock:       g.cmp,
-      days:           g.days,
-      dayRupturaPCP,
-      dayRupturaTotal,
-      resolvedByCmp:  dayRupturaPCP !== null && dayRupturaTotal === null,
-      partialByCmp:   dayRupturaPCP !== null && dayRupturaTotal !== null &&
-                      dayRupturaTotal > dayRupturaPCP,
-    });
-  });
-
-  return results;
-}
-
-// ─────────────────────────────────────────────
-//  RENDER
-// ─────────────────────────────────────────────
-function render(rows) {
-  const data = analyzeData(rows);
-
-  // KPIs
-  const critical   = data.filter(d => d.dayRupturaPCP !== null && d.dayRupturaPCP <= 7);
-  const machines   = [...new Set(critical.flatMap(d => d.machines))];
-  const inspection = data.filter(d => d.dayRupturaPCP !== null && d.cmpStock > 0 && d.dayRupturaTotal === null);
-  const resolved   = data.filter(d => d.resolvedByCmp);
-
-  document.getElementById('kpi-critical').textContent   = critical.length;
-  document.getElementById('kpi-machines').textContent   = machines.length;
-  document.getElementById('kpi-inspection').textContent = inspection.length;
-  document.getElementById('kpi-resolved').textContent   = resolved.length;
-
-  // ── INDICADORES DE IMPACTO ──
-  // Volume em Risco: soma das peças em falta (déficit) de todas as refs com ruptura
-  let totalConsumo = 0, totalEstoque = 0, volumeRisco = 0;
-  let refsComFalta = 0, deficitMax = 0, skuCritico = '—';
-
-  data.forEach(d => {
-    const consumo30 = d.days.reduce((a,b) => a+b, 0);
-    const estoqueDisp = d.pcpStock + d.cmpStock;
-    totalConsumo += consumo30;
-    totalEstoque += estoqueDisp;
-    if (d.dayRupturaPCP !== null) {
-      const deficit = Math.max(0, consumo30 - estoqueDisp);
-      volumeRisco += deficit;
-      if (deficit > 0) {
-        refsComFalta++;
-        if (deficit > deficitMax) { deficitMax = deficit; skuCritico = d.ref; }
-      }
-    }
-  });
-
-  // DOH Médio: para cada ref com ruptura, DOH = estoque / consumo_medio_diario
-  const refsComRuptura = data.filter(d => d.dayRupturaPCP !== null);
-  let dohMedio = 0, piorDoh = 999, consumoMedioDia = 0;
-  if (refsComRuptura.length > 0) {
-    let sumDoh = 0;
-    refsComRuptura.forEach(d => {
-      const consumo30 = d.days.reduce((a,b) => a+b, 0);
-      const consumoDia = consumo30 / NUM_DAYS;
-      consumoMedioDia += consumoDia;
-      const doh = consumoDia > 0 ? (d.pcpStock + d.cmpStock) / consumoDia : 0;
-      sumDoh += doh;
-      if (doh < piorDoh) piorDoh = doh;
-    });
-    dohMedio = sumDoh / refsComRuptura.length;
-    consumoMedioDia = consumoMedioDia / refsComRuptura.length;
-  }
-
-  const fmt = n => n.toLocaleString('pt-BR');
-  document.getElementById('kpi-volume-risco').textContent   = fmt(Math.round(volumeRisco)) + ' un';
-  document.getElementById('kpi-consumo-total').textContent  = fmt(Math.round(totalConsumo));
-  document.getElementById('kpi-estoque-total').textContent  = fmt(Math.round(totalEstoque));
-  document.getElementById('kpi-doh').textContent            = Math.round(dohMedio) + ' dias';
-  document.getElementById('kpi-consumo-dia').textContent    = Math.round(consumoMedioDia).toLocaleString('pt-BR');
-  document.getElementById('kpi-pior-doh').textContent       = piorDoh === 999 ? '—' : Math.round(piorDoh);
-  document.getElementById('kpi-refs-falta').textContent     = refsComFalta;
-  document.getElementById('kpi-deficit-max').textContent    = fmt(deficitMax);
-  document.getElementById('kpi-sku-critico').textContent    = skuCritico;
-
-  // TOP 10 TABLE
-  const top10 = data
-    .filter(d => d.dayRupturaPCP !== null)
-    .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP)
-    .slice(0, 10);
-
-  document.getElementById('badge-count').textContent = `${top10.length} itens`;
-
-  if (top10.length === 0) {
-    document.getElementById('urgency-table-container').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">✅</div>
-        <div class="empty-state-text">Nenhuma ruptura identificada nos próximos 30 dias</div>
-      </div>`;
-  } else {
-    let html = `<table class="urgency-table">
-      <thead><tr>
-        <th>Referência</th>
-        <th>Máquinas</th>
-        <th>Status</th>
-        <th>Dia Ruptura PCP</th>
-        <th>Dia Ruptura Total</th>
-        <th>Consumo 30d</th>
-        <th>Estoque Disp.</th>
-        <th>Falta (un)</th>
-        <th>Liberação Resolve?</th>
-      </tr></thead><tbody>`;
-
-    top10.forEach(d => {
-      const dotClass = d.dayRupturaPCP <= 3 ? 's-red' : d.dayRupturaPCP <= 7 ? 's-orange' : 's-yellow';
-      const statusLabel = d.dayRupturaPCP <= 3 ? 'CRÍTICO' : d.dayRupturaPCP <= 7 ? 'URGENTE' : 'ATENÇÃO';
-
-      let resolveLabel, resolveClass;
-      if (d.resolvedByCmp)     { resolveLabel = '✓ Resolve Total'; resolveClass = 'resolve-yes'; }
-      else if (d.partialByCmp) { resolveLabel = '▲ Resolve Parcial'; resolveClass = 'resolve-partial'; }
-      else if (d.cmpStock > 0) { resolveLabel = '▲ Insuficiente'; resolveClass = 'resolve-partial'; }
-      else                      { resolveLabel = '✗ Não Resolve'; resolveClass = 'resolve-no'; }
-
-      const consumo30 = d.days.reduce((a,b) => a+b, 0);
-      const estoqueDisp = d.pcpStock + d.cmpStock;
-      const falta = Math.max(0, consumo30 - estoqueDisp);
-
-      html += `<tr>
-        <td><div class="ref-code">${d.ref}</div></td>
-        <td>${d.machines.map(m => `<span class="machine-tag">${m}</span>`).join(' ')}</td>
-        <td><span class="semaphore"><span class="semaphore-dot ${dotClass}"></span>${statusLabel}</span></td>
-        <td><span class="day-num" style="color:var(--red)">D${d.dayRupturaPCP}</span></td>
-        <td>${d.dayRupturaTotal ? `<span class="day-num" style="color:var(--orange)">D${d.dayRupturaTotal}</span>` : `<span style="color:var(--green);font-weight:600">—</span>`}</td>
-        <td style="color:var(--text);font-weight:500">${consumo30.toLocaleString('pt-BR')}</td>
-        <td style="color:var(--blue);font-weight:500">${estoqueDisp.toLocaleString('pt-BR')}</td>
-        <td style="color:var(--red);font-weight:700">${falta > 0 ? falta.toLocaleString('pt-BR') : '<span style="color:var(--green)">—</span>'}</td>
-        <td><span class="resolve-badge ${resolveClass}">${resolveLabel}</span></td>
-      </tr>`;
-    });
-
-    html += '</tbody></table>';
-    document.getElementById('urgency-table-container').innerHTML = html;
-  }
-
-  // CHART
-  const dailyTotal = Array(NUM_DAYS).fill(0);
-  rows.forEach(r => r.days.forEach((v, i) => dailyTotal[i] += v));
-  const labels = Array.from({length: NUM_DAYS}, (_, i) => `D${i+1}`);
-
-  if (chartInstance) chartInstance.destroy();
-  const ctx = document.getElementById('consumoChart').getContext('2d');
-
-  const grad = ctx.createLinearGradient(0, 0, 0, 260);
-  grad.addColorStop(0, 'rgba(240,192,64,0.25)');
-  grad.addColorStop(1, 'rgba(240,192,64,0.02)');
-
-  chartInstance = new Chart(ctx, {
+  if (charts.forn) charts.forn.destroy();
+  charts.forn = new Chart(document.getElementById('chart-forn'), {
     type: 'bar',
     data: {
-      labels,
+      labels: fornSorted.map(f => f[0].length > 18 ? f[0].slice(0,18)+'…' : f[0]),
       datasets: [{
-        label: 'Consumo Total (un)',
-        data: dailyTotal,
-        backgroundColor: dailyTotal.map((v, i) => {
-          // Check if any critical item ruptures on this day
-          const hasCrit = top10.some(d => d.dayRupturaPCP === i + 1);
-          return hasCrit ? 'rgba(255,71,87,0.7)' : 'rgba(240,192,64,0.5)';
-        }),
-        borderColor: dailyTotal.map((v, i) => {
-          const hasCrit = top10.some(d => d.dayRupturaPCP === i + 1);
-          return hasCrit ? 'rgba(255,71,87,1)' : 'rgba(240,192,64,0.9)';
-        }),
-        borderWidth: 1,
-        borderRadius: 2,
+        label: 'Notas',
+        data: fornSorted.map(f => f[1]),
+        backgroundColor: '#1a4f8a',
+        borderRadius: 4,
+        borderSkipped: false,
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#111318',
-          borderColor: '#2a2f3a',
-          borderWidth: 1,
-          titleColor: '#e8eaf0',
-          bodyColor: '#5a6070',
-          titleFont: { family: 'Syne', weight: '700', size: 12 },
-          bodyFont: { family: 'DM Mono', size: 11 },
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 }
-        },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 } }
-        }
+        x: { ticks: { font: { size: 11, family:'DM Sans' }, color: '#6b6b66', maxRotation: 35, autoSkip: false }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#6b6b66', stepSize: 1 }, grid: { color: 'rgba(0,0,0,.05)' } }
       }
     }
   });
 
-  // ── BURN-DOWN CHART (Top 5 críticos) ──
-  // For each top-5 critical SKU, plot remaining stock over time
-  const top5 = data
-    .filter(d => d.dayRupturaPCP !== null)
-    .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP)
-    .slice(0, 5);
+  // Status donut
+  const stMap = { pendente: 0, andamento: 0, concluido: 0 };
+  rows.forEach(r => { stMap[r.status] = (stMap[r.status]||0) + 1; });
+  const stColors = { pendente: '#c0392b', andamento: '#9a6200', concluido: '#2d6a1f' };
+  const stLabels = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído' };
+  const stVals   = Object.entries(stMap);
 
-  const burndownColors = [
-    { line: 'rgba(255,71,87,1)',   fill: 'rgba(255,71,87,0.08)' },
-    { line: 'rgba(255,140,66,1)',  fill: 'rgba(255,140,66,0.08)' },
-    { line: 'rgba(240,192,64,1)', fill: 'rgba(240,192,64,0.08)' },
-    { line: 'rgba(77,166,255,1)', fill: 'rgba(77,166,255,0.08)' },
-    { line: 'rgba(46,204,113,1)', fill: 'rgba(46,204,113,0.08)' },
-  ];
+  document.getElementById('legend-status').innerHTML = stVals.map(([k,v]) =>
+    `<span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#6b6b66">
+      <span style="width:10px;height:10px;border-radius:2px;background:${stColors[k]};flex-shrink:0"></span>
+      ${stLabels[k]} <strong style="color:#1a1a18">${v}</strong>
+    </span>`
+  ).join('');
 
-  const burndownDatasets = top5.map((d, i) => {
-    const c = burndownColors[i];
-    let stock = d.pcpStock + d.cmpStock;
-    const stockOverTime = [stock];
-    for (let day = 0; day < NUM_DAYS - 1; day++) {
-      stock = Math.max(stock - d.days[day], 0);
-      stockOverTime.push(stock);
-    }
-    return {
-      label: d.ref,
-      data: stockOverTime,
-      borderColor: c.line,
-      backgroundColor: c.fill,
-      borderWidth: 2,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      fill: true,
-      tension: 0.3,
-    };
-  });
-
-  if (burndownChartInstance) burndownChartInstance.destroy();
-  const ctxBd = document.getElementById('burndownChart').getContext('2d');
-  burndownChartInstance = new Chart(ctxBd, {
-    type: 'line',
-    data: { labels, datasets: burndownDatasets },
+  if (charts.status) charts.status.destroy();
+  charts.status = new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels: stVals.map(([k]) => stLabels[k]),
+      datasets: [{ data: stVals.map(([,v]) => v), backgroundColor: stVals.map(([k]) => stColors[k]), borderWidth: 0, hoverOffset: 6 }]
+    },
     options: {
       responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      cutout: '68%',
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ── EVOLUÇÃO MENSAL ──
+function setEvolucaoMode(mode, el) {
+  currentEvolucaoMode = mode;
+  document.querySelectorAll('.evolucao-toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderEvolucao();
+}
+
+function getMonthKey(dateStr) {
+  const d = parseDate(dateStr);
+  if (!d || isNaN(d)) return null;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function monthLabel(key) {
+  const [y, m] = key.split('-');
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return months[parseInt(m)-1] + '/' + y.slice(2);
+}
+
+function renderEvolucao() {
+  // Agrupa por mês (usa allRows para ter histórico completo)
+  const byMonth = {};
+
+  allRows.forEach(r => {
+    const mk = getMonthKey(r.dtEntrega);
+    if (!mk) return;
+    if (!byMonth[mk]) byMonth[mk] = { pendente: 0, andamento: 0, concluido: 0, volRep_p: 0, volRep_a: 0, volRep_c: 0, volFalt_p: 0, volFalt_a: 0, volFalt_c: 0, total: 0 };
+    const m = byMonth[mk];
+    m[r.status]++;
+    m.total++;
+    if (r.status === 'pendente')  { m.volRep_p += r.volRep; m.volFalt_p += r.volFalt; }
+    if (r.status === 'andamento') { m.volRep_a += r.volRep; m.volFalt_a += r.volFalt; }
+    if (r.status === 'concluido') { m.volRep_c += r.volRep; m.volFalt_c += r.volFalt; }
+  });
+
+  const sortedKeys = Object.keys(byMonth).sort();
+  if (sortedKeys.length === 0) {
+    // Sem dados suficientes
+    return;
+  }
+
+  const labels = sortedKeys.map(monthLabel);
+  const isVol = currentEvolucaoMode === 'vol';
+
+  // Dados para barras empilhadas
+  const dPendente  = sortedKeys.map(k => isVol ? (byMonth[k].volRep_p + byMonth[k].volFalt_p) : byMonth[k].pendente);
+  const dAndamento = sortedKeys.map(k => isVol ? (byMonth[k].volRep_a + byMonth[k].volFalt_a) : byMonth[k].andamento);
+  const dConcluido = sortedKeys.map(k => isVol ? (byMonth[k].volRep_c + byMonth[k].volFalt_c) : byMonth[k].concluido);
+  const dTotal     = sortedKeys.map(k => isVol ? (byMonth[k].volRep_p + byMonth[k].volFalt_p + byMonth[k].volRep_a + byMonth[k].volFalt_a + byMonth[k].volRep_c + byMonth[k].volFalt_c) : byMonth[k].total);
+
+  document.getElementById('evol-chart-title').textContent = isVol
+    ? 'Volume por mês e status (reprov. + faltante)'
+    : 'Notas por mês e status';
+
+  if (charts.evolStack) charts.evolStack.destroy();
+  charts.evolStack = new Chart(document.getElementById('chart-evol-stack'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Pendente',     data: dPendente,  backgroundColor: '#c0392b', borderRadius: 0, stack: 's' },
+        { label: 'Em andamento', data: dAndamento, backgroundColor: '#e8a000', borderRadius: 0, stack: 's' },
+        { label: 'Concluído',    data: dConcluido, backgroundColor: '#3a8a28', borderRadius: 4, stack: 's' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, boxWidth: 12, padding: 10 }
-        },
+        legend: { display: true, position: 'top', labels: { font: { size: 12, family: 'DM Sans' }, boxWidth: 12, padding: 16 } },
         tooltip: {
-          backgroundColor: '#111318', borderColor: '#2a2f3a', borderWidth: 1,
-          titleColor: '#e8eaf0', bodyColor: '#5a6070',
-          titleFont: { family: 'Syne', weight: '700', size: 12 },
-          bodyFont: { family: 'DM Mono', size: 11 },
           callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('pt-BR')} un`
+            footer: (items) => {
+              const sum = items.reduce((a, i) => a + i.parsed.y, 0);
+              return 'Total: ' + sum.toLocaleString('pt-BR');
+            }
           }
-        },
-        annotation: {}
+        }
       },
       scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 }
-        },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 } },
-          title: { display: true, text: 'Estoque restante (un)', color: '#5a6070', font: { family: 'DM Mono', size: 9 } }
-        }
+        x: { stacked: true, ticks: { font: { size: 11, family: 'DM Sans' }, color: '#6b6b66' }, grid: { display: false } },
+        y: { stacked: true, ticks: { font: { size: 11 }, color: '#6b6b66' }, grid: { color: 'rgba(0,0,0,.05)' } }
       }
     }
   });
 
-  // ── RISK PROJECTION CHART (cumulative deficit over time) ──
-  // Day by day: sum all deficits across all refs with ruptura
-  const dailyDeficit = Array(NUM_DAYS).fill(0);
-  data.forEach(d => {
-    if (d.dayRupturaPCP === null) return;
-    let stock = d.pcpStock + d.cmpStock;
-    for (let day = 0; day < NUM_DAYS; day++) {
-      stock -= d.days[day];
-      if (stock < 0) { dailyDeficit[day] += Math.abs(stock); stock = 0; }
-    }
-  });
+  // Fluxo: linha de total e linha de concluídos
+  document.getElementById('evol-flux-title').textContent = isVol
+    ? 'Fluxo de volume — total acumulado vs resolvido'
+    : 'Fluxo de notas — total vs resolvidas por mês';
 
-  // Make it cumulative
-  const cumulativeRisk = [];
-  let cumSum = 0;
-  dailyDeficit.forEach(v => { cumSum += v; cumulativeRisk.push(cumSum); });
-
-  // Daily incremental deficit
-  const riskGrad = ctxBd; // reuse var name pattern
-  const ctxRisk = document.getElementById('riskChart').getContext('2d');
-  const areaGrad = ctxRisk.createLinearGradient(0, 0, 0, 260);
-  areaGrad.addColorStop(0, 'rgba(255,71,87,0.35)');
-  areaGrad.addColorStop(1, 'rgba(255,71,87,0.02)');
-
-  if (riskChartInstance) riskChartInstance.destroy();
-  riskChartInstance = new Chart(ctxRisk, {
+  if (charts.evolFlux) charts.evolFlux.destroy();
+  charts.evolFlux = new Chart(document.getElementById('chart-evol-flux'), {
     type: 'line',
     data: {
       labels,
       datasets: [
         {
-          label: 'Déficit Acumulado (un)',
-          data: cumulativeRisk,
-          borderColor: 'rgba(255,71,87,1)',
-          backgroundColor: areaGrad,
-          borderWidth: 2.5,
-          pointRadius: 0,
-          pointHoverRadius: 5,
+          label: isVol ? 'Volume total' : 'Total de notas',
+          data: dTotal,
+          borderColor: '#1a4f8a',
+          backgroundColor: 'rgba(26,79,138,0.08)',
+          borderWidth: 2,
           fill: true,
-          tension: 0.4,
-          yAxisID: 'y',
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#1a4f8a',
         },
         {
-          label: 'Déficit Diário (un)',
-          data: dailyDeficit,
-          borderColor: 'rgba(255,140,66,0.8)',
-          backgroundColor: 'rgba(255,140,66,0.15)',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          type: 'bar',
-          yAxisID: 'y2',
-        }
+          label: isVol ? 'Volume resolvido' : 'Notas concluídas',
+          data: dConcluido,
+          borderColor: '#3a8a28',
+          backgroundColor: 'rgba(58,138,40,0.08)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#3a8a28',
+        },
+        {
+          label: isVol ? 'Volume pendente' : 'Pendentes',
+          data: dPendente,
+          borderColor: '#c0392b',
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderWidth: 2,
+          borderDash: [5, 4],
+          tension: 0.3,
+          pointRadius: 3,
+          pointBackgroundColor: '#c0392b',
+        },
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: {
-          display: true, position: 'top',
-          labels: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, boxWidth: 12, padding: 10 }
-        },
-        tooltip: {
-          backgroundColor: '#111318', borderColor: '#2a2f3a', borderWidth: 1,
-          titleColor: '#e8eaf0', bodyColor: '#5a6070',
-          titleFont: { family: 'Syne', weight: '700', size: 12 },
-          bodyFont: { family: 'DM Mono', size: 11 },
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${Math.round(ctx.parsed.y).toLocaleString('pt-BR')} un`
-          }
-        }
+        legend: { display: true, position: 'top', labels: { font: { size: 12, family: 'DM Sans' }, boxWidth: 12, padding: 16 } }
       },
       scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#5a6070', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 }
-        },
-        y: {
-          position: 'left',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#ff4757', font: { family: 'DM Mono', size: 10 } },
-          title: { display: true, text: 'Acumulado (un)', color: '#ff4757', font: { family: 'DM Mono', size: 9 } }
-        },
-        y2: {
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          ticks: { color: '#ff8c42', font: { family: 'DM Mono', size: 10 } },
-          title: { display: true, text: 'Diário (un)', color: '#ff8c42', font: { family: 'DM Mono', size: 9 } }
-        }
+        x: { ticks: { font: { size: 11, family: 'DM Sans' }, color: '#6b6b66' }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#6b6b66' }, grid: { color: 'rgba(0,0,0,.05)' } }
       }
     }
   });
-  const inspList = data
-    .filter(d => d.dayRupturaPCP !== null && d.cmpStock > 0)
-    .sort((a, b) => a.dayRupturaPCP - b.dayRupturaPCP);
 
-  document.getElementById('badge-inspection').textContent = `${inspList.length} itens`;
+  renderMetas(byMonth, sortedKeys, isVol);
+}
 
-  if (inspList.length === 0) {
-    document.getElementById('alert-list-container').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">✅</div>
-        <div class="empty-state-text">Nenhum item aguardando inspeção com ruptura prevista</div>
-      </div>`;
+// ── METAS ──
+function renderMetas(byMonth, sortedKeys, isVol) {
+  // Pega o mês mais recente para cálculo do progresso
+  const lastKey = sortedKeys[sortedKeys.length - 1];
+  const lastMonth = byMonth[lastKey] || {};
+
+  const concluidoMes  = isVol ? (lastMonth.volRep_c + lastMonth.volFalt_c) : lastMonth.concluido || 0;
+  const pendenteMes   = isVol ? (lastMonth.volRep_p + lastMonth.volFalt_p) : lastMonth.pendente  || 0;
+  const totalVolMes   = isVol ? (lastMonth.volRep_p + lastMonth.volFalt_p + lastMonth.volRep_a + lastMonth.volFalt_a + lastMonth.volRep_c + lastMonth.volFalt_c) : lastMonth.total || 0;
+
+  const metaItems = [
+    {
+      id: 'concluir_mes',
+      label: isVol ? 'Volume resolvido (mês atual)' : 'Notas concluídas (mês atual)',
+      atual: concluidoMes,
+      meta: metas.concluir_mes,
+      color: '#3a8a28',
+      placeholder: isVol ? '500' : '10',
+    },
+    {
+      id: 'reduzir_pendente',
+      label: isVol ? 'Pendentes em volume (teto máx.)' : 'Pendentes (teto máximo)',
+      atual: pendenteMes,
+      meta: metas.reduzir_pendente,
+      color: '#c0392b',
+      placeholder: isVol ? '200' : '5',
+      teto: true, // lógica de teto: atual <= meta = ✅
+    },
+    {
+      id: 'total_mes',
+      label: isVol ? 'Volume total no período' : 'Total de notas no período',
+      atual: totalVolMes,
+      meta: metas.total_mes || 0,
+      color: '#1a4f8a',
+      placeholder: isVol ? '1000' : '30',
+      info: true,
+    },
+  ];
+
+  document.getElementById('metas-grid').innerHTML = metaItems.map(item => {
+    let pct, statusLabel, barColor, statusColor, barWidth;
+
+    if (item.meta <= 0) {
+      // Sem meta definida
+      pct = 0; statusLabel = '—'; barColor = '#d0d0c8'; statusColor = 'var(--text3)'; barWidth = 0;
+    } else if (item.teto) {
+      // Lógica de TETO: atual <= meta = bateu; atual > meta = estourou
+      if (item.atual <= item.meta) {
+        // Bateu a meta — barra verde proporcional ao quanto sobrou de margem
+        barWidth = 100;
+        barColor = '#3a8a28';
+        statusColor = '#3a8a28';
+        const sobra = item.meta - item.atual;
+        statusLabel = item.atual === item.meta
+          ? 'No limite ⚠️'
+          : `✅ Meta batida — ${sobra} abaixo do teto`;
+        pct = null; // não mostra %
+      } else {
+        // Estourou a meta
+        const excesso = item.atual - item.meta;
+        barWidth = Math.min(100, Math.round((item.atual / item.meta) * 60)); // barra parcial vermelha
+        barColor = '#c0392b';
+        statusColor = '#c0392b';
+        statusLabel = `⚠️ +${excesso} acima da meta`;
+        pct = null;
+      }
+    } else {
+      // Lógica normal: quanto mais próximo da meta melhor
+      pct = Math.min(100, Math.round((item.atual / item.meta) * 100));
+      barWidth = pct;
+      barColor = item.color;
+      statusColor = pct >= 100 ? '#3a8a28' : pct >= 60 ? '#e8a000' : '#c0392b';
+      statusLabel = pct + '%';
+    }
+
+    const metaLabel = item.meta > 0
+      ? (item.teto ? 'Teto: ' : 'Meta: ') + item.meta.toLocaleString('pt-BR')
+      : 'Meta não definida';
+
+    return `
+      <div class="meta-card">
+        <div class="meta-card-label">${item.label}</div>
+        <div class="meta-progress-wrap">
+          <div class="meta-progress-bar" style="width:${barWidth}%;background:${barColor}"></div>
+        </div>
+        <div class="meta-info">
+          <span class="meta-atual" style="color:${item.teto && item.meta > 0 ? (item.atual <= item.meta ? '#3a8a28' : '#c0392b') : item.color}">${item.atual.toLocaleString('pt-BR')}</span>
+          <span class="meta-alvo">${metaLabel}</span>
+          <span class="meta-pct" style="color:${statusColor};font-size:${item.teto ? '11px' : '12px'}">${statusLabel}</span>
+        </div>
+        <div class="meta-input-group">
+          <label>${item.teto ? 'Teto máximo:' : 'Definir meta:'}</label>
+          <input type="number" id="meta-input-${item.id}" value="${item.meta || ''}" placeholder="${item.placeholder}" min="0">
+          <button class="meta-save-btn" onclick="saveMeta('${item.id}')">Salvar</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function saveMeta(id) {
+  const val = parseInt(document.getElementById('meta-input-' + id).value) || 0;
+  metas[id] = val;
+  localStorage.setItem('notas-metas', JSON.stringify(metas));
+  renderEvolucao();
+}
+
+// ── RENDER TABLE ──
+function statusBadge(s, raw) {
+  if (s === 'concluido') return `<span class="badge badge-green">Concluído</span>`;
+  if (s === 'andamento') return `<span class="badge badge-amber">${raw || 'Em andamento'}</span>`;
+  return `<span class="badge badge-red">${raw || 'Pendente'}</span>`;
+}
+
+function renderTable() {
+  const search = (document.getElementById('search-input').value || '').toLowerCase();
+  const { from: fromDate, to: toDate } = getGlobalPeriod();
+
+  const filtered = allRows.filter(r => {
+    if (currentFilter === 'pendente'  && r.status !== 'pendente') return false;
+    if (currentFilter === 'andamento' && r.status !== 'andamento') return false;
+    if (currentFilter === 'concluido' && r.status !== 'concluido') return false;
+    if (currentFilter === 'critico'   && !isCritico(r)) return false;
+    if (search) {
+      const hay = [r.fornecedor, r.nf, r.desc, r.tipo, r.obsRec, r.obsComp].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    if (fromDate || toDate) {
+      const d = parseDate(r.dtEntrega);
+      if (!d || isNaN(d)) return false;
+      if (fromDate && d < fromDate) return false;
+      if (toDate   && d > toDate)   return false;
+    }
+    return true;
+  });
+
+  document.getElementById('table-count').textContent = filtered.length + ' de ' + allRows.length + ' notas';
+
+  if (filtered.length === 0) {
+    document.getElementById('table-body').innerHTML =
+      `<tr class="empty-row"><td colspan="13">Nenhuma nota encontrada para este filtro.</td></tr>`;
+    return;
+  }
+
+  document.getElementById('table-body').innerHTML = filtered.map(r => {
+    const idx = allRows.indexOf(r);
+    const crit = isCritico(r);
+    const dias = daysDiff(r.dtEntrega);
+    return `<tr class="${crit ? 'row-critico' : ''}">
+      <td style="font-weight:500;white-space:nowrap">${r.fornecedor}${crit ? '<span class="critico-tag">CRÍTICO</span>' : ''}</td>
+      <td style="white-space:nowrap;font-size:12px;color:#6b6b66">${r.tipo || '—'}</td>
+      <td class="mono">${r.nf || '—'}</td>
+      <td style="text-align:center;color:#6b6b66">${r.item || '—'}</td>
+      <td style="min-width:160px;max-width:200px;font-size:12px">${r.desc || '—'}</td>
+      <td style="text-align:right;font-weight:${r.volRep>0?'500':'400'};color:${r.volRep>0?'#c0392b':'#9e9e98'}">${r.volRep > 0 ? r.volRep.toLocaleString('pt-BR') : '—'}</td>
+      <td style="text-align:right;font-weight:${r.volFalt>0?'500':'400'};color:${r.volFalt>0?'#c0392b':'#9e9e98'}">${r.volFalt > 0 ? r.volFalt.toLocaleString('pt-BR') : '—'}</td>
+      <td style="text-align:center">${r.ins100 && r.ins100.toLowerCase().includes('sim') ? '<span class="badge badge-amber">Sim</span>' : '—'}</td>
+      <td style="white-space:nowrap;font-size:12px">${formatDateDisplay(r.dtEntrega)}${dias > 20 ? `<br><span style="font-size:10px;color:#c0392b">${dias}d atrás</span>` : ''}</td>
+      <td>${statusBadge(r.status, r.statusRaw)}</td>
+      <td class="obs-cell" onclick="showDetail(${idx})" title="${(r.obsRec||'').replace(/"/g,'&quot;')}">${r.obsRec || '<span style="color:#c8c8c0">—</span>'}</td>
+      <td class="obs-cell" onclick="showDetail(${idx})" title="${(r.obsComp||'').replace(/"/g,'&quot;')}">${r.obsComp || '<span style="color:#c0392b;font-size:11px">Sem retorno</span>'}</td>
+      <td>${r.linkForm && r.linkForm.startsWith('http') ? `<a href="${r.linkForm}" target="_blank" class="link-btn">Ver ↗</a>` : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function showDetail(idx) {
+  const r = allRows[idx];
+  const crit = isCritico(r);
+  const dias = daysDiff(r.dtEntrega);
+  document.getElementById('m-title').textContent = (r.nf || '—') + ' · ' + r.fornecedor;
+  document.getElementById('m-sub').textContent   = r.desc + (r.item ? ' — Item ' + r.item : '');
+  document.getElementById('m-body').innerHTML = `
+    <div class="modal-grid">
+      <div class="modal-field"><label>Tipo de material</label><span>${r.tipo || '—'}</span></div>
+      <div class="modal-field"><label>Código</label><span style="font-family:'DM Mono',monospace;font-size:12px">${r.codigo || '—'}</span></div>
+      <div class="modal-field"><label>Vol. reprovado</label><span style="color:${r.volRep>0?'#c0392b':'inherit'};font-weight:${r.volRep>0?500:400}">${r.volRep > 0 ? r.volRep.toLocaleString('pt-BR') + ' un.' : 'nenhum'}</span></div>
+      <div class="modal-field"><label>Vol. faltante</label><span style="color:${r.volFalt>0?'#c0392b':'inherit'};font-weight:${r.volFalt>0?500:400}">${r.volFalt > 0 ? r.volFalt.toLocaleString('pt-BR') + ' un.' : 'nenhum'}</span></div>
+      <div class="modal-field"><label>Inspeção 100%</label><span>${r.ins100 || '—'}</span></div>
+      <div class="modal-field"><label>Data de entrega</label><span>${formatDateDisplay(r.dtEntrega)}${dias > 0 ? ' <span style="color:#9a6200;font-size:11px">('+dias+'d)</span>' : ''}</span></div>
+      <div class="modal-field" style="grid-column:span 2"><label>Status compras</label><span>${statusBadge(r.status, r.statusRaw)}</span></div>
+    </div>
+    <hr class="modal-divider">
+    <div class="modal-obs-block">
+      <label>Obs. recebimento</label>
+      <p>${r.obsRec || '<em>Sem observações</em>'}</p>
+    </div>
+    <div class="modal-obs-block">
+      <label>Obs. compras</label>
+      <p style="${!r.obsComp ? 'color:#c0392b' : ''}">${r.obsComp || 'Sem retorno do setor de compras'}</p>
+    </div>
+    ${crit ? `<div class="modal-critico-alert">Nota crítica — ${dias} dias sem resolução. Cobrar ação imediata de compras.</div>` : ''}
+    ${r.linkForm && r.linkForm.startsWith('http') ? `<div style="margin-top:14px"><a href="${r.linkForm}" target="_blank" class="link-btn" style="font-size:13px;padding:6px 14px">Ver formulário de inspeção ↗</a></div>` : ''}
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+// CENTRAL DE AÇÃO
+// ══════════════════════════════════════════
+
+let acoesRegistradas = JSON.parse(localStorage.getItem('notas-acoes') || '[]');
+
+function renderAcao() {
+  const criticos = allRows.filter(isCritico);
+  const volCritico = criticos.reduce((a, r) => a + r.volRep + r.volFalt, 0);
+
+  document.getElementById('acao-alerta-titulo').textContent =
+    criticos.length > 0
+      ? `${criticos.length} nota${criticos.length > 1 ? 's' : ''} crítica${criticos.length > 1 ? 's' : ''} exigem ação imediata — ${volCritico.toLocaleString('pt-BR')} un. de volume em risco`
+      : '✅ Nenhuma nota crítica no momento';
+
+  const fornCriticos = [...new Set(criticos.map(r => r.fornecedor))];
+  document.getElementById('acao-alerta-sub').textContent =
+    criticos.length > 0
+      ? `Fornecedores envolvidos: ${fornCriticos.slice(0,5).join(', ')}${fornCriticos.length > 5 ? ` e mais ${fornCriticos.length - 5}` : ''}`
+      : 'Continue monitorando o painel de evolução mensal.';
+
+  renderListaAcoes();
+}
+
+// ── Prioridade: score = dias_parado * (1 + vol/100) ──
+function scoreCritico(r) {
+  const dias = daysDiff(r.dtEntrega);
+  const vol  = r.volRep + r.volFalt;
+  return dias * (1 + vol / 100);
+}
+
+function gerarPlanoAcao() {
+  const criticos = allRows
+    .filter(isCritico)
+    .sort((a, b) => scoreCritico(b) - scoreCritico(a));
+
+  if (criticos.length === 0) {
+    mostrarOutput('📋 Plano de Ação', '✅ Nenhuma nota crítica encontrada. Continue monitorando!');
+    return;
+  }
+
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  let txt = `PLANO DE AÇÃO — NOTAS PARADAS CRÍTICAS\n`;
+  txt += `Gerado em: ${hoje}\n`;
+  txt += `${'─'.repeat(60)}\n\n`;
+  txt += `RESUMO\n`;
+  txt += `  Total de notas críticas (+20 dias): ${criticos.length}\n`;
+  txt += `  Volume total em risco: ${criticos.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} un.\n`;
+  txt += `  Fornecedores envolvidos: ${[...new Set(criticos.map(r => r.fornecedor))].length}\n\n`;
+  txt += `${'─'.repeat(60)}\n\n`;
+  txt += `AÇÕES PRIORIZADAS (maior urgência primeiro)\n\n`;
+
+  criticos.forEach((r, i) => {
+    const dias = daysDiff(r.dtEntrega);
+    const vol  = r.volRep + r.volFalt;
+    const prazo = new Date(Date.now() + 2 * 86400000).toLocaleDateString('pt-BR');
+
+    txt += `${i + 1}. ${r.fornecedor}\n`;
+    txt += `   NF: ${r.nf || '—'}  |  Item: ${r.item || '—'}  |  ${dias} dias parado\n`;
+    txt += `   Descrição: ${r.desc || '—'}\n`;
+    if (vol > 0) txt += `   Volume em risco: ${vol.toLocaleString('pt-BR')} un. (reprov: ${r.volRep.toLocaleString('pt-BR')} / faltante: ${r.volFalt.toLocaleString('pt-BR')})\n`;
+    txt += `   Status atual: ${r.statusRaw || 'Pendente'}\n`;
+    if (r.obsComp) txt += `   Última obs. compras: "${r.obsComp}"\n`;
+    txt += `   ➤ AÇÃO: Contatar ${r.fornecedor} e exigir posição até ${prazo}\n`;
+    txt += `   ➤ RESPONSÁVEL: Compras\n`;
+    txt += `   ➤ PRAZO: ${prazo}\n\n`;
+  });
+
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `PRÓXIMA REVISÃO: ${new Date(Date.now() + 3 * 86400000).toLocaleDateString('pt-BR')}\n`;
+  txt += `Este plano foi gerado automaticamente a partir do dashboard de notas paradas.`;
+
+  mostrarOutput('📋 Plano de Ação', txt);
+}
+
+function gerarEmails() {
+  const criticos = allRows.filter(isCritico);
+
+  if (criticos.length === 0) {
+    mostrarOutput('✉️ E-mails de Cobrança', '✅ Nenhuma nota crítica para cobrar.');
+    return;
+  }
+
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const prazo2d = new Date(Date.now() + 2 * 86400000).toLocaleDateString('pt-BR');
+  const prazo5d = new Date(Date.now() + 5 * 86400000).toLocaleDateString('pt-BR');
+
+  // Agrupa por fornecedor
+  const porForn = {};
+  criticos.forEach(r => {
+    if (!porForn[r.fornecedor]) porForn[r.fornecedor] = [];
+    porForn[r.fornecedor].push(r);
+  });
+
+  let txt = ``;
+
+  // E-mail 1: Para o setor de COMPRAS (interno)
+  txt += `══════════════════════════════════════════\n`;
+  txt += `E-MAIL 1 — PARA: Setor de Compras (Interno)\n`;
+  txt += `ASSUNTO: ⚠️ URGENTE — ${criticos.length} nota${criticos.length > 1 ? 's' : ''} parada${criticos.length > 1 ? 's' : ''} crítica${criticos.length > 1 ? 's' : ''} aguardam ação imediata\n`;
+  txt += `══════════════════════════════════════════\n\n`;
+  txt += `Prezados,\n\n`;
+  txt += `Conforme acompanhamento do painel de notas paradas, identificamos ${criticos.length} nota${criticos.length > 1 ? 's' : ''} com mais de 20 dias sem resolução, totalizando ${criticos.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} unidades de volume em risco.\n\n`;
+  txt += `Notas que requerem ação imediata:\n\n`;
+  criticos.sort((a,b) => scoreCritico(b) - scoreCritico(a)).forEach((r, i) => {
+    txt += `  ${i+1}. NF ${r.nf || '—'} — ${r.fornecedor} (${daysDiff(r.dtEntrega)} dias parada)\n`;
+    if (r.volRep + r.volFalt > 0) txt += `     Volume: ${(r.volRep + r.volFalt).toLocaleString('pt-BR')} un.\n`;
+  });
+  txt += `\nSolicito que cada nota acima seja tratada e que me enviem posicionamento até ${prazo2d}.\n\n`;
+  txt += `Atenciosamente,\n[Seu nome]\n\n\n`;
+
+  // E-mail 2: Para FORNECEDORES (um por um, modelo)
+  const fornTop = Object.entries(porForn).sort((a,b) => b[1].length - a[1].length)[0];
+  if (fornTop) {
+    const [forn, notas] = fornTop;
+    const volForn = notas.reduce((a,r) => a + r.volRep + r.volFalt, 0);
+    txt += `══════════════════════════════════════════\n`;
+    txt += `E-MAIL 2 — MODELO PARA FORNECEDOR (adapte para cada um)\n`;
+    txt += `PARA: ${forn}\n`;
+    txt += `ASSUNTO: Pendência de entrega — notas em aberto — prazo: ${prazo2d}\n`;
+    txt += `══════════════════════════════════════════\n\n`;
+    txt += `Prezados, ${forn},\n\n`;
+    txt += `Estamos com as seguintes notas fiscais pendentes de regularização em nossa base:\n\n`;
+    notas.forEach(r => {
+      txt += `  • NF ${r.nf || '—'} — ${r.desc || '—'} — ${daysDiff(r.dtEntrega)} dias em aberto\n`;
+      if (r.volRep > 0) txt += `    Volume reprovado: ${r.volRep.toLocaleString('pt-BR')} un.\n`;
+      if (r.volFalt > 0) txt += `    Volume faltante: ${r.volFalt.toLocaleString('pt-BR')} un.\n`;
+    });
+    if (volForn > 0) txt += `\nTotal de volume impactado: ${volForn.toLocaleString('pt-BR')} unidades.\n`;
+    txt += `\nSolicitamos posicionamento formal até ${prazo2d} com previsão de regularização. Caso não haja retorno, escalaremos para a gestão comercial.\n\n`;
+    txt += `Atenciosamente,\n[Seu nome] — [Empresa]\n\n\n`;
+  }
+
+  // E-mail 3: Para GESTÃO / ESCALADA
+  txt += `══════════════════════════════════════════\n`;
+  txt += `E-MAIL 3 — ESCALADA PARA GESTÃO\n`;
+  txt += `PARA: [Gestor / Diretoria]\n`;
+  txt += `ASSUNTO: Relatório semanal — notas críticas sem resolução\n`;
+  txt += `══════════════════════════════════════════\n\n`;
+  txt += `Prezado(a),\n\n`;
+  txt += `Segue atualização do painel de notas paradas referente a ${hoje}:\n\n`;
+  txt += `  • Notas críticas (+20 dias): ${criticos.length}\n`;
+  txt += `  • Volume total em risco: ${criticos.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} un.\n`;
+  txt += `  • Fornecedores envolvidos: ${Object.keys(porForn).length}\n\n`;
+  txt += `Os setores de Compras e Qualidade foram notificados. Aguardamos retorno até ${prazo2d}.\n`;
+  txt += `Caso não haja evolução até ${prazo5d}, solicito autorização para acionar medidas contratuais junto aos fornecedores.\n\n`;
+  txt += `Atenciosamente,\n[Seu nome]`;
+
+  mostrarOutput('✉️ E-mails de Cobrança (3 modelos)', txt);
+}
+
+function gerarReuniao() {
+  const criticos = allRows.filter(isCritico).sort((a,b) => scoreCritico(b) - scoreCritico(a));
+  const pendentes = allRows.filter(r => r.status === 'pendente' && !isCritico(r));
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const proximaReuniao = new Date(Date.now() + 7 * 86400000).toLocaleDateString('pt-BR');
+
+  let txt = `PAUTA DE REUNIÃO — NOTAS PARADAS\n`;
+  txt += `Data: ${hoje}  |  Duração sugerida: 45 min\n`;
+  txt += `${'─'.repeat(60)}\n\n`;
+
+  txt += `PARTICIPANTES NECESSÁRIOS\n`;
+  txt += `  □ Compras\n`;
+  txt += `  □ Recebimento / Qualidade\n`;
+  txt += `  □ Gestor responsável\n`;
+  txt += `  □ Logística (se aplicável)\n\n`;
+
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `BLOCO 1 — ABERTURA (5 min)\n`;
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `  1. Objetivo da reunião: destravar notas críticas e definir responsáveis\n`;
+  txt += `  2. Regra: cada nota sai com um responsável e uma data de retorno\n\n`;
+
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `BLOCO 2 — NOTAS CRÍTICAS +20 DIAS (20 min)\n`;
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `Total: ${criticos.length} nota${criticos.length !== 1 ? 's' : ''}\n\n`;
+
+  if (criticos.length === 0) {
+    txt += `  ✅ Sem notas críticas no momento.\n\n`;
   } else {
-    let html = '<div class="alert-list">';
-    inspList.forEach(d => {
-      const urgencyColor = d.resolvedByCmp ? 'var(--green)' : 'var(--orange)';
-      const action = d.resolvedByCmp
-        ? 'Liberar agora resolve a ruptura PCP completamente'
-        : d.partialByCmp
-          ? 'Liberar agora adia a ruptura total — verificar complemento'
-          : 'Estoque insuficiente — liberar e acionar compras urgente';
-      html += `<div class="alert-item">
-        <div class="alert-left">
-          <div class="alert-icon">🔬</div>
-          <div>
-            <div class="alert-ref">${d.ref}</div>
-            <div class="alert-detail">${d.machines.join(', ')} · Ruptura PCP: D${d.dayRupturaPCP} · ${action}</div>
+    criticos.slice(0, 8).forEach((r, i) => {
+      const dias = daysDiff(r.dtEntrega);
+      txt += `  ${i+1}. ${r.fornecedor} — NF ${r.nf || '—'} (${dias} dias)\n`;
+      if (r.desc) txt += `     Desc: ${r.desc}\n`;
+      if (r.volRep + r.volFalt > 0) txt += `     Volume: ${(r.volRep + r.volFalt).toLocaleString('pt-BR')} un.\n`;
+      txt += `     Status: ${r.statusRaw || 'Pendente'}\n`;
+      if (r.obsComp) txt += `     Última obs: "${r.obsComp}"\n`;
+      txt += `     → DECISÃO: ________________________________\n`;
+      txt += `     → RESPONSÁVEL: ____________  PRAZO: ______\n\n`;
+    });
+    if (criticos.length > 8) txt += `  ... e mais ${criticos.length - 8} notas (ver painel completo)\n\n`;
+  }
+
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `BLOCO 3 — PENDENTES EM ANDAMENTO (10 min)\n`;
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `  Total pendentes sem andamento: ${pendentes.length}\n`;
+  txt += `  Volume: ${pendentes.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} un.\n\n`;
+  txt += `  Ponto de atenção: quais têm risco de virar críticos esta semana?\n`;
+  txt += `  → Listar: ________________________________\n\n`;
+
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `BLOCO 4 — ENCAMINHAMENTOS (10 min)\n`;
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `  □ Definir responsável por cada nota crítica\n`;
+  txt += `  □ Confirmar prazo de retorno por fornecedor\n`;
+  txt += `  □ Identificar notas com risco de escalar\n`;
+  txt += `  □ Agendar próxima revisão: ${proximaReuniao}\n\n`;
+
+  txt += `${'─'.repeat(60)}\n`;
+  txt += `PRÓXIMA REUNIÃO: ${proximaReuniao}\n`;
+  txt += `Frequência recomendada: semanal enquanto houver notas críticas.\n`;
+  txt += `\nAta gerada automaticamente em ${hoje} via painel de notas paradas.`;
+
+  mostrarOutput('📅 Pauta de Reunião', txt);
+}
+
+function mostrarOutput(titulo, conteudo) {
+  document.getElementById('acao-output-titulo').textContent = titulo;
+  document.getElementById('acao-output-conteudo').textContent = conteudo;
+  const el = document.getElementById('acao-output');
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function fecharOutput() {
+  document.getElementById('acao-output').style.display = 'none';
+}
+
+function copiarOutput() {
+  const txt = document.getElementById('acao-output-conteudo').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+// ══════════════════════════════════════════
+// CENTRAL DE AÇÃO — PLANOS HIERÁRQUICOS
+// ══════════════════════════════════════════
+
+let planos = JSON.parse(localStorage.getItem('notas-planos-v2') || '[]');
+let planoEditandoId = null;
+let planoConcluindoId = null;
+
+const PRIOR_CONFIG = {
+  critica: { label: '🔴 Crítica',  bg: '#fdf0ef', border: '#f5c6c3', color: '#c0392b' },
+  alta:    { label: '🟠 Alta',     bg: '#fef8ec', border: '#f5d98a', color: '#9a6200' },
+  media:   { label: '🟡 Média',    bg: '#fefbe8', border: '#f0e060', color: '#7a6800' },
+  baixa:   { label: '🟢 Baixa',    bg: '#edf6e8', border: '#a8d898', color: '#2d6a1f' },
+};
+const SETOR_COLORS = {
+  'Compras':'#1a4f8a','Recebimento':'#9a6200','Qualidade':'#6a2d8a',
+  'Fornecedor':'#c0392b','Logística':'#2d6a1f','Outro':'#6b6b66'
+};
+
+function salvarPlanos() {
+  localStorage.setItem('notas-planos-v2', JSON.stringify(planos));
+}
+
+// ── RENDER CENTRAL ──
+function renderAcao() {
+  const criticos = allRows.filter(isCritico);
+  const volCritico = criticos.reduce((a, r) => a + r.volRep + r.volFalt, 0);
+  document.getElementById('acao-alerta-titulo').textContent =
+    criticos.length > 0
+      ? `${criticos.length} nota${criticos.length > 1 ? 's' : ''} crítica${criticos.length > 1 ? 's' : ''} exigem ação imediata — ${volCritico.toLocaleString('pt-BR')} un. de volume em risco`
+      : '✅ Nenhuma nota crítica no momento';
+  const fornCriticos = [...new Set(criticos.map(r => r.fornecedor))];
+  document.getElementById('acao-alerta-sub').textContent =
+    criticos.length > 0
+      ? `Fornecedores: ${fornCriticos.slice(0,5).join(', ')}${fornCriticos.length > 5 ? ` e mais ${fornCriticos.length-5}` : ''}`
+      : 'Continue monitorando o painel de evolução mensal.';
+
+  renderResumoPlanosRapido();
+  renderListaPlanos();
+}
+
+function renderResumoPlanosRapido() {
+  const total     = planos.length;
+  const abertos   = planos.filter(p => p.status === 'aberto').length;
+  const atrasados = planos.filter(p => p.status === 'aberto' && p.prazo && new Date(p.prazo) < new Date()).length;
+  const concluidos= planos.filter(p => p.status === 'concluido').length;
+
+  const items = [
+    { label: 'Planos abertos',   val: abertos,    color: '#1a4f8a' },
+    { label: 'Atrasados',        val: atrasados,  color: '#c0392b' },
+    { label: 'Concluídos',       val: concluidos, color: '#2d6a1f' },
+    { label: 'Total de planos',  val: total,      color: '#6b6b66' },
+  ];
+
+  document.getElementById('planos-resumo').innerHTML = items.map(i => `
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:14px 16px;">
+      <div style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">${i.label}</div>
+      <div style="font-size:26px;font-weight:700;color:${i.color};letter-spacing:-0.03em;">${i.val}</div>
+    </div>`).join('');
+}
+
+// ── RENDER LISTA DE PLANOS ──
+function renderListaPlanos() {
+  const el = document.getElementById('lista-planos');
+  if (planos.length === 0) {
+    el.innerHTML = `
+      <div style="background:#fff;border:2px dashed rgba(0,0,0,.1);border-radius:12px;padding:48px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">📋</div>
+        <div style="font-size:15px;font-weight:600;color:#1a1a18;margin-bottom:6px;">Nenhum plano de ação ainda</div>
+        <div style="font-size:13px;color:#9e9e98;margin-bottom:20px;">Clique em "Novo plano" ou gere um plano automático a partir das notas críticas</div>
+        <button onclick="abrirModalPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;">+ Criar primeiro plano</button>
+      </div>`;
+    return;
+  }
+
+  // Ordena: críticos primeiro, depois por prazo
+  const ordemPrior = { critica: 0, alta: 1, media: 2, baixa: 3 };
+  const sorted = [...planos].sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'aberto' ? -1 : 1;
+    const dp = (ordemPrior[a.prioridade]||2) - (ordemPrior[b.prioridade]||2);
+    if (dp !== 0) return dp;
+    return (a.prazo||'') < (b.prazo||'') ? -1 : 1;
+  });
+
+  el.innerHTML = sorted.map(p => renderCardPlano(p)).join('');
+}
+
+function renderCardPlano(p) {
+  const pc     = PRIOR_CONFIG[p.prioridade] || PRIOR_CONFIG.media;
+  const hoje   = new Date(); hoje.setHours(0,0,0,0);
+  const prazoD = p.prazo ? new Date(p.prazo + 'T00:00:00') : null;
+  const atrasado = p.status === 'aberto' && prazoD && prazoD < hoje;
+  const diasAtraso = atrasado ? Math.floor((hoje - prazoD) / 86400000) : 0;
+
+  // Status conclusão
+  let conclusaoInfo = '';
+  if (p.status === 'concluido' && p.dataConclusao && p.prazo) {
+    const dc = new Date(p.dataConclusao + 'T00:00:00');
+    const pr = new Date(p.prazo + 'T00:00:00');
+    const diff = Math.floor((dc - pr) / 86400000);
+    if (diff <= 0) {
+      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#2d6a1f;background:#edf6e8;border-radius:99px;padding:2px 9px;">✅ No prazo${diff < 0 ? ` (${Math.abs(diff)}d antes)` : ''}</span>`;
+    } else {
+      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#c0392b;background:#fdf0ef;border-radius:99px;padding:2px 9px;">⚠️ ${diff}d de atraso</span>`;
+    }
+  }
+
+  // Tarefas
+  const tarefas = p.tarefas || [];
+  const tConcluidas = tarefas.filter(t => t.concluida).length;
+  const tTotal = tarefas.length;
+  const pctTarefas = tTotal > 0 ? Math.round((tConcluidas / tTotal) * 100) : 0;
+
+  const tarefasHTML = tarefas.map((t, ti) => {
+    const tAtrasada = t.prazo && !t.concluida && new Date(t.prazo + 'T00:00:00') < hoje;
+    const sc = SETOR_COLORS[t.setor] || '#6b6b66';
+    return `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:${t.concluida ? '#f7f6f2' : '#fff'};border:1px solid ${tAtrasada ? '#f5c6c3' : 'rgba(0,0,0,.07)'};margin-bottom:6px;transition:all .15s;">
+        <button onclick="toggleTarefa('${p.id}',${ti})" style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid ${t.concluida ? '#3a8a28' : '#d0d0c8'};background:${t.concluida ? '#3a8a28' : '#fff'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;font-size:11px;color:#fff;">${t.concluida ? '✓' : ''}</button>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+            <span style="font-size:13px;font-weight:600;color:${t.concluida ? '#9e9e98' : '#1a1a18'};${t.concluida ? 'text-decoration:line-through;' : ''}">${t.responsavel || '—'}</span>
+            <span style="font-size:11px;font-weight:500;background:${sc}18;color:${sc};border-radius:99px;padding:1px 8px;">${t.setor || '—'}</span>
+            ${t.prazo ? `<span style="font-size:11px;color:${tAtrasada ? '#c0392b' : '#9e9e98'};">📅 ${fmtDate(t.prazo)}${tAtrasada ? ' ⚠️' : ''}</span>` : ''}
+          </div>
+          <div style="font-size:12px;color:${t.concluida ? '#b0b0a8' : '#6b6b66'};">${t.desc || '—'}</div>
+        </div>
+        ${p.status === 'aberto' ? `<button onclick="editarTarefaInline('${p.id}',${ti})" style="font-size:11px;color:#9e9e98;background:none;border:none;cursor:pointer;padding:2px 4px;" title="Editar">✏️</button>` : ''}
+      </div>`;
+  }).join('');
+
+  const concluido = p.status === 'concluido';
+
+  return `
+    <div id="plano-${p.id}" style="background:#fff;border:1px solid ${atrasado ? '#f5c6c3' : concluido ? 'rgba(0,0,0,.06)' : 'rgba(0,0,0,.1)'};border-radius:12px;margin-bottom:14px;overflow:hidden;opacity:${concluido ? '.75' : '1'};">
+
+      <!-- CABEÇALHO DO PLANO -->
+      <div style="padding:18px 20px;border-bottom:1px solid rgba(0,0,0,.06);background:${atrasado ? '#fdf5f4' : concluido ? '#f9f9f7' : '#fafaf8'};">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+              <span style="font-size:15px;font-weight:700;color:#1a1a18;">${p.titulo}</span>
+              <span style="font-size:11px;font-weight:600;background:${pc.bg};border:1px solid ${pc.border};color:${pc.color};border-radius:99px;padding:2px 10px;">${pc.label}</span>
+              ${concluido ? `<span style="font-size:11px;font-weight:600;background:#edf6e8;color:#2d6a1f;border-radius:99px;padding:2px 10px;">✅ Concluído</span>` : ''}
+              ${atrasado ? `<span style="font-size:11px;font-weight:700;background:#fdf0ef;color:#c0392b;border-radius:99px;padding:2px 10px;">🔴 ${diasAtraso}d atrasado</span>` : ''}
+              ${conclusaoInfo}
+            </div>
+            ${p.desc ? `<div style="font-size:13px;color:#6b6b66;margin-bottom:8px;">${p.desc}</div>` : ''}
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:#9e9e98;">🔒 Prazo inicial: <strong style="color:${atrasado ? '#c0392b' : '#1a1a18'}">${prazoD ? fmtDate(p.prazo) : '—'}</strong></span>
+              ${p.dataConclusao ? `<span style="font-size:12px;color:#9e9e98;">✓ Concluído em: <strong style="color:#2d6a1f">${fmtDate(p.dataConclusao)}</strong></span>` : ''}
+              <span style="font-size:12px;color:#9e9e98;">📌 Criado: ${p.criadoEm}</span>
+              ${tTotal > 0 ? `<span style="font-size:12px;color:#9e9e98;">${tConcluidas}/${tTotal} tarefas concluídas</span>` : ''}
+            </div>
+          </div>
+          <!-- AÇÕES DO PLANO -->
+          <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;">
+            ${!concluido ? `<button onclick="abrirModalPlano('${p.id}')" style="font-size:12px;font-weight:500;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 12px;cursor:pointer;background:#fff;color:#1a1a18;">✏️ Editar</button>` : ''}
+            ${!concluido ? `<button onclick="abrirModalConcluir('${p.id}')" style="font-size:12px;font-weight:600;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;background:#2d6a1f;color:#fff;">✓ Concluir</button>` : ''}
+            <button onclick="excluirPlano('${p.id}')" style="font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 10px;cursor:pointer;background:#fff;color:#c0392b;" title="Excluir plano">🗑</button>
           </div>
         </div>
-        <div class="alert-stock">
-          <div class="alert-stock-val" style="color:${urgencyColor}">${d.cmpStock.toLocaleString('pt-BR')}</div>
-          <div class="alert-stock-label">Un em Compras</div>
+
+        <!-- BARRA DE PROGRESSO DAS TAREFAS -->
+        ${tTotal > 0 ? `
+        <div style="margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:11px;color:#9e9e98;font-weight:500;">Progresso das tarefas</span>
+            <span style="font-size:11px;font-weight:700;color:${pctTarefas === 100 ? '#2d6a1f' : '#1a1a18'}">${pctTarefas}%</span>
+          </div>
+          <div style="height:6px;background:#f0efe9;border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:${pctTarefas}%;background:${pctTarefas === 100 ? '#3a8a28' : '#1a4f8a'};border-radius:99px;transition:width .4s;"></div>
+          </div>
+        </div>` : ''}
+      </div>
+
+      <!-- TAREFAS -->
+      ${tTotal > 0 ? `
+      <div style="padding:14px 20px 6px;">
+        <div style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Tarefas (${tTotal})</div>
+        ${tarefasHTML}
+      </div>` : `
+      <div style="padding:14px 20px;font-size:13px;color:#b0b0a8;font-style:italic;">Nenhuma tarefa cadastrada neste plano.</div>`}
+
+      <!-- ADD TAREFA INLINE (se aberto) -->
+      ${!concluido ? `
+      <div style="padding:0 20px 16px;">
+        <button onclick="adicionarTarefaRapida('${p.id}')" style="font-size:12px;font-weight:500;border:1px dashed rgba(0,0,0,.15);border-radius:6px;padding:6px 14px;cursor:pointer;background:none;color:#9e9e98;width:100%;text-align:center;">+ Adicionar tarefa</button>
+        <div id="form-tarefa-rapida-${p.id}" style="display:none;margin-top:10px;background:#f7f6f2;border-radius:8px;padding:14px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">RESPONSÁVEL</label>
+              <input id="tr-resp-${p.id}" type="text" placeholder="Nome de quem faz" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;">
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">SETOR</label>
+              <select id="tr-setor-${p.id}" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;color:#1a1a18;">
+                <option value="">Selecionar...</option>
+                <option>Compras</option><option>Recebimento</option><option>Qualidade</option>
+                <option>Fornecedor</option><option>Logística</option><option>Outro</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">PRAZO DA TAREFA</label>
+              <input id="tr-prazo-${p.id}" type="date" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;">
+            </div>
+          </div>
+          <div style="margin-bottom:8px;">
+            <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">O QUE FAZER</label>
+            <input id="tr-desc-${p.id}" type="text" placeholder="Ex: Entrar em contato com o fornecedor e solicitar NF corrigida" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;">
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button onclick="document.getElementById('form-tarefa-rapida-${p.id}').style.display='none'" style="font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 12px;cursor:pointer;background:#fff;color:#6b6b66;">Cancelar</button>
+            <button onclick="salvarTarefaRapida('${p.id}')" style="font-size:12px;font-weight:600;background:#1a1a18;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;">Salvar tarefa</button>
+          </div>
         </div>
-      </div>`;
+      </div>` : ''}
+
+    </div>`;
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('pt-BR');
+}
+
+// ── MODAL PLANO ──
+let tarefasTemp = [];
+
+function abrirModalPlano(id) {
+  planoEditandoId = id || null;
+  tarefasTemp = [];
+  const p = id ? planos.find(x => x.id === id) : null;
+
+  document.getElementById('modal-plano-titulo').textContent = p ? 'Editar plano' : 'Novo plano de ação';
+  document.getElementById('mp-titulo').value = p ? p.titulo : '';
+  document.getElementById('mp-desc').value   = p ? p.desc   : '';
+  document.getElementById('mp-prior').value  = p ? p.prioridade : 'media';
+
+  if (p) {
+    document.getElementById('mp-prazo').value = p.prazo || '';
+    document.getElementById('mp-prazo').disabled = true;
+    document.getElementById('mp-prazo').style.opacity = '.6';
+    document.getElementById('mp-prazo').title = 'Prazo inicial não pode ser alterado';
+    tarefasTemp = JSON.parse(JSON.stringify(p.tarefas || []));
+  } else {
+    document.getElementById('mp-prazo').value = '';
+    document.getElementById('mp-prazo').disabled = false;
+    document.getElementById('mp-prazo').style.opacity = '1';
+    document.getElementById('mp-prazo').title = '';
+  }
+
+  renderTarefasForm();
+  document.getElementById('modal-plano').style.display = 'flex';
+}
+
+function fecharModalPlano() {
+  document.getElementById('modal-plano').style.display = 'none';
+}
+
+function renderTarefasForm() {
+  const el = document.getElementById('mp-tarefas-lista');
+  if (tarefasTemp.length === 0) {
+    el.innerHTML = `<div style="font-size:12px;color:#b0b0a8;padding:8px 0;font-style:italic;">Nenhuma tarefa ainda. Clique em "+ Tarefa" para adicionar.</div>`;
+    return;
+  }
+  el.innerHTML = tarefasTemp.map((t, i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;background:#f7f6f2;border-radius:8px;padding:10px 12px;">
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">RESPONSÁVEL</label>
+        <input type="text" value="${t.responsavel||''}" onchange="tarefasTemp[${i}].responsavel=this.value" placeholder="Nome" style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;">
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">SETOR</label>
+        <select onchange="tarefasTemp[${i}].setor=this.value" style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;color:#1a1a18;">
+          ${['Compras','Recebimento','Qualidade','Fornecedor','Logística','Outro'].map(s => `<option value="${s}" ${t.setor===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">PRAZO</label>
+        <input type="date" value="${t.prazo||''}" onchange="tarefasTemp[${i}].prazo=this.value" style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;">
+      </div>
+      <button onclick="tarefasTemp.splice(${i},1);renderTarefasForm()" style="font-size:18px;background:none;border:none;color:#d0d0c8;cursor:pointer;padding:0 4px;align-self:center;" title="Remover">×</button>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">O QUE FAZER</label>
+        <input type="text" value="${t.desc||''}" onchange="tarefasTemp[${i}].desc=this.value" placeholder="Descreva a tarefa..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;">
+      </div>
+    </div>`).join('');
+}
+
+function adicionarTarefaForm() {
+  tarefasTemp.push({ responsavel:'', setor:'Compras', prazo:'', desc:'', concluida:false });
+  renderTarefasForm();
+}
+
+function salvarPlano() {
+  const titulo = document.getElementById('mp-titulo').value.trim();
+  const desc   = document.getElementById('mp-desc').value.trim();
+  const prazo  = document.getElementById('mp-prazo').value;
+  const prior  = document.getElementById('mp-prior').value;
+
+  if (!titulo) { alert('Informe o título do plano.'); return; }
+  if (!prazo && !planoEditandoId) { alert('Informe o prazo inicial.'); return; }
+
+  if (planoEditandoId) {
+    const p = planos.find(x => x.id === planoEditandoId);
+    if (p) {
+      p.titulo = titulo;
+      p.desc   = desc;
+      p.prioridade = prior;
+      p.tarefas = tarefasTemp;
+    }
+  } else {
+    planos.unshift({
+      id: 'p' + Date.now(),
+      titulo, desc, prazo, prioridade: prior,
+      status: 'aberto',
+      tarefas: tarefasTemp,
+      criadoEm: new Date().toLocaleDateString('pt-BR'),
+      dataConclusao: null,
     });
-    html += '</div>';
-    document.getElementById('alert-list-container').innerHTML = html;
   }
 
-  document.getElementById('last-updated').textContent =
-    `Atualizado: ${new Date().toLocaleString('pt-BR')}`;
+  salvarPlanos();
+  fecharModalPlano();
+  renderResumoPlanosRapido();
+  renderListaPlanos();
 }
 
-// ─────────────────────────────────────────────
-//  LOAD FROM URL
-// ─────────────────────────────────────────────
-async function loadFromURL() {
-  const raw = document.getElementById('sheet-url').value.trim();
-  if (!raw) { setStatus('Cole uma URL válida.', 'error'); return; }
-
-  // Convert standard share URL to CSV export
-  let url = raw;
-  const idMatch = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  const gidMatch = raw.match(/[#&]gid=(\d+)/);
-  if (idMatch) {
-    const id = idMatch[1];
-    const gid = gidMatch ? gidMatch[1] : '0';
-    url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-  }
-
-  showLoading(true);
-  setStatus('Buscando dados...', '');
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTPS ${res.status}`);
-    const text = await res.text();
-    const rows = parseCSV(text);
-    if (!rows.length) throw new Error('Nenhum dado encontrado. Verifique se a aba está correta e publicada.');
-    render(rows);
-    setStatus(`✓ ${rows.length} linhas carregadas com sucesso.`, 'success');
-  } catch(e) {
-    setStatus(`✗ Erro: ${e.message}. Certifique-se que a planilha está publicada publicamente (Arquivo → Publicar na Web → CSV).`, 'error');
-  }
-  showLoading(false);
+// ── TAREFA RÁPIDA INLINE ──
+function adicionarTarefaRapida(pid) {
+  document.getElementById('form-tarefa-rapida-' + pid).style.display = 'block';
 }
 
-function loadDemo() {
-  showLoading(true);
-  setStatus('', '');
+function salvarTarefaRapida(pid) {
+  const resp  = document.getElementById('tr-resp-'  + pid).value.trim();
+  const setor = document.getElementById('tr-setor-' + pid).value;
+  const prazo = document.getElementById('tr-prazo-' + pid).value;
+  const desc  = document.getElementById('tr-desc-'  + pid).value.trim();
+
+  if (!resp || !desc) { alert('Informe o responsável e o que deve ser feito.'); return; }
+
+  const p = planos.find(x => x.id === pid);
+  if (p) {
+    if (!p.tarefas) p.tarefas = [];
+    p.tarefas.push({ responsavel: resp, setor, prazo, desc, concluida: false });
+    salvarPlanos();
+    renderListaPlanos();
+    renderResumoPlanosRapido();
+  }
+}
+
+// ── TOGGLE TAREFA ──
+function toggleTarefa(pid, ti) {
+  const p = planos.find(x => x.id === pid);
+  if (!p || !p.tarefas[ti]) return;
+  p.tarefas[ti].concluida = !p.tarefas[ti].concluida;
+  salvarPlanos();
+  renderListaPlanos();
+  renderResumoPlanosRapido();
+}
+
+// ── EDITAR TAREFA INLINE ──
+function editarTarefaInline(pid, ti) {
+  planoEditandoId = pid;
+  const p = planos.find(x => x.id === pid);
+  if (!p) return;
+  tarefasTemp = JSON.parse(JSON.stringify(p.tarefas || []));
+  // Abre modal no modo edição
+  document.getElementById('modal-plano-titulo').textContent = 'Editar plano — tarefas';
+  document.getElementById('mp-titulo').value = p.titulo;
+  document.getElementById('mp-desc').value   = p.desc || '';
+  document.getElementById('mp-prior').value  = p.prioridade;
+  document.getElementById('mp-prazo').value  = p.prazo || '';
+  document.getElementById('mp-prazo').disabled = true;
+  document.getElementById('mp-prazo').style.opacity = '.6';
+  renderTarefasForm();
+  document.getElementById('modal-plano').style.display = 'flex';
+  // Scroll para a tarefa
   setTimeout(() => {
-    const rows = generateDemoData();
-    render(rows);
-    setStatus('✓ Dados demonstrativos carregados. Substitua pela sua planilha real.', 'success');
-    showLoading(false);
-  }, 400);
+    const items = document.getElementById('mp-tarefas-lista').children;
+    if (items[ti]) items[ti].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 }
 
-function setStatus(msg, cls) {
-  const el = document.getElementById('import-status');
-  el.textContent = msg;
-  el.className = cls;
+// ── CONCLUIR PLANO ──
+function abrirModalConcluir(pid) {
+  planoConcluindoId = pid;
+  const p = planos.find(x => x.id === pid);
+  document.getElementById('mc-subtitulo').textContent = p ? p.titulo : '';
+  document.getElementById('mc-data').value = new Date().toISOString().slice(0,10);
+  document.getElementById('modal-concluir').style.display = 'flex';
 }
 
-function showLoading(v) {
-  document.getElementById('loading-overlay').style.display = v ? 'flex' : 'none';
+function fecharModalConcluir() {
+  document.getElementById('modal-concluir').style.display = 'none';
 }
 
-// Allow Enter key on URL input
-document.getElementById('sheet-url').addEventListener('keydown', e => {
-  if (e.key === 'Enter') loadFromURL();
-});
+function confirmarConclusao() {
+  const data = document.getElementById('mc-data').value;
+  if (!data) { alert('Informe a data de conclusão.'); return; }
+  const p = planos.find(x => x.id === planoConcluindoId);
+  if (p) {
+    p.status = 'concluido';
+    p.dataConclusao = data;
+    salvarPlanos();
+  }
+  fecharModalConcluir();
+  renderResumoPlanosRapido();
+  renderListaPlanos();
+}
 
-// Load demo on startup
-window.addEventListener('load', () => loadDemo());
+// ── EXCLUIR PLANO ──
+function excluirPlano(pid) {
+  if (!confirm('Excluir este plano de ação? Essa ação não pode ser desfeita.')) return;
+  planos = planos.filter(x => x.id !== pid);
+  salvarPlanos();
+  renderResumoPlanosRapido();
+  renderListaPlanos();
+}
+
+// ── GERADOR DE PLANO AUTOMÁTICO ──
+function gerarPlanoAcao() {
+  const criticos = allRows.filter(isCritico).sort((a,b) => scoreCritico(b) - scoreCritico(a));
+  if (criticos.length === 0) {
+    mostrarOutput('📋 Plano de Ação', '✅ Nenhuma nota crítica encontrada.');
+    return;
+  }
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const prazo2d = new Date(Date.now() + 2 * 86400000).toLocaleDateString('pt-BR');
+  let txt = `PLANO DE AÇÃO — NOTAS PARADAS CRÍTICAS\nGerado em: ${hoje}\n${'─'.repeat(60)}\n\n`;
+  txt += `RESUMO\n  Notas críticas: ${criticos.length}  |  Volume em risco: ${criticos.reduce((a,r)=>a+r.volRep+r.volFalt,0).toLocaleString('pt-BR')} un.\n\n${'─'.repeat(60)}\n\n`;
+  criticos.forEach((r, i) => {
+    const dias = daysDiff(r.dtEntrega);
+    const vol  = r.volRep + r.volFalt;
+    txt += `${i+1}. ${r.fornecedor} — NF ${r.nf||'—'} (${dias} dias parada)\n`;
+    txt += `   Desc: ${r.desc||'—'}\n`;
+    if (vol > 0) txt += `   Volume: ${vol.toLocaleString('pt-BR')} un.\n`;
+    txt += `   Status: ${r.statusRaw||'Pendente'}\n`;
+    if (r.obsComp) txt += `   Obs. compras: "${r.obsComp}"\n`;
+    txt += `   ➤ AÇÃO: Contatar fornecedor e exigir posição até ${prazo2d}\n`;
+    txt += `   ➤ RESPONSÁVEL: Compras  |  PRAZO: ${prazo2d}\n\n`;
+  });
+  txt += `${'─'.repeat(60)}\nPRÓXIMA REVISÃO: ${new Date(Date.now()+3*86400000).toLocaleDateString('pt-BR')}`;
+  mostrarOutput('📋 Plano de Ação (texto)', txt);
+}
+
+loadData();
 </script>
 </body>
 </html>
