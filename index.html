@@ -561,6 +561,7 @@
     </div>
   </div>
   <div class="header-right">
+    <span id="sync-badge" style="font-size:12px;font-weight:500;padding:4px 12px;border-radius:99px;border:1px solid #a8d898;background:#edf6e8;color:#2d6a1f;">🟢 Compartilhado</span>
     <span class="badge-date" id="today-label"></span>
     <button id="btn-reload" onclick="loadData()">Atualizar dados</button>
   </div>
@@ -888,7 +889,7 @@ let filteredRows = []; // rows após filtro de período
 let currentFilter = 'all';
 let currentEvolucaoMode = 'qtd';
 let charts = {};
-let metas = JSON.parse(localStorage.getItem('notas-metas') || '{"concluir_mes":10,"reduzir_pendente":5,"reduzir_vol":1000}');
+let metas = {"concluir_mes":10,"reduzir_pendente":5,"reduzir_vol":1000};
 
 document.getElementById('today-label').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
 
@@ -1472,10 +1473,10 @@ function renderMetas(byMonth, sortedKeys, isVol) {
   }).join('');
 }
 
-function saveMeta(id) {
+async function saveMeta(id) {
   const val = parseInt(document.getElementById('meta-input-' + id).value) || 0;
   metas[id] = val;
-  localStorage.setItem('notas-metas', JSON.stringify(metas));
+  await DB.save();
   renderEvolucao();
 }
 
@@ -1585,7 +1586,7 @@ function closeModal(e) {
 // CENTRAL DE AÇÃO
 // ══════════════════════════════════════════
 
-let acoesRegistradas = JSON.parse(localStorage.getItem('notas-acoes') || '[]');
+let acoesRegistradas = [];
 
 function renderAcao() {
   const criticos = allRows.filter(isCritico);
@@ -1821,13 +1822,96 @@ function copiarOutput() {
   });
 }
 
-// ══════════════════════════════════════════
-// CENTRAL DE AÇÃO — PLANOS HIERÁRQUICOS
-// ══════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// DB — JSONBin.io  (armazenamento compartilhado, gratuito)
+// Cria um bin novo automaticamente na primeira execução.
+// O BIN_ID fica guardado em localStorage APENAS como ponteiro
+// para o mesmo bin em todas as máquinas — os DADOS ficam na nuvem.
+// ══════════════════════════════════════════════════════════
+const JSONBIN_API = 'https://api.jsonbin.io/v3';
+// ⚠️  Substitua pela sua Master Key do jsonbin.io (gratuito em jsonbin.io/free)
+const JSONBIN_KEY = '$2a$10$RWlS0HYjce5Rc9/5PjZXHekEx290eYWiuNXOxI7Ke5vYuLr5ZLMmy';
 
-let planos = JSON.parse(localStorage.getItem('notas-planos-v2') || '[]');
+const DB = {
+  binId: localStorage.getItem('notas-bin-id') || null,
+
+  _headers(write = false) {
+    const h = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
+    if (!write) h['X-Bin-Meta'] = 'false';
+    return h;
+  },
+
+  async init() {
+    setSyncBadge('⏳ Conectando…', '#9a6200', '#fef8ec', '#f5d98a');
+    if (!this.binId) {
+      // Cria bin novo com estrutura inicial
+      const res = await fetch(`${JSONBIN_API}/b`, {
+        method: 'POST',
+        headers: { ...this._headers(true), 'X-Bin-Name': 'notas-planos', 'X-Bin-Private': 'false' },
+        body: JSON.stringify({ planos: [], metas: {"concluir_mes":10,"reduzir_pendente":5,"reduzir_vol":1000}, acoes: [] })
+      });
+      const data = await res.json();
+      this.binId = data.metadata.id;
+      localStorage.setItem('notas-bin-id', this.binId);
+    }
+    await this.load();
+  },
+
+  async load() {
+    try {
+      const res = await fetch(`${JSONBIN_API}/b/${this.binId}/latest`, { headers: this._headers() });
+      const data = await res.json();
+      const rec = data.record || data;
+      planos            = rec.planos  || [];
+      metas             = rec.metas   || metas;
+      acoesRegistradas  = rec.acoes   || [];
+      setSyncBadge('🟢 Compartilhado', '#2d6a1f', '#edf6e8', '#a8d898');
+    } catch(e) {
+      setSyncBadge('⚠️ Sem conexão', '#c0392b', '#fdf0ef', '#f5c6c3');
+    }
+    renderResumoPlanosRapido();
+    renderListaPlanos();
+  },
+
+  async save() {
+    setSyncBadge('💾 Salvando…', '#1a4f8a', '#eaf1fb', '#b5d4f4');
+    try {
+      await fetch(`${JSONBIN_API}/b/${this.binId}`, {
+        method: 'PUT',
+        headers: this._headers(true),
+        body: JSON.stringify({ planos, metas, acoes: acoesRegistradas })
+      });
+      setSyncBadge('✅ Salvo', '#2d6a1f', '#edf6e8', '#a8d898');
+      setTimeout(() => setSyncBadge('🟢 Compartilhado', '#2d6a1f', '#edf6e8', '#a8d898'), 2000);
+    } catch(e) {
+      setSyncBadge('⚠️ Erro ao salvar', '#c0392b', '#fdf0ef', '#f5c6c3');
+    }
+  }
+};
+
+function setSyncBadge(txt, color, bg, border) {
+  const b = document.getElementById('sync-badge');
+  if (!b) return;
+  b.textContent = txt;
+  b.style.color = color;
+  b.style.background = bg;
+  b.style.borderColor = border;
+}
+
+// ── Auto-refresh a cada 30s ──
+let _pollTimer = null;
+function startPolling() {
+  if (_pollTimer) return;
+  _pollTimer = setInterval(() => DB.load(), 30000);
+}
+
+let planos = [];
 let planoEditandoId = null;
 let planoConcluindoId = null;
+
+async function salvarPlanos() {
+  await DB.save();
+}
 
 const PRIOR_CONFIG = {
   critica: { label: '🔴 Crítica',  bg: '#fdf0ef', border: '#f5c6c3', color: '#c0392b' },
@@ -1840,12 +1924,12 @@ const SETOR_COLORS = {
   'Fornecedor':'#c0392b','Logística':'#2d6a1f','Outro':'#6b6b66'
 };
 
-function salvarPlanos() {
-  localStorage.setItem('notas-planos-v2', JSON.stringify(planos));
-}
+// salvarPlanos() definida acima como async → DB.save()
 
 // ── RENDER CENTRAL ──
-function renderAcao() {
+async function renderAcao() {
+  await DB.load();
+  startPolling();
   const criticos = allRows.filter(isCritico);
   const volCritico = criticos.reduce((a, r) => a + r.volRep + r.volFalt, 0);
   document.getElementById('acao-alerta-titulo').textContent =
@@ -2117,7 +2201,7 @@ function adicionarTarefaForm() {
   renderTarefasForm();
 }
 
-function salvarPlano() {
+async function salvarPlano() {
   const titulo = document.getElementById('mp-titulo').value.trim();
   const desc   = document.getElementById('mp-desc').value.trim();
   const prazo  = document.getElementById('mp-prazo').value;
@@ -2156,7 +2240,7 @@ function adicionarTarefaRapida(pid) {
   document.getElementById('form-tarefa-rapida-' + pid).style.display = 'block';
 }
 
-function salvarTarefaRapida(pid) {
+async function salvarTarefaRapida(pid) {
   const resp  = document.getElementById('tr-resp-'  + pid).value.trim();
   const setor = document.getElementById('tr-setor-' + pid).value;
   const prazo = document.getElementById('tr-prazo-' + pid).value;
@@ -2175,7 +2259,7 @@ function salvarTarefaRapida(pid) {
 }
 
 // ── TOGGLE TAREFA ──
-function toggleTarefa(pid, ti) {
+async function toggleTarefa(pid, ti) {
   const p = planos.find(x => x.id === pid);
   if (!p || !p.tarefas[ti]) return;
   p.tarefas[ti].concluida = !p.tarefas[ti].concluida;
@@ -2220,7 +2304,7 @@ function fecharModalConcluir() {
   document.getElementById('modal-concluir').style.display = 'none';
 }
 
-function confirmarConclusao() {
+async function confirmarConclusao() {
   const data = document.getElementById('mc-data').value;
   if (!data) { alert('Informe a data de conclusão.'); return; }
   const p = planos.find(x => x.id === planoConcluindoId);
@@ -2235,7 +2319,7 @@ function confirmarConclusao() {
 }
 
 // ── EXCLUIR PLANO ──
-function excluirPlano(pid) {
+async function excluirPlano(pid) {
   if (!confirm('Excluir este plano de ação? Essa ação não pode ser desfeita.')) return;
   planos = planos.filter(x => x.id !== pid);
   salvarPlanos();
@@ -2268,6 +2352,9 @@ function gerarPlanoAcao() {
   txt += `${'─'.repeat(60)}\nPRÓXIMA REVISÃO: ${new Date(Date.now()+3*86400000).toLocaleDateString('pt-BR')}`;
   mostrarOutput('📋 Plano de Ação (texto)', txt);
 }
+
+// Inicializa DB compartilhado assim que a página carrega
+DB.init().catch(console.error);
 
 loadData();
 </script>
