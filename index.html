@@ -1830,6 +1830,22 @@ const JSONBIN_API = 'https://api.jsonbin.io/v3';
 const JSONBIN_KEY = '$2a$10$RWlS0HYjce5Rc9/5PjZXHekEx290eYWiuNXOxI7Ke5vYuLr5ZLMmy';
 const JSONBIN_BIN = '6a05be89c0954111d8215e05';
 
+// --- ADIÇÃO DA SENHA ---
+const SENHA_MESTRA = '1234'; // <--- Altere para a senha que desejar
+let acessoAutorizado = false; 
+
+function validarAcesso() {
+    if (acessoAutorizado) return true;
+    const tentativa = prompt("🔒 Área Restrita: Digite a senha para salvar alterações:");
+    if (tentativa === SENHA_MESTRA) {
+        acessoAutorizado = true; 
+        return true;
+    }
+    alert("❌ Senha incorreta! As alterações não serão salvas na nuvem.");
+    return false;
+}
+// -----------------------
+
 const DB = {
   binId: JSONBIN_BIN,
 
@@ -1849,7 +1865,7 @@ const DB = {
       const res = await fetch(`${JSONBIN_API}/b/${this.binId}/latest`, { headers: this._headers() });
       const data = await res.json();
       const rec = data.record || data;
-      planos            = rec.planos  || [];
+      planos            = rec.planos   || [];
       metas             = rec.metas   || metas;
       acoesRegistradas  = rec.acoes   || [];
       setSyncBadge('🟢 Compartilhado', '#2d6a1f', '#edf6e8', '#a8d898');
@@ -1861,6 +1877,9 @@ const DB = {
   },
 
   async save() {
+    // Solicita a senha antes de iniciar o processo de salvamento
+    if (!validarAcesso()) return; 
+
     setSyncBadge('💾 Salvando…', '#1a4f8a', '#eaf1fb', '#b5d4f4');
     try {
       await fetch(`${JSONBIN_API}/b/${this.binId}`, {
@@ -1875,7 +1894,6 @@ const DB = {
     }
   }
 };
-
 function setSyncBadge(txt, color, bg, border) {
   const b = document.getElementById('sync-badge');
   if (!b) return;
