@@ -1823,17 +1823,15 @@ function copiarOutput() {
 }
 
 // ══════════════════════════════════════════════════════════
-// DB — JSONBin.io  (armazenamento compartilhado, gratuito)
-// Cria um bin novo automaticamente na primeira execução.
-// O BIN_ID fica guardado em localStorage APENAS como ponteiro
-// para o mesmo bin em todas as máquinas — os DADOS ficam na nuvem.
+// DB — JSONBin.io  (armazenamento compartilhado)
+// Bin e chave fixos — todos os usuários lêem e escrevem no mesmo lugar.
 // ══════════════════════════════════════════════════════════
 const JSONBIN_API = 'https://api.jsonbin.io/v3';
-// ⚠️  Substitua pela sua Master Key do jsonbin.io (gratuito em jsonbin.io/free)
 const JSONBIN_KEY = '$2a$10$RWlS0HYjce5Rc9/5PjZXHekEx290eYWiuNXOxI7Ke5vYuLr5ZLMmy';
+const JSONBIN_BIN = '6a05be89c0954111d8215e05';
 
 const DB = {
-  binId: localStorage.getItem('notas-bin-id') || null,
+  binId: JSONBIN_BIN,
 
   _headers(write = false) {
     const h = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
@@ -1843,17 +1841,6 @@ const DB = {
 
   async init() {
     setSyncBadge('⏳ Conectando…', '#9a6200', '#fef8ec', '#f5d98a');
-    if (!this.binId) {
-      // Cria bin novo com estrutura inicial
-      const res = await fetch(`${JSONBIN_API}/b`, {
-        method: 'POST',
-        headers: { ...this._headers(true), 'X-Bin-Name': 'notas-planos', 'X-Bin-Private': 'false' },
-        body: JSON.stringify({ planos: [], metas: {"concluir_mes":10,"reduzir_pendente":5,"reduzir_vol":1000}, acoes: [] })
-      });
-      const data = await res.json();
-      this.binId = data.metadata.id;
-      localStorage.setItem('notas-bin-id', this.binId);
-    }
     await this.load();
   },
 
