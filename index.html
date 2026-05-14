@@ -2325,9 +2325,16 @@ async function confirmarConclusao() {
 
 // ── EXCLUIR PLANO ──
 async function excluirPlano(pid) {
+  // 1. Primeiro de tudo, pede a senha
+  if (!validarAcesso()) return;
+
+  // 2. Se a senha estiver correta, pede a confirmação visual
   if (!confirm('Excluir este plano de ação? Essa ação não pode ser desfeita.')) return;
+
+  // 3. Só então remove do array e salva na nuvem
   planos = planos.filter(x => x.id !== pid);
-  salvarPlanos();
+  
+  await DB.save(); // Garante que a exclusão suba para o JSONBin
   renderResumoPlanosRapido();
   renderListaPlanos();
 }
