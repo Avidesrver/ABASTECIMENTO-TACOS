@@ -1977,8 +1977,11 @@ function renderResumoPlanosRapido() {
 }
 
 // ── RENDER LISTA DE PLANOS ──
+
 function renderListaPlanos() {
   const el = document.getElementById('lista-planos');
+  if (!el) return; // Segurança contra erro de elemento inexistente
+
   if (planos.length === 0) {
     el.innerHTML = `
       <div style="background:#fff;border:2px dashed rgba(0,0,0,.1);border-radius:12px;padding:48px;text-align:center;">
@@ -1994,26 +1997,13 @@ function renderListaPlanos() {
   const ordemPrior = { critica: 0, alta: 1, media: 2, baixa: 3 };
   const sorted = [...planos].sort((a, b) => {
     if (a.status !== b.status) return a.status === 'aberto' ? -1 : 1;
-    const dp = (ordemPrior[a.prioridade]||2) - (ordemPrior[b.prioridade]||2);
+    const dp = (ordemPrior[a.prioridade] || 2) - (ordemPrior[b.prioridade] || 2);
     if (dp !== 0) return dp;
-    return (a.prazo||'') < (b.prazo||'') ? -1 : 1;
+    return (a.prazo || '') < (b.prazo || '') ? -1 : 1;
   });
 
   el.innerHTML = sorted.map(p => renderCardPlano(p)).join('');
 }
-
-function renderListaPlanos() {
-  const el = document.getElementById('lista-planos');
-  if (planos.length === 0) {
-    el.innerHTML = `
-      <div style="background:#fff;border:2px dashed rgba(0,0,0,.1);border-radius:12px;padding:48px;text-align:center;">
-        <div style="font-size:32px;margin-bottom:12px;">📋</div>
-        <div style="font-size:15px;font-weight:600;color:#1a1a18;margin-bottom:6px;">Nenhum plano de ação ainda</div>
-        <div style="font-size:13px;color:#9e9e98;margin-bottom:20px;">Clique em "Novo plano" ou gere um plano automático a partir das notas críticas</div>
-        <button onclick="abrirModalPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;">+ Criar primeiro plano</button>
-      </div>`;
-    return;
-  }
 
   // Ordena: críticos primeiro, depois por prazo
   const ordemPrior = { critica: 0, alta: 1, media: 2, baixa: 3 };
@@ -2028,12 +2018,11 @@ function renderListaPlanos() {
 }
 
 function renderCardPlano(p) {
-  const pc     = PRIOR_CONFIG[p.prioridade] || PRIOR_CONFIG.media;
-  const hoje   = new Date(); hoje.setHours(0,0,0,0);
+  const pc = PRIOR_CONFIG[p.prioridade] || PRIOR_CONFIG.media;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const prazoD = p.prazo ? new Date(p.prazo + 'T00:00:00') : null;
   const atrasado = p.status === 'aberto' && prazoD && prazoD < hoje;
-  const diasAtraso = atrasado ? Math.floor((hoje - prazoD) / 86400000) : 0;
-
+  
   // Status conclusão
   let conclusaoInfo = '';
   if (p.status === 'concluido' && p.dataConclusao && p.prazo) {
@@ -2041,11 +2030,55 @@ function renderCardPlano(p) {
     const pr = new Date(p.prazo + 'T00:00:00');
     const diff = Math.floor((dc - pr) / 86400000);
     if (diff <= 0) {
-      concluaoInfo = `<span style="font-size:11px;font-weight:600;color:#2d6a1f;background:#edf6e8;border-radius:99px;padding:2px 9px;">✅ No prazo${diff < 0 ? ` (${Math.abs(diff)}d antes)` : ''}</span>`;
+      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#2d6a1f;background:#edf6e8;border-radius:99px;padding:2px 9px;">✅ No prazo</span>`;
     } else {
-      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#c0392b;background:#fdf0ef;border-radius:99px;padding:2px 9px;">⚠️ ${diff}d de atraso</span>`;
+      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#c0392b;background:#fdf0ef;border-radius:99px;padding:2px 9px;">⚠️ ${diff}d atraso</span>`;
     }
   }
+
+  // Cálculo de progresso
+  const total = p.tarefas ? p.tarefas.length : 0;
+  const done = p.tarefas ? p.tarefas.filter(t => t.done).length : 0;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  return `
+    <div class="p-card" onclick="abrirModalPlano('${p.id}')">
+      <div class="p-header">
+        <div style="flex:1">
+          <div class="p-title">${p.titulo}</div>
+          
+          <div style="display:inline-flex; align-items:center; gap:5px; margin-top:6px; background: #f0efe9; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.05);">
+            <span style="font-size:11px; font-weight:600; color:#1a1a18;">
+              👤 ${p.responsavel || 'Sem responsável'}
+            </span>
+          </div>
+
+          <div class="p-meta" style="margin-top:8px;">
+            <span style="font-size:11px;font-weight:600;color:${pc.color};background:${pc.bg};border-radius:99px;padding:2px 9px;">${p.prioridade.toUpperCase()}</span>
+            ${p.prazo ? `<span>📅 ${new Date(p.prazo + 'T00:00:00').toLocaleDateString('pt-BR')}</span>` : ''}
+            ${conclusaoInfo}
+          </div>
+        </div>
+        
+        <div style="margin-left:15px; display:flex; align-items:center; justify-content:center;">
+           <div style="width:26px; height:26px; border-radius:50%; border:2px solid ${p.status === 'concluido' ? '#2d6a1f' : '#ddd'}; display:flex; align-items:center; justify-content:center; color:${p.status === 'concluido' ? '#2d6a1f' : '#ddd'}; font-weight:bold; font-size:14px;">
+             ${p.status === 'concluido' ? '✓' : ''}
+           </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#9e9e98; margin-bottom:4px;">
+          <span>Progresso</span>
+          <span>${pct}%</span>
+        </div>
+        <div style="width:100%; height:4px; background:#f0efe9; border-radius:2px; overflow:hidden;">
+          <div style="width:${pct}%; height:100%; background:${p.status === 'concluido' ? '#2d6a1f' : '#1a1a18'}; transition:width 0.3s ease;"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
   return `
     <div class="p-card" onclick="abrirModalPlano('${p.id}')">
