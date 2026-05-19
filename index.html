@@ -3,2381 +3,1067 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notas Paradas — Tratativas Compras</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<title>Central de Compras — Supply Chain</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #f7f6f2;
-    --surface: #ffffff;
-    --surface2: #f0efe9;
-    --border: rgba(0,0,0,0.09);
-    --border2: rgba(0,0,0,0.15);
-    --text: #1a1a18;
-    --text2: #6b6b66;
-    --text3: #9e9e98;
-    --red: #c0392b;
-    --red-bg: #fdf0ef;
-    --amber: #9a6200;
-    --amber-bg: #fef8ec;
-    --green: #2d6a1f;
-    --green-bg: #edf6e8;
-    --blue: #1a4f8a;
-    --blue-bg: #eaf1fb;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .header-logo {
-    width: 36px; height: 36px;
-    background: #1a1a18;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .header-logo svg { width: 20px; height: 20px; fill: #f7f6f2; }
-  .header-title { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
-  .header-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-  .badge-date { font-size: 12px; color: var(--text2); background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; }
-  #btn-reload {
-    font-size: 12px; font-weight: 500;
-    background: #1a1a18; color: #f7f6f2;
-    border: none; border-radius: var(--radius-sm);
-    padding: 7px 16px; cursor: pointer;
-    transition: opacity .15s;
-  }
-  #btn-reload:hover { opacity: 0.8; }
-
-  /* ── TABS ── */
-  .tabs-bar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 32px;
-    display: flex;
-    gap: 0;
-  }
-  .tab-btn {
-    font-size: 13px; font-weight: 500;
-    padding: 12px 18px;
-    border: none;
-    background: none;
-    color: var(--text2);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: all .15s;
-    white-space: nowrap;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--text); border-bottom-color: #1a1a18; }
-
-  /* ── MAIN ── */
-  .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
-
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  /* ── LOADING ── */
-  #loading {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    min-height: 300px; gap: 16px;
-  }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid var(--border2);
-    border-top-color: #1a1a18;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #loading p { font-size: 14px; color: var(--text2); }
-
-  #error-msg {
-    display: none;
-    background: var(--red-bg);
-    border: 1px solid #f5c6c3;
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    color: var(--red);
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  #content { display: none; }
-
-  /* ── PERIOD FILTER BAR (global) ── */
-  .period-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .period-bar-label { font-size: 12px; font-weight: 600; color: var(--text2); white-space: nowrap; }
-  .period-inputs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .period-field { display: flex; align-items: center; gap: 6px; }
-  .period-field label { font-size: 11px; color: var(--text3); font-weight: 500; }
-  .period-field input[type="date"] {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 5px 10px;
-    background: var(--surface2);
-    color: var(--text);
-    outline: none;
-    cursor: pointer;
-  }
-  .period-field input[type="date"]:focus { border-color: #1a1a18; }
-  .period-clear-btn {
-    font-size: 11px; font-weight: 500;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 5px 12px;
-    cursor: pointer;
-    background: var(--red-bg);
-    color: var(--red);
-    transition: all .12s;
-  }
-  .period-clear-btn:hover { background: #f5c6c3; }
-  .period-presets { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
-  .period-preset {
-    font-size: 11px; font-weight: 500;
-    border: 1px solid var(--border2);
-    border-radius: 99px;
-    padding: 4px 11px;
-    cursor: pointer;
-    background: var(--surface2);
-    color: var(--text2);
-    transition: all .12s;
-    white-space: nowrap;
-  }
-  .period-preset:hover, .period-preset.active { background: #1a1a18; color: #f7f6f2; border-color: #1a1a18; }
-  .period-active-badge {
-    display: none;
-    font-size: 11px; font-weight: 500;
-    background: var(--blue-bg);
-    color: var(--blue);
-    border: 1px solid #b5d4f4;
-    border-radius: 99px;
-    padding: 3px 10px;
-  }
-
-  /* ── KPI CARDS ── */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .kpi {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-  }
-  .kpi-label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
-  .kpi-value { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
-  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
-  .kpi-value.red { color: var(--red); }
-  .kpi-value.amber { color: var(--amber); }
-  .kpi-value.green { color: var(--green); }
-  .kpi-value.blue { color: var(--blue); }
-
-  /* ── VOL POR STATUS ── */
-  .vol-status-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  @media (max-width: 600px) { .vol-status-grid { grid-template-columns: 1fr; } }
-  .vol-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-  }
-  .vol-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .vol-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-  .vol-card-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; }
-  .vol-rows { display: flex; flex-direction: column; gap: 6px; }
-  .vol-row { display: flex; justify-content: space-between; align-items: center; }
-  .vol-row-label { font-size: 11px; color: var(--text3); }
-  .vol-row-val { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
-  .vol-row-val.red { color: var(--red); }
-  .vol-row-val.neutral { color: var(--text2); }
-  .vol-bar-wrap { height: 4px; background: var(--surface2); border-radius: 99px; margin-top: 8px; overflow: hidden; }
-  .vol-bar { height: 100%; border-radius: 99px; transition: width .4s; }
-
-  /* ── CHARTS ROW ── */
-  .charts-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 24px;
-  }
-  @media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-  }
-  .chart-card h3 { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
-
-  /* ── FILTER BAR ── */
-  .filter-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    font-size: 12px; font-weight: 500;
-    border: 1px solid var(--border2);
-    border-radius: 99px;
-    padding: 5px 14px;
-    cursor: pointer;
-    background: var(--surface);
-    color: var(--text2);
-    transition: all .12s;
-  }
-  .filter-btn:hover { background: var(--surface2); }
-  .filter-btn.active { background: #1a1a18; color: #f7f6f2; border-color: #1a1a18; }
-  .filter-btn .dot {
-    display: inline-block;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    margin-right: 5px;
-    vertical-align: middle;
-  }
-  .search-wrap { margin-left: auto; }
-  .search-wrap input {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 6px 12px;
-    background: var(--surface);
-    color: var(--text);
-    width: 200px;
-    outline: none;
-  }
-  .search-wrap input:focus { border-color: #1a1a18; }
-
-  /* ── TABLE ── */
-  .table-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .table-header {
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .table-header h2 { font-size: 14px; font-weight: 600; }
-  .table-count { font-size: 12px; color: var(--text2); }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    background: var(--surface2);
-    color: var(--text2);
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    padding: 10px 14px;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 1px solid var(--border);
-  }
-  td {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-    color: var(--text);
-  }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafaf8; }
-  tr.row-critico td { background: #fdf5f4; }
-  tr.row-critico:hover td { background: #faecea; }
-  .mono { font-family: 'DM Mono', monospace; font-size: 12px; }
-
-  /* ── BADGES ── */
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 9px;
-    border-radius: 99px;
-    white-space: nowrap;
-  }
-  .badge-red    { background: var(--red-bg);   color: var(--red); }
-  .badge-amber  { background: var(--amber-bg); color: var(--amber); }
-  .badge-green  { background: var(--green-bg); color: var(--green); }
-  .badge-blue   { background: var(--blue-bg);  color: var(--blue); }
-  .badge-gray   { background: var(--surface2); color: var(--text2); }
-  .critico-tag {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: var(--red);
-    color: #fff;
-    margin-left: 5px;
-    vertical-align: middle;
-    letter-spacing: .03em;
-  }
-
-  /* ── OBS CELL ── */
-  .obs-cell {
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text2);
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .obs-cell:hover { color: var(--blue); text-decoration: underline; }
-
-  /* ── LINK BTN ── */
-  .link-btn {
-    font-size: 11px;
-    color: var(--blue);
-    border: 1px solid #b5d4f4;
-    border-radius: 5px;
-    padding: 2px 8px;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .link-btn:hover { background: var(--blue-bg); }
-
-  /* ── MODAL ── */
-  #modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.4);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  #modal-overlay.open { display: flex; }
-  .modal-box {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 28px 28px 24px;
-    max-width: 480px;
-    width: 100%;
-    border: 1px solid var(--border2);
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  .modal-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-  .modal-title { font-size: 16px; font-weight: 600; line-height: 1.3; }
-  .modal-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .modal-close {
-    background: var(--surface2); border: none;
-    width: 28px; height: 28px; border-radius: 50%;
-    font-size: 16px; cursor: pointer; color: var(--text2);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-left: 12px; line-height: 1;
-  }
-  .modal-close:hover { background: var(--border2); }
-  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .modal-field label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 3px; }
-  .modal-field span { font-size: 13px; color: var(--text); }
-  .modal-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-  .modal-obs-block { margin-bottom: 12px; }
-  .modal-obs-block label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 4px; }
-  .modal-obs-block p { font-size: 13px; color: var(--text); line-height: 1.6; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; }
-  .modal-critico-alert {
-    background: var(--red-bg);
-    border: 1px solid #f5c6c3;
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    font-size: 13px;
-    color: var(--red);
-    font-weight: 500;
-    margin-top: 14px;
-  }
-
-  /* ── EMPTY ── */
-  .empty-row td { text-align: center; padding: 40px; color: var(--text3); font-size: 14px; }
-
-  /* ── EVOLUÇÃO MENSAL ── */
-  .evolucao-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .evolucao-header h2 { font-size: 16px; font-weight: 600; }
-  .evolucao-header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
-  .evolucao-toggle {
-    display: flex;
-    gap: 6px;
-    background: var(--surface2);
-    border-radius: var(--radius-sm);
-    padding: 3px;
-  }
-  .evolucao-toggle-btn {
-    font-size: 12px; font-weight: 500;
-    padding: 5px 14px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    background: none;
-    color: var(--text2);
-    transition: all .12s;
-  }
-  .evolucao-toggle-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-
-  .evolucao-charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 24px;
-  }
-  @media (max-width: 800px) { .evolucao-charts-grid { grid-template-columns: 1fr; } }
-
-  .evolucao-full-chart {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    margin-bottom: 14px;
-  }
-  .evolucao-full-chart h3 { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
-
-  .metas-section { margin-top: 24px; }
-  .metas-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .metas-section-header h3 { font-size: 14px; font-weight: 600; }
-  .metas-hint { font-size: 12px; color: var(--text3); background: var(--amber-bg); border: 1px solid #f5d98a; border-radius: var(--radius-sm); padding: 6px 12px; }
-
-  .metas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-  }
-  .meta-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-  }
-  .meta-card-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
-  .meta-progress-wrap { position: relative; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
-  .meta-progress-bar { height: 100%; border-radius: 99px; transition: width .5s; }
-  .meta-info { display: flex; justify-content: space-between; align-items: center; }
-  .meta-atual { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
-  .meta-alvo { font-size: 12px; color: var(--text3); }
-  .meta-pct { font-size: 12px; font-weight: 600; }
-
-  .meta-input-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-  .meta-input-group label { font-size: 11px; color: var(--text3); white-space: nowrap; }
-  .meta-input-group input {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 4px 8px;
-    width: 80px;
-    outline: none;
-    background: var(--surface2);
-    color: var(--text);
-  }
-  .meta-input-group input:focus { border-color: #1a1a18; }
-  .meta-save-btn {
-    font-size: 11px; font-weight: 500;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 4px 10px;
-    cursor: pointer;
-    background: #1a1a18;
-    color: #f7f6f2;
-    transition: opacity .12s;
-  }
-  .meta-save-btn:hover { opacity: 0.8; }
-
-  /* ── FOOTER ── */
-  .footer {
-    text-align: center;
-    padding: 24px 32px;
-    font-size: 11px;
-    color: var(--text3);
-    border-top: 1px solid var(--border);
-    margin-top: 8px;
-  }
+:root {
+  --bg: #07090f;
+  --bg1: #0c1018;
+  --bg2: #111827;
+  --bg3: #162033;
+  --border: #1c2840;
+  --border2: #243454;
+  --border3: #2e4470;
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.12);
+  --cyan: #22d3ee;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --green: #10b981;
+  --purple: #a78bfa;
+  --text: #dde4f0;
+  --text2: #6b7fa3;
+  --text3: #2d3f5a;
+  --mono: 'DM Mono', monospace;
+  --syne: 'Syne', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--syne);min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 70% 40% at 5% 0%, rgba(34,211,238,0.04) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 50% at 95% 100%, rgba(59,130,246,0.05) 0%,transparent 55%);
+}
+.mono{font-family:var(--mono)}
+/* ── Cards ── */
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:10px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.card-sm{background:var(--bg2);border:1px solid var(--border);border-radius:8px}
+/* ── Labels ── */
+.label{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
+/* ── Badges ── */
+.badge{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:2px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
+.b-red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.28)}
+.b-amber{background:rgba(245,158,11,.13);color:#fcd34d;border:1px solid rgba(245,158,11,.28)}
+.b-green{background:rgba(16,185,129,.13);color:#6ee7b7;border:1px solid rgba(16,185,129,.28)}
+.b-blue{background:rgba(59,130,246,.13);color:#93c5fd;border:1px solid rgba(59,130,246,.28)}
+.b-purple{background:rgba(167,139,250,.13);color:#c4b5fd;border:1px solid rgba(167,139,250,.28)}
+.b-gray{background:rgba(107,127,163,.1);color:#94a3b8;border:1px solid rgba(107,127,163,.2)}
+.b-orange{background:rgba(234,88,12,.15);color:#fb923c;border:1px solid rgba(234,88,12,.3)}
+/* ── KPI ── */
+.kpi-num{font-family:var(--syne);font-weight:800;line-height:1}
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
+/* ── Tab system ── */
+.tab-pill{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:5px 14px;border-radius:6px;border:1px solid transparent;cursor:pointer;transition:all .15s;text-transform:uppercase;background:transparent;color:var(--text2)}
+.tab-pill.on{background:rgba(59,130,246,.14);border-color:rgba(59,130,246,.4);color:#93c5fd}
+.tab-pill:hover:not(.on){color:var(--text);background:rgba(255,255,255,.03)}
+/* ── Table rows ── */
+.tr{display:grid;align-items:center;border-bottom:1px solid var(--border);transition:background .12s}
+.tr:hover{background:rgba(59,130,246,.04)}
+.tr.crit{border-left:3px solid var(--red)}
+.tr.warn{border-left:3px solid var(--amber)}
+.tr.safe{border-left:3px solid var(--green)}
+.tr.info{border-left:3px solid var(--blue)}
+/* ── Chips ── */
+.chip{font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:3px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:all .15s;color:var(--text2);background:transparent;white-space:nowrap}
+.chip.on,.chip:hover{border-color:var(--blue);color:#93c5fd;background:rgba(59,130,246,.1)}
+/* ── Export btns ── */
+.export-btn{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:4px 11px;border-radius:5px;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.btn-csv{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+.btn-csv:hover{background:rgba(16,185,129,.22)}
+.btn-pdf{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.btn-pdf:hover{background:rgba(239,68,68,.22)}
+/* ── Month tab ── */
+.month-tab{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.month-tab.active{border-color:var(--border3);background:rgba(59,130,246,.08)}
+.month-tab:hover:not(.active){background:rgba(255,255,255,.03)}
+/* ── Loader ── */
+#loader{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
+.ring{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ── Pulse ── */
+.dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+/* ── Alert banner ── */
+.alert-bar{border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.alert-red{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2)}
+.alert-amber{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2)}
+.alert-blue{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2)}
+/* ── Section title ── */
+.sec-title{font-family:var(--syne);font-size:14px;font-weight:700}
+/* ── Qty indicator ── */
+.qty-bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
+.qty-fill{height:100%;border-radius:2px}
+/* ── Price alert ── */
+.price-alert{background:rgba(234,88,12,.1);border:1px solid rgba(234,88,12,.25);border-radius:5px;padding:2px 7px;font-family:var(--mono);font-size:9px;color:#fb923c}
+#app{display:none}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <div class="header-logo">
-      <svg viewBox="0 0 20 20"><path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h9v2H3v-2z"/></svg>
-    </div>
-    <div>
-      <div class="header-title">Notas paradas — tratativas compras</div>
-      <div class="header-sub" id="sheet-name">Carregando planilha...</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <span id="sync-badge" style="font-size:12px;font-weight:500;padding:4px 12px;border-radius:99px;border:1px solid #a8d898;background:#edf6e8;color:#2d6a1f;">🟢 Compartilhado</span>
-    <span class="badge-date" id="today-label"></span>
-    <button id="btn-reload" onclick="loadData()">Atualizar dados</button>
-  </div>
+<!-- LOADER -->
+<div id="loader">
+  <div class="ring"></div>
+  <div style="font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--text2)">CARREGANDO DADOS</div>
+  <div id="ld-msg" style="font-family:var(--mono);font-size:10px;color:var(--text3)">Conectando ao Google Sheets...</div>
 </div>
 
-<div class="tabs-bar">
-  <button class="tab-btn active" onclick="switchTab('visao-geral', this)">Visão geral</button>
-  <button class="tab-btn" onclick="switchTab('evolucao', this)">Evolução mensal</button>
-  <button class="tab-btn" onclick="switchTab('tabela', this)">Tabela detalhada</button>
-  <button class="tab-btn" id="tab-btn-acao" onclick="switchTab('acao', this)" style="color:#c0392b;font-weight:600">🚨 Central de Ação</button>
+<!-- ERROR -->
+<div id="err" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px">
+  <div style="font-size:28px">⚠️</div>
+  <div style="font-family:var(--syne);font-size:16px;font-weight:700;color:#fca5a5">Erro ao carregar</div>
+  <div id="err-msg" style="font-family:var(--mono);font-size:11px;color:var(--text2);max-width:440px;text-align:center;line-height:1.7"></div>
+  <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Certifique-se que a planilha está com acesso público (Qualquer pessoa com o link → Leitor)</div>
+  <button onclick="loadData()" style="padding:7px 20px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#93c5fd;border-radius:7px;font-family:var(--mono);font-size:11px;cursor:pointer">↺ Tentar novamente</button>
 </div>
 
-<div class="main">
-  <div id="loading">
-    <div class="spinner"></div>
-    <p>Buscando dados da planilha...</p>
-  </div>
+<!-- APP -->
+<div id="app">
 
-  <div id="error-msg"></div>
-
-  <div id="content">
-
-    <!-- FILTRO DE PERÍODO GLOBAL -->
-    <div class="period-bar">
-      <span class="period-bar-label">📅 Período:</span>
-      <div class="period-inputs">
-        <div class="period-field">
-          <label for="global-from">De</label>
-          <input type="date" id="global-from" onchange="applyPeriodFilter()">
-        </div>
-        <div class="period-field">
-          <label for="global-to">Até</label>
-          <input type="date" id="global-to" onchange="applyPeriodFilter()">
-        </div>
-        <button class="period-clear-btn" onclick="clearPeriodFilter()" id="btn-clear-period" style="display:none">Limpar</button>
-        <span class="period-active-badge" id="period-active-badge">Período filtrado</span>
-      </div>
-      <div class="period-presets">
-        <button class="period-preset" onclick="setPeriodPreset('week', this)">Esta semana</button>
-        <button class="period-preset" onclick="setPeriodPreset('month', this)">Este mês</button>
-        <button class="period-preset" onclick="setPeriodPreset('last30', this)">Últimos 30d</button>
-        <button class="period-preset" onclick="setPeriodPreset('last60', this)">Últimos 60d</button>
-        <button class="period-preset" onclick="setPeriodPreset('last90', this)">Últimos 90d</button>
-        <button class="period-preset" onclick="setPeriodPreset('all', this)">Tudo</button>
-      </div>
-    </div>
-
-    <!-- ==================== ABA: VISÃO GERAL ==================== -->
-    <div id="tab-visao-geral" class="tab-content active">
-
-      <!-- KPI CARDS -->
-      <div class="kpi-grid" id="kpi-grid"></div>
-
-      <!-- VOLUME POR STATUS -->
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Volume por status de tratativa</div>
-      <div class="vol-status-grid" id="vol-status-grid"></div>
-
-      <!-- CHARTS -->
-      <div class="charts-row">
-        <div class="chart-card">
-          <h3>Notas por fornecedor</h3>
-          <div style="position:relative;height:220px;">
-            <canvas id="chart-forn"></canvas>
-          </div>
-        </div>
-        <div class="chart-card">
-          <h3>Status de tratativa</h3>
-          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;" id="legend-status"></div>
-          <div style="position:relative;height:190px;">
-            <canvas id="chart-status"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== ABA: EVOLUÇÃO MENSAL ==================== -->
-    <div id="tab-evolucao" class="tab-content">
-      <div class="evolucao-header">
-        <div>
-          <h2>Evolução mensal</h2>
-          <p>Compare mês a mês: o que entrou, o que resolvemos e o que ficou pendente.</p>
-        </div>
-        <div class="evolucao-toggle">
-          <button class="evolucao-toggle-btn active" onclick="setEvolucaoMode('qtd', this)">Quantidade</button>
-          <button class="evolucao-toggle-btn" onclick="setEvolucaoMode('vol', this)">Volume</button>
-        </div>
-      </div>
-
-      <!-- Gráfico principal: barras empilhadas por status/mês -->
-      <div class="evolucao-full-chart">
-        <h3 id="evol-chart-title">Notas por mês e status</h3>
-        <div style="position:relative;height:280px;">
-          <canvas id="chart-evol-stack"></canvas>
-        </div>
-      </div>
-
-      <!-- Gráfico de linhas: fluxo (entradas vs resoluções) -->
-      <div class="evolucao-full-chart">
-        <h3 id="evol-flux-title">Fluxo mensal — entradas vs resoluções</h3>
-        <div style="position:relative;height:240px;">
-          <canvas id="chart-evol-flux"></canvas>
-        </div>
-      </div>
-
-      <!-- METAS -->
-      <div class="metas-section">
-        <div class="metas-section-header">
-          <h3>Metas de resolução</h3>
-          <span class="metas-hint">💡 Defina suas metas abaixo e acompanhe o progresso</span>
-        </div>
-        <div class="metas-grid" id="metas-grid"></div>
-      </div>
-    </div>
-
-    <!-- ==================== ABA: TABELA ==================== -->
-    <div id="tab-tabela" class="tab-content">
-      <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Todas</button>
-        <button class="filter-btn" data-filter="pendente" onclick="setFilter('pendente',this)"><span class="dot" style="background:#c0392b"></span>Pendentes</button>
-        <button class="filter-btn" data-filter="andamento" onclick="setFilter('andamento',this)"><span class="dot" style="background:#9a6200"></span>Em andamento</button>
-        <button class="filter-btn" data-filter="concluido" onclick="setFilter('concluido',this)"><span class="dot" style="background:#2d6a1f"></span>Concluídas</button>
-        <button class="filter-btn" data-filter="critico" onclick="setFilter('critico',this)"><span class="dot" style="background:#c0392b"></span>Críticas +20d</button>
-        <div class="search-wrap">
-          <input type="text" id="search-input" placeholder="Buscar fornecedor, NF, desc..." oninput="renderTable()">
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <h2>Registro de notas paradas</h2>
-          <span class="table-count" id="table-count"></span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Fornecedor</th>
-                <th>Tipo</th>
-                <th>Nota fiscal</th>
-                <th>Item</th>
-                <th>Descrição</th>
-                <th style="text-align:right">Vol. reprov.</th>
-                <th style="text-align:right">Vol. faltante</th>
-                <th>Insp. 100%</th>
-                <th>Dt. entrega</th>
-                <th>Status compras</th>
-                <th>Obs. recebimento</th>
-                <th>Obs. compras</th>
-                <th>Formulário</th>
-              </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== ABA: CENTRAL DE AÇÃO ==================== -->
-    <div id="tab-acao" class="tab-content">
-
-      <!-- ALERTA CRÍTICO -->
-      <div id="acao-alerta" style="background:#fdf0ef;border:1px solid #f5c6c3;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;">
-        <span style="font-size:28px">🚨</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#c0392b" id="acao-alerta-titulo">Carregando...</div>
-          <div style="font-size:12px;color:#6b6b66;margin-top:2px" id="acao-alerta-sub"></div>
-        </div>
-        <button onclick="renderAcao()" style="margin-left:auto;font-size:12px;font-weight:500;background:#c0392b;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;">↻ Atualizar</button>
-      </div>
-
-      <!-- GERADOR DE AÇÕES -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;" id="acao-gerador-grid">
-
-        <!-- PLANO DE AÇÃO -->
-        <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:18px 20px;">
-          <div style="font-size:12px;font-weight:600;color:#6b6b66;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">📋 Plano de ação</div>
-          <div style="font-size:13px;color:#1a1a18;margin-bottom:14px;">Priorizado por dias parado × volume</div>
-          <button onclick="gerarPlanoAcao()" style="width:100%;font-size:13px;font-weight:500;background:#1a1a18;color:#f7f6f2;border:none;border-radius:6px;padding:9px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Gerar plano agora</button>
-        </div>
-
-        <!-- EMAILS -->
-        <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:18px 20px;">
-          <div style="font-size:12px;font-weight:600;color:#6b6b66;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">✉️ E-mails de cobrança</div>
-          <div style="font-size:13px;color:#1a1a18;margin-bottom:14px;">Por setor: compras, recebimento, qualidade</div>
-          <button onclick="gerarEmails()" style="width:100%;font-size:13px;font-weight:500;background:#1a4f8a;color:#fff;border:none;border-radius:6px;padding:9px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Gerar e-mails</button>
-        </div>
-
-        <!-- REUNIÃO -->
-        <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:18px 20px;">
-          <div style="font-size:12px;font-weight:600;color:#6b6b66;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">📅 Pauta de reunião</div>
-          <div style="font-size:13px;color:#1a1a18;margin-bottom:14px;">Estruturada para cobrar cada setor</div>
-          <button onclick="gerarReuniao()" style="width:100%;font-size:13px;font-weight:500;background:#2d6a1f;color:#fff;border:none;border-radius:6px;padding:9px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Gerar pauta</button>
-        </div>
-      </div>
-
-      <!-- ÁREA DE OUTPUT -->
-      <div id="acao-output" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:14px;font-weight:600;" id="acao-output-titulo"></div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="copiarOutput()" style="font-size:12px;font-weight:500;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 14px;cursor:pointer;background:#fff;color:#1a1a18;">📋 Copiar</button>
-            <button onclick="fecharOutput()" style="font-size:12px;font-weight:500;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 14px;cursor:pointer;background:#fff;color:#6b6b66;">✕ Fechar</button>
-          </div>
-        </div>
-        <div id="acao-output-conteudo" style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:24px;font-size:13px;line-height:1.8;color:#1a1a18;white-space:pre-wrap;max-height:600px;overflow-y:auto;font-family:'DM Mono',monospace;"></div>
-      </div>
-
-      <!-- PLANOS DE AÇÃO HIERÁRQUICOS -->
-      <div style="margin-top:8px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div>
-            <div style="font-size:15px;font-weight:700;color:#1a1a18;">Planos de ação</div>
-            <div style="font-size:12px;color:#6b6b66;margin-top:2px;">Cada plano agrupa o problema principal e as tarefas de cada responsável</div>
-          </div>
-          <button onclick="abrirModalPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#f7f6f2;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-            <span style="font-size:16px;line-height:1">+</span> Novo plano
-          </button>
-        </div>
-
-        <!-- RESUMO RÁPIDO -->
-        <div id="planos-resumo" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;"></div>
-
-        <!-- LISTA DE PLANOS -->
-        <div id="lista-planos"></div>
-      </div>
-
-    </div><!-- /tab-acao -->
-
-    <!-- ══ MODAL NOVO/EDITAR PLANO ══ -->
-    <div id="modal-plano" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-        <div style="padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:16px;font-weight:700;" id="modal-plano-titulo">Novo plano de ação</div>
-          <button onclick="fecharModalPlano()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f0efe9;font-size:18px;cursor:pointer;color:#6b6b66;display:flex;align-items:center;justify-content:center;">×</button>
-        </div>
-        <div style="padding:20px 24px 24px;">
-
-          <!-- Título do plano -->
-          <div style="margin-bottom:14px;">
-            <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Título do problema / plano</label>
-            <input id="mp-titulo" type="text" placeholder="Ex: NF 0042 – EBATA LTDA – volume reprovado parado há 30 dias" style="width:100%;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;">
-          </div>
-
-          <!-- Responsável -->
-          <div style="margin-bottom:14px;">
-            <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Responsável pelo plano</label>
-            <input id="mp-resp" type="text" placeholder="Ex: João Silva — Compras" style="width:100%;font-family:'DM Sans',sans-serif;font-size:14px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;">
-          </div>
-
-          <!-- Descrição -->
-          <div style="margin-bottom:14px;">
-            <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Descrição do problema</label>
-            <textarea id="mp-desc" rows="2" placeholder="Qual é o impacto? O que está bloqueado?" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;resize:vertical;"></textarea>
-          </div>
-
-          <!-- Linha: prazo inicial + prioridade -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-            <div>
-              <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Prazo inicial (fixo) 🔒</label>
-              <input id="mp-prazo" type="date" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;outline:none;background:#fafaf8;">
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Prioridade</label>
-              <select id="mp-prior" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;outline:none;background:#fafaf8;color:#1a1a18;">
-                <option value="critica">🔴 Crítica — agir hoje</option>
-                <option value="alta">🟠 Alta — esta semana</option>
-                <option value="media" selected>🟡 Média — este mês</option>
-                <option value="baixa">🟢 Baixa — quando possível</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- TAREFAS -->
-          <div style="border-top:1px solid rgba(0,0,0,.08);padding-top:18px;margin-bottom:14px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <label style="font-size:12px;font-weight:700;color:#1a1a18;text-transform:uppercase;letter-spacing:.04em;">Tarefas do plano</label>
-              <button onclick="adicionarTarefaForm()" style="font-size:12px;font-weight:500;background:#f0efe9;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:5px 12px;cursor:pointer;color:#1a1a18;">+ Tarefa</button>
-            </div>
-            <div id="mp-tarefas-lista"></div>
-          </div>
-
-          <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid rgba(0,0,0,.08);padding-top:16px;">
-            <button onclick="fecharModalPlano()" style="font-size:13px;border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:9px 20px;cursor:pointer;background:#fff;color:#6b6b66;">Cancelar</button>
-            <button onclick="salvarPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#f7f6f2;border:none;border-radius:8px;padding:9px 24px;cursor:pointer;">Salvar plano</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ MODAL CONCLUIR PLANO ══ -->
-    <div id="modal-concluir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-        <div style="padding:24px;">
-          <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Concluir plano</div>
-          <div style="font-size:13px;color:#6b6b66;margin-bottom:18px;" id="mc-subtitulo"></div>
-          <label style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Data de conclusão</label>
-          <input id="mc-data" type="date" style="width:100%;font-family:'DM Sans',sans-serif;font-size:14px;border:2px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;outline:none;background:#fafaf8;margin-bottom:18px;">
-          <div style="display:flex;gap:8px;justify-content:flex-end;">
-            <button onclick="fecharModalConcluir()" style="font-size:13px;border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:8px 18px;cursor:pointer;background:#fff;color:#6b6b66;">Cancelar</button>
-            <button onclick="confirmarConclusao()" style="font-size:13px;font-weight:600;background:#2d6a1f;color:#fff;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;">✓ Confirmar conclusão</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /#content -->
-</div>
-
-<div class="footer" id="footer-info"></div>
-
-<!-- MODAL -->
-<div id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal-box">
-    <div class="modal-top">
+  <!-- ══ HEADER ══ -->
+  <header style="border-bottom:1px solid var(--border);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:rgba(7,9,15,.96);backdrop-filter:blur(14px)">
+    <div style="display:flex;align-items:center;gap:20px">
       <div>
-        <div class="modal-title" id="m-title"></div>
-        <div class="modal-sub" id="m-sub"></div>
+        <div style="font-family:var(--syne);font-size:17px;font-weight:800;letter-spacing:-.02em">
+          Central de <span style="color:var(--cyan)">Compras</span>
+        </div>
+        <div class="label" style="margin-top:1px">Supply Chain Intelligence — Previsibilidade &amp; Ação</div>
       </div>
-      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">×</button>
+      <!-- Month tabs -->
+      <div style="display:flex;gap:6px;margin-left:12px">
+        <div class="month-tab active" id="tab-m0" onclick="switchMonth(0)">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan)"></div>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text)">MÊS 0</span>
+          <span id="m0-badge" class="badge b-blue" style="padding:1px 6px">—</span>
+        </div>
+        <div class="month-tab" id="tab-m1" onclick="switchMonth(1)">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--purple)"></div>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text2)">MÊS 1</span>
+          <span id="m1-badge" class="badge b-purple" style="padding:1px 6px">—</span>
+        </div>
+      </div>
     </div>
-    <div id="m-body"></div>
-  </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="display:flex;align-items:center;gap:5px">
+        <div class="dot" style="background:var(--green)"></div>
+        <span class="mono" style="font-size:10px;color:var(--text2)" id="last-upd">—</span>
+      </div>
+      <div id="freeze-pill" style="font-family:var(--mono);font-size:10px;padding:3px 11px;border-radius:5px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);color:#c4b5fd"></div>
+      <button onclick="loadData()" style="padding:5px 13px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);color:var(--cyan);border-radius:7px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.08em">↺ REFRESH</button>
+    </div>
+  </header>
+
+  <main style="padding:20px 28px;max-width:1700px;margin:0 auto">
+
+    <!-- ══ MÊS 0 VIEW ══ -->
+    <div id="view-m0">
+
+      <!-- KPIs M0 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+        <!-- NS -->
+        <div class="card" style="padding:16px">
+          <div class="label">Nível de Serviço M0</div>
+          <div class="kpi-num" style="font-size:36px;margin-top:8px" id="ns-m0">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="ns-m0-d">—</div>
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden">
+            <div id="ns-m0-bar" style="height:100%;border-radius:2px;transition:width .8s;width:0%"></div>
+          </div>
+        </div>
+        <!-- Falta Comprar -->
+        <div class="card" style="padding:16px;border-color:rgba(239,68,68,.3)">
+          <div class="label" style="color:#fca5a5">Falta Comprar (AI)</div>
+          <div class="kpi-num" style="font-size:36px;color:var(--red);margin-top:8px" id="fc-m0">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="fc-m0-d">itens com status pendente</div>
+        </div>
+        <!-- Impacto no Plano -->
+        <div class="card" style="padding:16px;border-color:rgba(245,158,11,.3)">
+          <div class="label" style="color:#fcd34d">Impacto no Plano (AJ)</div>
+          <div class="kpi-num" style="font-size:36px;color:var(--amber);margin-top:8px" id="imp-m0">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="imp-m0-d">produtos Pai travados</div>
+        </div>
+        <!-- Alerta Preço >6m -->
+        <div class="card" style="padding:16px;border-color:rgba(234,88,12,.3)">
+          <div class="label" style="color:#fb923c">Risco de Reajuste &gt;6m</div>
+          <div class="kpi-num" style="font-size:36px;color:#f97316;margin-top:8px" id="old-m0">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px">última compra &gt; 6 meses</div>
+        </div>
+        <!-- Freeze -->
+        <div class="card" style="padding:16px;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(59,130,246,.05));border-color:rgba(167,139,250,.25)">
+          <div class="label" style="color:#c4b5fd">Freeze Period</div>
+          <div class="kpi-num" style="font-size:24px;color:var(--purple);margin-top:8px" id="freeze-v">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="freeze-d">Maior LT detectado</div>
+        </div>
+      </div>
+
+      <!-- Alert banners M0 -->
+      <div id="banners-m0" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+
+      <!-- Charts row M0 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+        <!-- Status AI -->
+        <div class="card" style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+            <div>
+              <div class="label">O que Falta Comprar</div>
+              <div class="sec-title" style="margin-top:3px">Status Mat. M0 — col. AI</div>
+            </div>
+            <div id="ai-legend" style="display:flex;flex-direction:column;gap:3px"></div>
+          </div>
+          <div style="position:relative;height:180px"><canvas id="ch-ai"></canvas></div>
+        </div>
+        <!-- Impacto AJ -->
+        <div class="card" style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+            <div>
+              <div class="label">Impacto no Plano</div>
+              <div class="sec-title" style="margin-top:3px">Status Produto — col. AJ</div>
+            </div>
+            <div id="aj-legend" style="display:flex;flex-direction:column;gap:3px"></div>
+          </div>
+          <div style="position:relative;height:180px"><canvas id="ch-aj"></canvas></div>
+        </div>
+        <!-- Última Compra -->
+        <div class="card" style="padding:16px">
+          <div style="margin-bottom:12px">
+            <div class="label">Antiguidade da Última Compra</div>
+            <div class="sec-title" style="margin-top:3px">Distribuição por Faixa</div>
+          </div>
+          <div style="position:relative;height:180px"><canvas id="ch-age"></canvas></div>
+        </div>
+      </div>
+
+      <!-- TABLE: O que falta comprar M0 (AI) -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="label">Tabela de Ação — Mês 0</div>
+            <div class="sec-title" style="margin-top:3px">Itens que Faltam Comprar × Impacto no Produto Pai (AJ)</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="chip on" id="f0-all" onclick="filterM0('all')">Todos</button>
+            <button class="chip" id="f0-critico" onclick="filterM0('critico')">🔴 Crítico</button>
+            <button class="chip" id="f0-parcial" onclick="filterM0('parcial')">🟡 Parcial</button>
+            <button class="chip" id="f0-preco" onclick="filterM0('preco')">🟠 Risco Preço</button>
+            <input id="search-m0" oninput="filterM0(activeF0)" placeholder="Buscar…" style="padding:3px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;width:140px;outline:none">
+            <button class="export-btn btn-csv" onclick="exportCSV('m0')">↓ CSV</button>
+            <button class="export-btn btn-pdf" onclick="exportPDF('m0')">↓ PDF</button>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border)">
+          <!-- TH -->
+          <div class="tr" style="grid-template-columns:110px 1fr 90px 80px 75px 75px 75px 110px 130px 150px;padding:6px 18px;background:rgba(255,255,255,.02)">
+            <div class="label">Item Pai</div>
+            <div class="label">Descrição</div>
+            <div class="label">Grupo</div>
+            <div class="label">Últ. Compra</div>
+            <div class="label">LT (dias)</div>
+            <div class="label">Saldo M0</div>
+            <div class="label">Em Pedido</div>
+            <div class="label">Status AI</div>
+            <div class="label">Impacto AJ</div>
+            <div class="label">Ação Sugerida</div>
+          </div>
+          <div id="tbl-m0" style="max-height:440px;overflow-y:auto"></div>
+          <div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m0">0 itens</span>
+            <span class="mono" style="font-size:9px;color:var(--text3)">🟠 = última compra &gt;6 meses → risco de reajuste de preço</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE: Risco de Reajuste > 6m -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🟠</span>
+            <div>
+              <div class="label">Alerta de Preço</div>
+              <div class="sec-title" style="margin-top:3px">Itens com Última Compra &gt; 6 Meses — Reavaliação Necessária</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="export-btn btn-csv" onclick="exportCSV('preco')">↓ CSV</button>
+            <button class="export-btn btn-pdf" onclick="exportPDF('preco')">↓ PDF</button>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border)">
+          <div class="tr" style="grid-template-columns:110px 1fr 90px 110px 100px 80px 80px 160px;padding:6px 18px;background:rgba(255,255,255,.02)">
+            <div class="label">Item</div>
+            <div class="label">Descrição</div>
+            <div class="label">Fornecedor</div>
+            <div class="label">Últ. Compra</div>
+            <div class="label">Dias Sem Compra</div>
+            <div class="label">Status AI</div>
+            <div class="label">Estoque</div>
+            <div class="label">Ação</div>
+          </div>
+          <div id="tbl-preco" style="max-height:320px;overflow-y:auto"></div>
+          <div style="padding:8px 18px;border-top:1px solid var(--border)">
+            <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-preco">0 itens</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-m0 -->
+
+    <!-- ══ MÊS 1 VIEW ══ -->
+    <div id="view-m1" style="display:none">
+
+      <!-- KPIs M1 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        <div class="card" style="padding:16px">
+          <div class="label">Nível de Serviço M1</div>
+          <div class="kpi-num" style="font-size:36px;margin-top:8px" id="ns-m1">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="ns-m1-d">—</div>
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden">
+            <div id="ns-m1-bar" style="height:100%;border-radius:2px;transition:width .8s;width:0%"></div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;border-color:rgba(167,139,250,.3)">
+          <div class="label" style="color:#c4b5fd">Falta Comprar M1 (AS)</div>
+          <div class="kpi-num" style="font-size:36px;color:var(--purple);margin-top:8px" id="fc-m1">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="fc-m1-d">itens com pendência M1</div>
+        </div>
+        <div class="card" style="padding:16px;border-color:rgba(245,158,11,.3)">
+          <div class="label" style="color:#fcd34d">Impacto no Plano M1 (AT)</div>
+          <div class="kpi-num" style="font-size:36px;color:var(--amber);margin-top:8px" id="imp-m1">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="imp-m1-d">produtos travados em M1</div>
+        </div>
+        <div class="card" style="padding:16px;border-color:rgba(239,68,68,.25)">
+          <div class="label" style="color:#fca5a5">Já Nasce em Falta (M1)</div>
+          <div class="kpi-num" style="font-size:36px;color:var(--red);margin-top:8px" id="dead-m1">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px">sem saída no prazo atual</div>
+        </div>
+      </div>
+
+      <!-- Alert banners M1 -->
+      <div id="banners-m1" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+
+      <!-- Charts M1 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div class="card" style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+            <div>
+              <div class="label">O que Falta Comprar M1</div>
+              <div class="sec-title" style="margin-top:3px">Status Mat. M1 — col. AS</div>
+            </div>
+            <div id="as-legend" style="display:flex;flex-direction:column;gap:3px"></div>
+          </div>
+          <div style="position:relative;height:200px"><canvas id="ch-as"></canvas></div>
+        </div>
+        <div class="card" style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+            <div>
+              <div class="label">Impacto no Plano M1</div>
+              <div class="sec-title" style="margin-top:3px">Status Produto M1 — col. AT</div>
+            </div>
+            <div id="at-legend" style="display:flex;flex-direction:column;gap:3px"></div>
+          </div>
+          <div style="position:relative;height:200px"><canvas id="ch-at"></canvas></div>
+        </div>
+      </div>
+
+      <!-- TABLE M1 -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="label">Tabela de Ação — Mês 1</div>
+            <div class="sec-title" style="margin-top:3px">Itens que Nascem em Falta — AS × AT (Produto Pai)</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="chip on" id="f1-all" onclick="filterM1('all')">Todos</button>
+            <button class="chip" id="f1-morto" onclick="filterM1('morto')">💀 Sem saída</button>
+            <button class="chip" id="f1-parcial" onclick="filterM1('parcial')">🟡 Parcial</button>
+            <input id="search-m1" oninput="filterM1(activeF1)" placeholder="Buscar…" style="padding:3px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;width:140px;outline:none">
+            <button class="export-btn btn-csv" onclick="exportCSV('m1')">↓ CSV</button>
+            <button class="export-btn btn-pdf" onclick="exportPDF('m1')">↓ PDF</button>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border)">
+          <div class="tr" style="grid-template-columns:110px 1fr 90px 80px 80px 80px 110px 130px 150px;padding:6px 18px;background:rgba(255,255,255,.02)">
+            <div class="label">Item Pai</div>
+            <div class="label">Descrição</div>
+            <div class="label">Grupo</div>
+            <div class="label">LT (dias)</div>
+            <div class="label">Plano M1</div>
+            <div class="label">Saldo M1</div>
+            <div class="label">Status AS (M1)</div>
+            <div class="label">Impacto AT (M1)</div>
+            <div class="label">Ação M1</div>
+          </div>
+          <div id="tbl-m1" style="max-height:440px;overflow-y:auto"></div>
+          <div style="padding:8px 18px;border-top:1px solid var(--border)">
+            <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1">0 itens</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-m1 -->
+
+  </main>
+
+  <footer style="border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+    <span class="mono" style="font-size:9px;color:var(--text3)">CENTRAL DE COMPRAS — SUPPLY CHAIN INTELLIGENCE</span>
+    <span class="mono" style="font-size:9px;color:var(--text3)" id="foot-info">—</span>
+  </footer>
 </div>
 
 <script>
-const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
-const GID      = '1456714907';
+/* ═══════════════════════════════════════
+   CONFIG & GLOBALS
+═══════════════════════════════════════ */
+const SHEET_ID = '14jb6fVTvH148n4qSyZtQLytLSy-t6mv9vq5VQ-dzlPg';
+const GID_BASE = '0';
+const GID_ALT  = '1769742644';
+const TODAY    = new Date(); TODAY.setHours(0,0,0,0);
+const SIX_MONTHS_MS = 180 * 86400000;
 
-let allRows = [];
-let filteredRows = []; // rows após filtro de período
-let currentFilter = 'all';
-let currentEvolucaoMode = 'qtd';
+let activeF0 = 'all', activeF1 = 'all';
+let rowsM0 = [], rowsM0Preco = [], rowsM1 = [];
 let charts = {};
-let metas = {"concluir_mes":10,"reduzir_pendente":5,"reduzir_vol":1000};
 
-document.getElementById('today-label').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+/* Column index map (0-based) */
+const C = {
+  A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,
+  K:10,L:11,M:12,N:13,O:14,P:15,Q:16,R:17,S:18,
+  T:19,U:20,V:21,W:22,X:23,Y:24,Z:25,
+  AA:26,AB:27,AC:28,AD:29,AE:30,AF:31,AG:32,AH:33,
+  AI:34,AJ:35,AK:36,AL:37,AM:38,AN:39,AO:40,AP:41,
+  AQ:42,AR:43,AS:44,AT:45,AU:46,AV:47,AW:48
+};
 
-// ── TABS ──
-function switchTab(id, el) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-' + id).classList.add('active');
-  if (id === 'evolucao') renderEvolucao();
+function gc(row, key) { return (row[C[key]] ?? '').toString().trim(); }
+function gn(row, key) {
+  const v = gc(row, key).replace(',', '.').replace(/[^\d.-]/g, '');
+  const n = parseFloat(v); return isNaN(n) ? 0 : n;
 }
 
-// ── DATE UTILS ──
-function parseDate(str) {
-  if (!str) return null;
-  const s = String(str).trim();
-  const gviz = s.match(/^Date\((\d+),(\d+),(\d+)\)$/);
-  if (gviz) return new Date(+gviz[1], +gviz[2], +gviz[3]);
-  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
-  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (ymd) return new Date(+ymd[1], +ymd[2]-1, +ymd[3]);
+/* ═══════════════════════════════════════
+   CSV PARSING
+═══════════════════════════════════════ */
+async function fetchCSV(gid) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status} — GID ${gid}`);
+  return parseCSV(await r.text());
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    rows.push(splitCSVLine(line));
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const res = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (q && line[i+1]==='"') { cur+='"'; i++; } else q=!q; }
+    else if (c === ',' && !q) { res.push(cur.trim()); cur=''; }
+    else cur += c;
+  }
+  res.push(cur.trim()); return res;
+}
+
+/* ═══════════════════════════════════════
+   DATE HELPERS
+═══════════════════════════════════════ */
+function parseDate(v) {
+  if (!v) return null;
+  const s = v.toString().trim();
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m2) return new Date(+m2[1], +m2[2]-1, +m2[3]);
+  const n = parseFloat(s);
+  if (!isNaN(n) && n > 40000) return new Date(Date.UTC(1899,11,30) + n*86400000);
   return null;
 }
-
-function formatDateDisplay(str) {
-  if (!str) return '—';
-  const d = parseDate(str);
-  if (!d || isNaN(d.getTime())) return String(str);
-  return d.toLocaleDateString('pt-BR');
+function fmtDate(d) { return d ? d.toLocaleDateString('pt-BR') : '—'; }
+function diffDays(a) { return a ? Math.round((TODAY - a)/86400000) : null; }
+function fmtDays(d) {
+  if (d === null) return '—';
+  if (d < 0) return `em ${Math.abs(d)}d`;
+  return `há ${d}d`;
 }
 
-function daysDiff(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d || isNaN(d)) return 0;
-  return Math.floor((Date.now() - d.getTime()) / 86400000);
+/* ═══════════════════════════════════════
+   STATUS CLASSIFIER
+═══════════════════════════════════════ */
+function classify(s) {
+  const n = s.toLowerCase();
+  if (!s || s === '—' || s === '-') return 'empty';
+  if (n.includes('ok') || n.includes('disp') || n.includes('sufic')) return 'ok';
+  if (n.includes('falta') || n.includes('crít') || n.includes('insuf') || n.includes('comprar')) return 'critical';
+  if (n.includes('risco') || n.includes('parcial') || n.includes('aten') || n.includes('revisar')) return 'warning';
+  if (n.includes('pedido') || n.includes('aguard') || n.includes('em compra')) return 'info';
+  return 'neutral';
 }
 
-function isCritico(r) {
-  const status = (r.status || '').toLowerCase();
-  if (status.includes('conclu')) return false;
-  return daysDiff(r.dtEntrega) > 20;
+function statusBadge(s) {
+  if (!s || s === '—' || s === '-') return '<span class="badge b-gray">—</span>';
+  const cl = classify(s);
+  const map = {critical:'b-red',warning:'b-amber',ok:'b-green',info:'b-blue',neutral:'b-gray',empty:'b-gray'};
+  const short = s.length > 20 ? s.substring(0,19)+'…' : s;
+  return `<span class="badge ${map[cl]||'b-gray'}" title="${s}">${short}</span>`;
 }
 
-function normalizeStatus(raw) {
-  if (!raw) return 'pendente';
-  const s = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  if (s.includes('conclu')) return 'concluido';
-  if (s.includes('andamento') || s.includes('progress') || s.includes('tratando') || s.includes('em trat')) return 'andamento';
-  return 'pendente';
+function actionSuggest(aiStatus, ajStatus, lt, isOld) {
+  const ai = classify(aiStatus), aj = classify(ajStatus);
+  if (ai === 'ok' && aj === 'ok') return '<span class="badge b-green">✓ Nenhuma ação</span>';
+  if (ai === 'critical' && lt > 30) return '<span class="badge b-red">🚨 URGENTE — LT Longo</span>';
+  if (ai === 'critical') return '<span class="badge b-red">⚡ Acionar Fornecedor</span>';
+  if (ai === 'warning' && isOld) return '<span class="badge b-orange">🟠 Cotar + Comprar</span>';
+  if (ai === 'warning') return '<span class="badge b-amber">⚠ Monitorar / Negociar</span>';
+  if (ai === 'info') return '<span class="badge b-blue">📋 Acompanhar Pedido</span>';
+  if (aj === 'critical') return '<span class="badge b-red">🔴 Trava Produção</span>';
+  if (aj === 'warning') return '<span class="badge b-amber">⚠ Risco Parcial</span>';
+  return '<span class="badge b-gray">Verificar</span>';
 }
 
-// ── PERÍODO GLOBAL ──
-function getGlobalPeriod() {
-  const fromVal = document.getElementById('global-from').value;
-  const toVal   = document.getElementById('global-to').value;
-  return {
-    from: fromVal ? new Date(fromVal + 'T00:00:00') : null,
-    to:   toVal   ? new Date(toVal   + 'T23:59:59') : null,
-  };
+function actionSuggestM1(asStatus, atStatus, lt) {
+  const as = classify(asStatus), at = classify(atStatus);
+  if (as === 'ok' && at === 'ok') return '<span class="badge b-green">✓ Planejado</span>';
+  if (as === 'critical' && lt > 30) return '<span class="badge b-red">💀 Sem saída no prazo</span>';
+  if (as === 'critical') return '<span class="badge b-red">⚡ Antecipar Compra</span>';
+  if (as === 'warning') return '<span class="badge b-amber">⚠ Planejar Agora</span>';
+  if (at === 'critical') return '<span class="badge b-red">🔴 Trava Prod. M1</span>';
+  return '<span class="badge b-gray">Monitorar</span>';
 }
 
-function applyPeriodFilter() {
-  const { from, to } = getGlobalPeriod();
-  const hasFilter = from || to;
-
-  document.getElementById('btn-clear-period').style.display = hasFilter ? 'inline-block' : 'none';
-  document.getElementById('period-active-badge').style.display = hasFilter ? 'inline-block' : 'none';
-
-  filteredRows = allRows.filter(r => {
-    if (!hasFilter) return true;
-    const d = parseDate(r.dtEntrega);
-    if (!d || isNaN(d)) return false;
-    if (from && d < from) return false;
-    if (to   && d > to)   return false;
-    return true;
-  });
-
-  renderKPIs();
-  renderCharts();
-  renderTable();
-  if (document.getElementById('tab-evolucao').classList.contains('active')) renderEvolucao();
-}
-
-function clearPeriodFilter() {
-  document.getElementById('global-from').value = '';
-  document.getElementById('global-to').value   = '';
-  document.querySelectorAll('.period-preset').forEach(b => b.classList.remove('active'));
-  applyPeriodFilter();
-}
-
-function setPeriodPreset(p, el) {
-  const now   = new Date();
-  const today = now.toISOString().slice(0,10);
-  let from = '', to = today;
-
-  if (p === 'all') { from = ''; to = ''; }
-  else if (p === 'week') {
-    const d = new Date(now); d.setDate(d.getDate() - d.getDay());
-    from = d.toISOString().slice(0,10);
-  } else if (p === 'month') {
-    from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
-  } else if (p === 'last30') {
-    const d = new Date(now); d.setDate(d.getDate() - 30);
-    from = d.toISOString().slice(0,10);
-  } else if (p === 'last60') {
-    const d = new Date(now); d.setDate(d.getDate() - 60);
-    from = d.toISOString().slice(0,10);
-  } else if (p === 'last90') {
-    const d = new Date(now); d.setDate(d.getDate() - 90);
-    from = d.toISOString().slice(0,10);
-  }
-
-  document.getElementById('global-from').value = from;
-  document.getElementById('global-to').value   = to;
-  document.querySelectorAll('.period-preset').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  applyPeriodFilter();
-}
-
-// ── LOAD DATA ──
+/* ═══════════════════════════════════════
+   MAIN LOAD
+═══════════════════════════════════════ */
 async function loadData() {
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('content').style.display  = 'none';
-  document.getElementById('error-msg').style.display = 'none';
-
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+  document.getElementById('loader').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('err').style.display = 'none';
 
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
-
-    const rows = json.table.rows;
-
-    allRows = rows
-      .filter(r => r && r.c && r.c[0] && r.c[0].v)
-      .map(r => {
-        const v = i => (r.c[i] && r.c[i].v != null) ? String(r.c[i].v).trim() : '';
-        const vDate = i => {
-          const cel = r.c[i];
-          if (!cel || cel.v == null) return '';
-          return String(cel.v).trim();
-        };
-        return {
-          fornecedor: v(0),
-          tipo:       v(1),
-          nf:         v(2),
-          item:       v(3),
-          desc:       v(4),
-          volRep:     parseFloat(v(5)) || 0,
-          volFalt:    parseFloat(v(6)) || 0,
-          ins100:     v(7),
-          dtEntrega:  vDate(8),
-          linkForm:   v(9),
-          codigo:     v(10),
-          obsRec:     v(11),
-          obsComp:    v(12),
-          statusRaw:  v(13),
-          status:     normalizeStatus(v(13)),
-        };
-      });
-
-    filteredRows = [...allRows];
-
-    document.getElementById('sheet-name').textContent = 'Tratativa — Fornecedor (Compras) · ' + allRows.length + ' registros carregados';
-    document.getElementById('footer-info').textContent = 'Dados atualizados em ' + new Date().toLocaleString('pt-BR') + ' · Planilha ID ' + SHEET_ID;
-
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('content').style.display  = 'block';
-
-    renderKPIs();
-    renderVolumeStatus();
-    renderCharts();
-    renderTable();
-
-  } catch (e) {
-    document.getElementById('loading').style.display = 'none';
-    const err = document.getElementById('error-msg');
-    err.style.display = 'block';
-    err.innerHTML = `<strong>Não foi possível carregar os dados.</strong><br>Verifique se a planilha está pública (Compartilhar → qualquer pessoa com o link).<br><br>Detalhe: ${e.message}`;
+    setLd('Carregando aba BASE...');
+    const base = await fetchCSV(GID_BASE);
+    setLd('Carregando aba ALTERACAO...');
+    const alt = await fetchCSV(GID_ALT);
+    setLd('Processando...');
+    processAll(base, alt);
+    document.getElementById('last-upd').textContent = new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('err').style.display = 'flex';
+    document.getElementById('err-msg').textContent = e.message;
+    console.error(e);
   }
 }
+function setLd(m) { document.getElementById('ld-msg').textContent = m; }
 
-// ── RENDER KPIs (usa filteredRows) ──
-function renderKPIs() {
-  const rows = filteredRows;
-  const total     = rows.length;
-  const pendente  = rows.filter(r => r.status === 'pendente').length;
-  const andamento = rows.filter(r => r.status === 'andamento').length;
-  const concluido = rows.filter(r => r.status === 'concluido').length;
-  const critico   = rows.filter(isCritico).length;
-  const totalRep  = rows.reduce((a, r) => a + r.volRep, 0);
-  const totalFalt = rows.reduce((a, r) => a + r.volFalt, 0);
+/* ═══════════════════════════════════════
+   PROCESS ALL DATA
+═══════════════════════════════════════ */
+function processAll(baseRows, altRows) {
+  destroyCharts();
 
-  const { from, to } = getGlobalPeriod();
-  const filtrado = from || to;
+  /* ── Index alterações por Item Pai ── */
+  const altByPai = {};
+  altRows.forEach(r => {
+    const pai = (r[0]||'').toString().trim();
+    if (!pai) return;
+    if (!altByPai[pai]) altByPai[pai] = [];
+    const dataMod = parseDate(r[8]);
+    altByPai[pai].push({ dataMod, valorAbs: parseFloat((r[11]||'0').replace(',','.')) || 0 });
+  });
 
-  const cards = [
-    { label: 'Total de notas',    value: total,                             cls: 'blue',  sub: filtrado ? 'no período' : 'em tratativa' },
-    { label: 'Pendentes',         value: pendente,                          cls: 'red',   sub: 'sem ação de compras' },
-    { label: 'Em andamento',      value: andamento,                         cls: 'amber', sub: 'aguardando retorno' },
-    { label: 'Concluídas',        value: concluido,                         cls: 'green', sub: 'resolvidas' },
-    { label: 'Críticas (+20d)',   value: critico,                           cls: 'red',   sub: 'sem solução há 20+ dias' },
-    { label: 'Vol. reprovado',    value: totalRep.toLocaleString('pt-BR'),  cls: 'amber', sub: 'volume reprovado' },
-    { label: 'Vol. faltante',     value: totalFalt.toLocaleString('pt-BR'),cls: 'red',   sub: 'volume faltante' },
-  ];
+  /* ── Processar BASE ── */
+  let totalM0 = 0, okM0 = 0, totalM1 = 0, okM1 = 0;
+  let fcM0 = 0, impM0 = 0, fcM1 = 0, impM1 = 0, deadM1 = 0, oldCount = 0;
+  let maxLT = 0, maxLTItem = '';
+  const aiCount = {}, ajCount = {}, asCount = {}, atCount = {};
+  const ageCounts = {lt30:0, d30a90:0, d90a180:0, gt180:0, nodate:0};
 
-  document.getElementById('kpi-grid').innerHTML = cards.map(c =>
-    `<div class="kpi">
-      <div class="kpi-label">${c.label}</div>
-      <div class="kpi-value ${c.cls}">${c.value}</div>
-      <div class="kpi-sub">${c.sub}</div>
+  rowsM0 = []; rowsM0Preco = []; rowsM1 = [];
+
+  baseRows.forEach(r => {
+    if (!r || r.length < 36) return;
+    const itemPai = gc(r,'A');
+    const desc    = gc(r,'C');
+    const grupo   = gc(r,'N');
+    const fornec  = gc(r,'E');
+    const ltStr   = gc(r,'AA');
+    const lt      = parseFloat(ltStr) || 0;
+
+    // Datas
+    const ultCompraStr = gc(r,'I');
+    const ultCompra    = parseDate(ultCompraStr);
+    const diasSemCompra = diffDays(ultCompra);
+    const isOld6m = diasSemCompra !== null && diasSemCompra > 180;
+
+    // Saldos e status M0
+    const saldoM0 = gn(r,'AD');
+    const emPedido = gn(r,'Z');
+    const estoque  = gn(r,'J');
+    const statusAI = gc(r,'AI'); // o que falta comprar M0
+    const statusAJ = gc(r,'AJ'); // impacto no produto pai M0
+
+    // Status M1
+    const planoM1  = gn(r,'AO');
+    const saldoM1  = gn(r,'AQ');
+    const statusAS = gc(r,'AS'); // o que falta comprar M1
+    const statusAT = gc(r,'AT'); // impacto no produto pai M1
+
+    if (!itemPai) return;
+
+    // LT máximo
+    if (lt > maxLT) { maxLT = lt; maxLTItem = itemPai; }
+
+    // ── Contadores M0 ──
+    totalM0++;
+    const aiCl = classify(statusAI), ajCl = classify(statusAJ);
+    if (aiCl === 'ok' || aiCl === 'empty') okM0++;
+    if (aiCl === 'critical' || aiCl === 'warning') fcM0++;
+    if (ajCl === 'critical' || ajCl === 'warning') impM0++;
+    if (statusAI) aiCount[statusAI] = (aiCount[statusAI]||0) + 1;
+    if (statusAJ) ajCount[statusAJ] = (ajCount[statusAJ]||0) + 1;
+
+    // Risco preço
+    if (isOld6m && (aiCl==='critical'||aiCl==='warning')) oldCount++;
+
+    // Idade última compra
+    if (diasSemCompra === null) ageCounts.nodate++;
+    else if (diasSemCompra < 30) ageCounts.lt30++;
+    else if (diasSemCompra < 90) ageCounts.d30a90++;
+    else if (diasSemCompra < 180) ageCounts.d90a180++;
+    else ageCounts.gt180++;
+
+    // ── Contadores M1 ──
+    totalM1++;
+    const asCl = classify(statusAS), atCl = classify(statusAT);
+    if (asCl === 'ok' || asCl === 'empty') okM1++;
+    if (asCl === 'critical' || asCl === 'warning') fcM1++;
+    if (atCl === 'critical' || atCl === 'warning') impM1++;
+    if (asCl === 'critical' && lt > 0) deadM1++; // já nasce morto: falta + LT longo
+    if (statusAS) asCount[statusAS] = (asCount[statusAS]||0) + 1;
+    if (statusAT) atCount[statusAT] = (atCount[statusAT]||0) + 1;
+
+    // ── Linha M0 ──
+    rowsM0.push({
+      itemPai, desc, grupo, fornec, lt,
+      ultCompra, diasSemCompra, isOld6m,
+      saldoM0, emPedido, estoque,
+      statusAI, statusAJ,
+      aiCl, ajCl
+    });
+
+    // Risco preço: qualquer item com >6m e com falta ou warning
+    if (isOld6m && (aiCl==='critical'||aiCl==='warning'||aiCl==='empty')) {
+      rowsM0Preco.push({ itemPai, desc, grupo, fornec, lt, ultCompra, diasSemCompra, estoque, statusAI, aiCl });
+    }
+
+    // ── Linha M1 ──
+    rowsM1.push({
+      itemPai, desc, grupo, lt,
+      planoM1, saldoM1,
+      statusAS, statusAT,
+      asCl, atCl
+    });
+  });
+
+  /* ── Freeze ── */
+  const proxMesInicio = new Date(TODAY.getFullYear(), TODAY.getMonth()+1, 1);
+  const freezeDate = new Date(proxMesInicio);
+  freezeDate.setDate(freezeDate.getDate() - maxLT);
+  document.getElementById('freeze-v').textContent = maxLT > 0 ? maxLT+'d' : '—';
+  document.getElementById('freeze-d').textContent = maxLT > 0 ? `Freeze: ${fmtDate(freezeDate)}` : 'Nenhum LT crítico detectado';
+  document.getElementById('freeze-pill').textContent = maxLT > 0 ? `FREEZE: ${fmtDate(freezeDate)}` : '—';
+
+  /* ── KPIs M0 ── */
+  const nsM0 = totalM0 ? (okM0/totalM0*100) : 0;
+  const nsM0Color = nsM0>=90?'var(--green)':nsM0>=70?'var(--amber)':'var(--red)';
+  setKPI('ns-m0', nsM0.toFixed(1)+'%', nsM0Color);
+  document.getElementById('ns-m0-d').textContent = `${okM0} OK de ${totalM0} itens`;
+  document.getElementById('ns-m0-bar').style.cssText = `width:${nsM0}%;background:${nsM0Color}`;
+  setKPI('fc-m0', fcM0, 'var(--red)');
+  document.getElementById('fc-m0-d').textContent = `itens com falta/risco em AI`;
+  setKPI('imp-m0', impM0, 'var(--amber)');
+  document.getElementById('imp-m0-d').textContent = `produtos Pai bloqueados em AJ`;
+  setKPI('old-m0', oldCount, '#f97316');
+  document.getElementById('m0-badge').textContent = `${fcM0} faltas`;
+
+  /* ── KPIs M1 ── */
+  const nsM1 = totalM1 ? (okM1/totalM1*100) : 0;
+  const nsM1Color = nsM1>=90?'var(--green)':nsM1>=70?'var(--amber)':'var(--red)';
+  setKPI('ns-m1', nsM1.toFixed(1)+'%', nsM1Color);
+  document.getElementById('ns-m1-d').textContent = `${okM1} OK de ${totalM1} itens`;
+  document.getElementById('ns-m1-bar').style.cssText = `width:${nsM1}%;background:${nsM1Color}`;
+  setKPI('fc-m1', fcM1, 'var(--purple)');
+  document.getElementById('fc-m1-d').textContent = `itens com pendência M1`;
+  setKPI('imp-m1', impM1, 'var(--amber)');
+  document.getElementById('imp-m1-d').textContent = `produtos travados em M1`;
+  setKPI('dead-m1', deadM1, 'var(--red)');
+  document.getElementById('m1-badge').textContent = `${fcM1} faltas`;
+
+  /* ── Banners M0 ── */
+  const b0 = [];
+  if (fcM0 > 0) b0.push({cls:'alert-red',icon:'🚨',msg:`<strong style="color:#fca5a5">${fcM0} itens</strong> precisam de ação imediata de compra (col. AI). ${impM0} produtos Pai têm produção bloqueada (col. AJ).`});
+  if (oldCount > 0) b0.push({cls:'alert-amber',icon:'🟠',msg:`<strong style="color:#fcd34d">${oldCount} itens</strong> com última compra há mais de 6 meses e com falta — <strong style="color:#fb923c">risco de reajuste de preço</strong>. Solicite cotação atualizada.`});
+  if (maxLT > 0) b0.push({cls:'alert-blue',icon:'📅',msg:`Maior Lead Time detectado: <strong style="color:#93c5fd">${maxLT} dias (item ${maxLTItem})</strong>. Para produzir em ${proxMesInicio.toLocaleDateString('pt-BR',{month:'long'})}, o plano deveria estar fechado desde <strong style="color:#a78bfa">${fmtDate(freezeDate)}</strong>.`});
+  document.getElementById('banners-m0').innerHTML = b0.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:11px;color:var(--text2)">${b.msg}</span></div>`).join('');
+
+  /* ── Banners M1 ── */
+  const b1 = [];
+  if (deadM1 > 0) b1.push({cls:'alert-red',icon:'💀',msg:`<strong style="color:#fca5a5">${deadM1} itens</strong> já nascem em falta para M1 considerando o Lead Time atual — ruptura inevitável se não houver ação <em>agora</em>.`});
+  if (fcM1 > 0) b1.push({cls:'alert-amber',icon:'📋',msg:`<strong style="color:#fcd34d">${fcM1} itens</strong> ainda precisam ser comprados para garantir M1. Inicie o processo de compra imediatamente.`});
+  document.getElementById('banners-m1').innerHTML = b1.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:11px;color:var(--text2)">${b.msg}</span></div>`).join('');
+
+  /* ── Charts ── */
+  buildDonut('ch-ai', aiCount, 'ai-legend');
+  buildDonut('ch-aj', ajCount, 'aj-legend');
+  buildDonut('ch-as', asCount, 'as-legend');
+  buildDonut('ch-at', atCount, 'at-legend');
+  buildAgeBar('ch-age', ageCounts);
+
+  /* ── Tables ── */
+  renderM0('all');
+  renderPreco();
+  renderM1('all');
+
+  document.getElementById('foot-info').textContent =
+    `Sheet: ${SHEET_ID} | ${totalM0} itens | ${new Date().toLocaleString('pt-BR')}`;
+}
+
+function setKPI(id, val, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val;
+  if (color) el.style.color = color;
+}
+
+/* ═══════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════ */
+Chart.defaults.color = '#6b7fa3';
+Chart.defaults.borderColor = '#1c2840';
+Chart.defaults.font.family = 'DM Mono';
+Chart.defaults.font.size = 9;
+
+function colorForStatus(s) {
+  const n = (s||'').toLowerCase();
+  if (n.includes('ok')||n.includes('disp')) return 'rgba(16,185,129,.75)';
+  if (n.includes('falta')||n.includes('crít')||n.includes('comprar')) return 'rgba(239,68,68,.75)';
+  if (n.includes('risco')||n.includes('parcial')||n.includes('aten')) return 'rgba(245,158,11,.75)';
+  if (n.includes('pedido')||n.includes('aguard')) return 'rgba(59,130,246,.75)';
+  return 'rgba(107,127,163,.5)';
+}
+
+function buildDonut(canvasId, countObj, legendId) {
+  const labels = Object.keys(countObj).sort((a,b)=>countObj[b]-countObj[a]).slice(0,8);
+  const values = labels.map(l=>countObj[l]);
+  const colors = labels.map(l=>colorForStatus(l));
+  const total  = values.reduce((a,b)=>a+b,0);
+
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderColor:'#07090f', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(0)}%)`}}
+      }
+    }
+  });
+
+  const el = document.getElementById(legendId);
+  if (el) el.innerHTML = labels.slice(0,5).map((l,i)=>
+    `<div style="display:flex;align-items:center;gap:4px">
+      <div style="width:7px;height:7px;border-radius:1px;background:${colors[i]};flex-shrink:0"></div>
+      <span class="mono" style="font-size:8px;color:var(--text2)">${l.length>18?l.substring(0,17)+'…':l} (${values[i]})</span>
     </div>`
   ).join('');
-
-  renderVolumeStatus();
 }
 
-// ── VOLUME POR STATUS ──
-function renderVolumeStatus() {
-  const rows = filteredRows;
-
-  const groups = {
-    pendente:  { label: 'Pendente',      color: '#c0392b', colorBar: '#c0392b' },
-    andamento: { label: 'Em andamento',  color: '#9a6200', colorBar: '#e8a000' },
-    concluido: { label: 'Concluído',     color: '#2d6a1f', colorBar: '#3a8a28' },
-  };
-
-  const data = {};
-  Object.keys(groups).forEach(k => {
-    const sub = rows.filter(r => r.status === k);
-    data[k] = {
-      count: sub.length,
-      volRep:  sub.reduce((a, r) => a + r.volRep, 0),
-      volFalt: sub.reduce((a, r) => a + r.volFalt, 0),
-    };
-  });
-
-  const maxVol = Math.max(1, ...Object.values(data).map(d => d.volRep + d.volFalt));
-
-  document.getElementById('vol-status-grid').innerHTML = Object.entries(groups).map(([k, g]) => {
-    const d = data[k];
-    const totalVol = d.volRep + d.volFalt;
-    const pct = Math.round((totalVol / maxVol) * 100);
-    return `
-      <div class="vol-card">
-        <div class="vol-card-header">
-          <span class="vol-dot" style="background:${g.color}"></span>
-          <span class="vol-card-label">${g.label}</span>
-          <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--text2)">${d.count} nota${d.count !== 1 ? 's' : ''}</span>
-        </div>
-        <div class="vol-rows">
-          <div class="vol-row">
-            <span class="vol-row-label">Vol. reprovado</span>
-            <span class="vol-row-val ${d.volRep > 0 ? 'red' : 'neutral'}">${d.volRep > 0 ? d.volRep.toLocaleString('pt-BR') : '—'}</span>
-          </div>
-          <div class="vol-row">
-            <span class="vol-row-label">Vol. faltante</span>
-            <span class="vol-row-val ${d.volFalt > 0 ? 'red' : 'neutral'}">${d.volFalt > 0 ? d.volFalt.toLocaleString('pt-BR') : '—'}</span>
-          </div>
-          <div class="vol-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:2px">
-            <span class="vol-row-label" style="font-weight:600;color:var(--text2)">Total volume</span>
-            <span class="vol-row-val" style="color:${g.color}">${totalVol > 0 ? totalVol.toLocaleString('pt-BR') : '—'}</span>
-          </div>
-        </div>
-        <div class="vol-bar-wrap">
-          <div class="vol-bar" style="width:${pct}%;background:${g.colorBar}"></div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// ── RENDER CHARTS (usa filteredRows) ──
-function renderCharts() {
-  const rows = filteredRows;
-
-  // Fornecedor
-  const fornMap = {};
-  rows.forEach(r => { fornMap[r.fornecedor] = (fornMap[r.fornecedor]||0) + 1; });
-  const fornSorted = Object.entries(fornMap).sort((a,b) => b[1]-a[1]).slice(0,10);
-
-  if (charts.forn) charts.forn.destroy();
-  charts.forn = new Chart(document.getElementById('chart-forn'), {
-    type: 'bar',
-    data: {
-      labels: fornSorted.map(f => f[0].length > 18 ? f[0].slice(0,18)+'…' : f[0]),
-      datasets: [{
-        label: 'Notas',
-        data: fornSorted.map(f => f[1]),
-        backgroundColor: '#1a4f8a',
-        borderRadius: 4,
-        borderSkipped: false,
+function buildAgeBar(canvasId, ag) {
+  if (charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{
+      labels:['<30d','30-90d','90-180d','>180d','Sem data'],
+      datasets:[{
+        data:[ag.lt30, ag.d30a90, ag.d90a180, ag.gt180, ag.nodate],
+        backgroundColor:['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(234,88,12,.7)','rgba(239,68,68,.7)','rgba(107,127,163,.4)'],
+        borderRadius:4, borderWidth:0
       }]
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { font: { size: 11, family:'DM Sans' }, color: '#6b6b66', maxRotation: 35, autoSkip: false }, grid: { display: false } },
-        y: { ticks: { font: { size: 11 }, color: '#6b6b66', stepSize: 1 }, grid: { color: 'rgba(0,0,0,.05)' } }
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}},
+        y:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}}
       }
     }
   });
+}
 
-  // Status donut
-  const stMap = { pendente: 0, andamento: 0, concluido: 0 };
-  rows.forEach(r => { stMap[r.status] = (stMap[r.status]||0) + 1; });
-  const stColors = { pendente: '#c0392b', andamento: '#9a6200', concluido: '#2d6a1f' };
-  const stLabels = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído' };
-  const stVals   = Object.entries(stMap);
+function destroyCharts() { Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}}); charts={}; }
 
-  document.getElementById('legend-status').innerHTML = stVals.map(([k,v]) =>
-    `<span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#6b6b66">
-      <span style="width:10px;height:10px;border-radius:2px;background:${stColors[k]};flex-shrink:0"></span>
-      ${stLabels[k]} <strong style="color:#1a1a18">${v}</strong>
-    </span>`
-  ).join('');
-
-  if (charts.status) charts.status.destroy();
-  charts.status = new Chart(document.getElementById('chart-status'), {
-    type: 'doughnut',
-    data: {
-      labels: stVals.map(([k]) => stLabels[k]),
-      datasets: [{ data: stVals.map(([,v]) => v), backgroundColor: stVals.map(([k]) => stColors[k]), borderWidth: 0, hoverOffset: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '68%',
-      plugins: { legend: { display: false } }
-    }
+/* ═══════════════════════════════════════
+   TABLE M0
+═══════════════════════════════════════ */
+function filterM0(f) {
+  activeF0 = f;
+  ['all','critico','parcial','preco'].forEach(k=>{
+    document.getElementById('f0-'+k)?.classList.toggle('on', k===f);
   });
+  renderM0(f);
 }
 
-// ── EVOLUÇÃO MENSAL ──
-function setEvolucaoMode(mode, el) {
-  currentEvolucaoMode = mode;
-  document.querySelectorAll('.evolucao-toggle-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  renderEvolucao();
-}
-
-function getMonthKey(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d || isNaN(d)) return null;
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-
-function monthLabel(key) {
-  const [y, m] = key.split('-');
-  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  return months[parseInt(m)-1] + '/' + y.slice(2);
-}
-
-function renderEvolucao() {
-  // Agrupa por mês (usa allRows para ter histórico completo)
-  const byMonth = {};
-
-  allRows.forEach(r => {
-    const mk = getMonthKey(r.dtEntrega);
-    if (!mk) return;
-    if (!byMonth[mk]) byMonth[mk] = { pendente: 0, andamento: 0, concluido: 0, volRep_p: 0, volRep_a: 0, volRep_c: 0, volFalt_p: 0, volFalt_a: 0, volFalt_c: 0, total: 0 };
-    const m = byMonth[mk];
-    m[r.status]++;
-    m.total++;
-    if (r.status === 'pendente')  { m.volRep_p += r.volRep; m.volFalt_p += r.volFalt; }
-    if (r.status === 'andamento') { m.volRep_a += r.volRep; m.volFalt_a += r.volFalt; }
-    if (r.status === 'concluido') { m.volRep_c += r.volRep; m.volFalt_c += r.volFalt; }
+function renderM0(f) {
+  const search = (document.getElementById('search-m0')?.value||'').toLowerCase();
+  const rows = rowsM0.filter(r=>{
+    if (search && !r.itemPai.toLowerCase().includes(search) && !r.desc.toLowerCase().includes(search)) return false;
+    if (f==='critico') return r.aiCl==='critical'||r.ajCl==='critical';
+    if (f==='parcial') return r.aiCl==='warning'||r.ajCl==='warning';
+    if (f==='preco')   return r.isOld6m;
+    return r.aiCl!=='ok'&&r.aiCl!=='empty'; // default: apenas não-OK
   });
 
-  const sortedKeys = Object.keys(byMonth).sort();
-  if (sortedKeys.length === 0) {
-    // Sem dados suficientes
+  document.getElementById('cnt-m0').textContent = rows.length+' itens';
+  const el = document.getElementById('tbl-m0');
+
+  if (!rows.length) {
+    el.innerHTML = `<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com este filtro ✓</div>`;
     return;
   }
 
-  const labels = sortedKeys.map(monthLabel);
-  const isVol = currentEvolucaoMode === 'vol';
-
-  // Dados para barras empilhadas
-  const dPendente  = sortedKeys.map(k => isVol ? (byMonth[k].volRep_p + byMonth[k].volFalt_p) : byMonth[k].pendente);
-  const dAndamento = sortedKeys.map(k => isVol ? (byMonth[k].volRep_a + byMonth[k].volFalt_a) : byMonth[k].andamento);
-  const dConcluido = sortedKeys.map(k => isVol ? (byMonth[k].volRep_c + byMonth[k].volFalt_c) : byMonth[k].concluido);
-  const dTotal     = sortedKeys.map(k => isVol ? (byMonth[k].volRep_p + byMonth[k].volFalt_p + byMonth[k].volRep_a + byMonth[k].volFalt_a + byMonth[k].volRep_c + byMonth[k].volFalt_c) : byMonth[k].total);
-
-  document.getElementById('evol-chart-title').textContent = isVol
-    ? 'Volume por mês e status (reprov. + faltante)'
-    : 'Notas por mês e status';
-
-  if (charts.evolStack) charts.evolStack.destroy();
-  charts.evolStack = new Chart(document.getElementById('chart-evol-stack'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Pendente',     data: dPendente,  backgroundColor: '#c0392b', borderRadius: 0, stack: 's' },
-        { label: 'Em andamento', data: dAndamento, backgroundColor: '#e8a000', borderRadius: 0, stack: 's' },
-        { label: 'Concluído',    data: dConcluido, backgroundColor: '#3a8a28', borderRadius: 4, stack: 's' },
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'top', labels: { font: { size: 12, family: 'DM Sans' }, boxWidth: 12, padding: 16 } },
-        tooltip: {
-          callbacks: {
-            footer: (items) => {
-              const sum = items.reduce((a, i) => a + i.parsed.y, 0);
-              return 'Total: ' + sum.toLocaleString('pt-BR');
-            }
-          }
-        }
-      },
-      scales: {
-        x: { stacked: true, ticks: { font: { size: 11, family: 'DM Sans' }, color: '#6b6b66' }, grid: { display: false } },
-        y: { stacked: true, ticks: { font: { size: 11 }, color: '#6b6b66' }, grid: { color: 'rgba(0,0,0,.05)' } }
-      }
-    }
+  // Sort: criticos primeiro
+  rows.sort((a,b)=>{
+    const order = {critical:0,warning:1,info:2,neutral:3,ok:4,empty:5};
+    return (order[a.aiCl]||5)-(order[b.aiCl]||5);
   });
 
-  // Fluxo: linha de total e linha de concluídos
-  document.getElementById('evol-flux-title').textContent = isVol
-    ? 'Fluxo de volume — total acumulado vs resolvido'
-    : 'Fluxo de notas — total vs resolvidas por mês';
-
-  if (charts.evolFlux) charts.evolFlux.destroy();
-  charts.evolFlux = new Chart(document.getElementById('chart-evol-flux'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: isVol ? 'Volume total' : 'Total de notas',
-          data: dTotal,
-          borderColor: '#1a4f8a',
-          backgroundColor: 'rgba(26,79,138,0.08)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.3,
-          pointRadius: 4,
-          pointBackgroundColor: '#1a4f8a',
-        },
-        {
-          label: isVol ? 'Volume resolvido' : 'Notas concluídas',
-          data: dConcluido,
-          borderColor: '#3a8a28',
-          backgroundColor: 'rgba(58,138,40,0.08)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.3,
-          pointRadius: 4,
-          pointBackgroundColor: '#3a8a28',
-        },
-        {
-          label: isVol ? 'Volume pendente' : 'Pendentes',
-          data: dPendente,
-          borderColor: '#c0392b',
-          backgroundColor: 'rgba(0,0,0,0)',
-          borderWidth: 2,
-          borderDash: [5, 4],
-          tension: 0.3,
-          pointRadius: 3,
-          pointBackgroundColor: '#c0392b',
-        },
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'top', labels: { font: { size: 12, family: 'DM Sans' }, boxWidth: 12, padding: 16 } }
-      },
-      scales: {
-        x: { ticks: { font: { size: 11, family: 'DM Sans' }, color: '#6b6b66' }, grid: { display: false } },
-        y: { ticks: { font: { size: 11 }, color: '#6b6b66' }, grid: { color: 'rgba(0,0,0,.05)' } }
-      }
-    }
-  });
-
-  renderMetas(byMonth, sortedKeys, isVol);
-}
-
-// ── METAS ──
-function renderMetas(byMonth, sortedKeys, isVol) {
-  // Pega o mês mais recente para cálculo do progresso
-  const lastKey = sortedKeys[sortedKeys.length - 1];
-  const lastMonth = byMonth[lastKey] || {};
-
-  const concluidoMes  = isVol ? (lastMonth.volRep_c + lastMonth.volFalt_c) : lastMonth.concluido || 0;
-  const pendenteMes   = isVol ? (lastMonth.volRep_p + lastMonth.volFalt_p) : lastMonth.pendente  || 0;
-  const totalVolMes   = isVol ? (lastMonth.volRep_p + lastMonth.volFalt_p + lastMonth.volRep_a + lastMonth.volFalt_a + lastMonth.volRep_c + lastMonth.volFalt_c) : lastMonth.total || 0;
-
-  const metaItems = [
-    {
-      id: 'concluir_mes',
-      label: isVol ? 'Volume resolvido (mês atual)' : 'Notas concluídas (mês atual)',
-      atual: concluidoMes,
-      meta: metas.concluir_mes,
-      color: '#3a8a28',
-      placeholder: isVol ? '500' : '10',
-    },
-    {
-      id: 'reduzir_pendente',
-      label: isVol ? 'Pendentes em volume (teto máx.)' : 'Pendentes (teto máximo)',
-      atual: pendenteMes,
-      meta: metas.reduzir_pendente,
-      color: '#c0392b',
-      placeholder: isVol ? '200' : '5',
-      teto: true, // lógica de teto: atual <= meta = ✅
-    },
-    {
-      id: 'total_mes',
-      label: isVol ? 'Volume total no período' : 'Total de notas no período',
-      atual: totalVolMes,
-      meta: metas.total_mes || 0,
-      color: '#1a4f8a',
-      placeholder: isVol ? '1000' : '30',
-      info: true,
-    },
-  ];
-
-  document.getElementById('metas-grid').innerHTML = metaItems.map(item => {
-    let pct, statusLabel, barColor, statusColor, barWidth;
-
-    if (item.meta <= 0) {
-      // Sem meta definida
-      pct = 0; statusLabel = '—'; barColor = '#d0d0c8'; statusColor = 'var(--text3)'; barWidth = 0;
-    } else if (item.teto) {
-      // Lógica de TETO: atual <= meta = bateu; atual > meta = estourou
-      if (item.atual <= item.meta) {
-        // Bateu a meta — barra verde proporcional ao quanto sobrou de margem
-        barWidth = 100;
-        barColor = '#3a8a28';
-        statusColor = '#3a8a28';
-        const sobra = item.meta - item.atual;
-        statusLabel = item.atual === item.meta
-          ? 'No limite ⚠️'
-          : `✅ Meta batida — ${sobra} abaixo do teto`;
-        pct = null; // não mostra %
-      } else {
-        // Estourou a meta
-        const excesso = item.atual - item.meta;
-        barWidth = Math.min(100, Math.round((item.atual / item.meta) * 60)); // barra parcial vermelha
-        barColor = '#c0392b';
-        statusColor = '#c0392b';
-        statusLabel = `⚠️ +${excesso} acima da meta`;
-        pct = null;
-      }
-    } else {
-      // Lógica normal: quanto mais próximo da meta melhor
-      pct = Math.min(100, Math.round((item.atual / item.meta) * 100));
-      barWidth = pct;
-      barColor = item.color;
-      statusColor = pct >= 100 ? '#3a8a28' : pct >= 60 ? '#e8a000' : '#c0392b';
-      statusLabel = pct + '%';
-    }
-
-    const metaLabel = item.meta > 0
-      ? (item.teto ? 'Teto: ' : 'Meta: ') + item.meta.toLocaleString('pt-BR')
-      : 'Meta não definida';
-
-    return `
-      <div class="meta-card">
-        <div class="meta-card-label">${item.label}</div>
-        <div class="meta-progress-wrap">
-          <div class="meta-progress-bar" style="width:${barWidth}%;background:${barColor}"></div>
-        </div>
-        <div class="meta-info">
-          <span class="meta-atual" style="color:${item.teto && item.meta > 0 ? (item.atual <= item.meta ? '#3a8a28' : '#c0392b') : item.color}">${item.atual.toLocaleString('pt-BR')}</span>
-          <span class="meta-alvo">${metaLabel}</span>
-          <span class="meta-pct" style="color:${statusColor};font-size:${item.teto ? '11px' : '12px'}">${statusLabel}</span>
-        </div>
-        <div class="meta-input-group">
-          <label>${item.teto ? 'Teto máximo:' : 'Definir meta:'}</label>
-          <input type="number" id="meta-input-${item.id}" value="${item.meta || ''}" placeholder="${item.placeholder}" min="0">
-          <button class="meta-save-btn" onclick="saveMeta('${item.id}')">Salvar</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-async function saveMeta(id) {
-  const val = parseInt(document.getElementById('meta-input-' + id).value) || 0;
-  metas[id] = val;
-  await DB.save();
-  renderEvolucao();
-}
-
-// ── RENDER TABLE ──
-function statusBadge(s, raw) {
-  if (s === 'concluido') return `<span class="badge badge-green">Concluído</span>`;
-  if (s === 'andamento') return `<span class="badge badge-amber">${raw || 'Em andamento'}</span>`;
-  return `<span class="badge badge-red">${raw || 'Pendente'}</span>`;
-}
-
-function renderTable() {
-  const search = (document.getElementById('search-input').value || '').toLowerCase();
-  const { from: fromDate, to: toDate } = getGlobalPeriod();
-
-  const filtered = allRows.filter(r => {
-    if (currentFilter === 'pendente'  && r.status !== 'pendente') return false;
-    if (currentFilter === 'andamento' && r.status !== 'andamento') return false;
-    if (currentFilter === 'concluido' && r.status !== 'concluido') return false;
-    if (currentFilter === 'critico'   && !isCritico(r)) return false;
-    if (search) {
-      const hay = [r.fornecedor, r.nf, r.desc, r.tipo, r.obsRec, r.obsComp].join(' ').toLowerCase();
-      if (!hay.includes(search)) return false;
-    }
-    if (fromDate || toDate) {
-      const d = parseDate(r.dtEntrega);
-      if (!d || isNaN(d)) return false;
-      if (fromDate && d < fromDate) return false;
-      if (toDate   && d > toDate)   return false;
-    }
-    return true;
-  });
-
-  document.getElementById('table-count').textContent = filtered.length + ' de ' + allRows.length + ' notas';
-
-  if (filtered.length === 0) {
-    document.getElementById('table-body').innerHTML =
-      `<tr class="empty-row"><td colspan="13">Nenhuma nota encontrada para este filtro.</td></tr>`;
-    return;
-  }
-
-  document.getElementById('table-body').innerHTML = filtered.map(r => {
-    const idx = allRows.indexOf(r);
-    const crit = isCritico(r);
-    const dias = daysDiff(r.dtEntrega);
-    return `<tr class="${crit ? 'row-critico' : ''}">
-      <td style="font-weight:500;white-space:nowrap">${r.fornecedor}${crit ? '<span class="critico-tag">CRÍTICO</span>' : ''}</td>
-      <td style="white-space:nowrap;font-size:12px;color:#6b6b66">${r.tipo || '—'}</td>
-      <td class="mono">${r.nf || '—'}</td>
-      <td style="text-align:center;color:#6b6b66">${r.item || '—'}</td>
-      <td style="min-width:160px;max-width:200px;font-size:12px">${r.desc || '—'}</td>
-      <td style="text-align:right;font-weight:${r.volRep>0?'500':'400'};color:${r.volRep>0?'#c0392b':'#9e9e98'}">${r.volRep > 0 ? r.volRep.toLocaleString('pt-BR') : '—'}</td>
-      <td style="text-align:right;font-weight:${r.volFalt>0?'500':'400'};color:${r.volFalt>0?'#c0392b':'#9e9e98'}">${r.volFalt > 0 ? r.volFalt.toLocaleString('pt-BR') : '—'}</td>
-      <td style="text-align:center">${r.ins100 && r.ins100.toLowerCase().includes('sim') ? '<span class="badge badge-amber">Sim</span>' : '—'}</td>
-      <td style="white-space:nowrap;font-size:12px">${formatDateDisplay(r.dtEntrega)}${dias > 20 ? `<br><span style="font-size:10px;color:#c0392b">${dias}d atrás</span>` : ''}</td>
-      <td>${statusBadge(r.status, r.statusRaw)}</td>
-      <td class="obs-cell" onclick="showDetail(${idx})" title="${(r.obsRec||'').replace(/"/g,'&quot;')}">${r.obsRec || '<span style="color:#c8c8c0">—</span>'}</td>
-      <td class="obs-cell" onclick="showDetail(${idx})" title="${(r.obsComp||'').replace(/"/g,'&quot;')}">${r.obsComp || '<span style="color:#c0392b;font-size:11px">Sem retorno</span>'}</td>
-      <td>${r.linkForm && r.linkForm.startsWith('http') ? `<a href="${r.linkForm}" target="_blank" class="link-btn">Ver ↗</a>` : '—'}</td>
-    </tr>`;
-  }).join('');
-}
-
-function setFilter(f, el) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  renderTable();
-}
-
-function showDetail(idx) {
-  const r = allRows[idx];
-  const crit = isCritico(r);
-  const dias = daysDiff(r.dtEntrega);
-  document.getElementById('m-title').textContent = (r.nf || '—') + ' · ' + r.fornecedor;
-  document.getElementById('m-sub').textContent   = r.desc + (r.item ? ' — Item ' + r.item : '');
-  document.getElementById('m-body').innerHTML = `
-    <div class="modal-grid">
-      <div class="modal-field"><label>Tipo de material</label><span>${r.tipo || '—'}</span></div>
-      <div class="modal-field"><label>Código</label><span style="font-family:'DM Mono',monospace;font-size:12px">${r.codigo || '—'}</span></div>
-      <div class="modal-field"><label>Vol. reprovado</label><span style="color:${r.volRep>0?'#c0392b':'inherit'};font-weight:${r.volRep>0?500:400}">${r.volRep > 0 ? r.volRep.toLocaleString('pt-BR') + ' un.' : 'nenhum'}</span></div>
-      <div class="modal-field"><label>Vol. faltante</label><span style="color:${r.volFalt>0?'#c0392b':'inherit'};font-weight:${r.volFalt>0?500:400}">${r.volFalt > 0 ? r.volFalt.toLocaleString('pt-BR') + ' un.' : 'nenhum'}</span></div>
-      <div class="modal-field"><label>Inspeção 100%</label><span>${r.ins100 || '—'}</span></div>
-      <div class="modal-field"><label>Data de entrega</label><span>${formatDateDisplay(r.dtEntrega)}${dias > 0 ? ' <span style="color:#9a6200;font-size:11px">('+dias+'d)</span>' : ''}</span></div>
-      <div class="modal-field" style="grid-column:span 2"><label>Status compras</label><span>${statusBadge(r.status, r.statusRaw)}</span></div>
-    </div>
-    <hr class="modal-divider">
-    <div class="modal-obs-block">
-      <label>Obs. recebimento</label>
-      <p>${r.obsRec || '<em>Sem observações</em>'}</p>
-    </div>
-    <div class="modal-obs-block">
-      <label>Obs. compras</label>
-      <p style="${!r.obsComp ? 'color:#c0392b' : ''}">${r.obsComp || 'Sem retorno do setor de compras'}</p>
-    </div>
-    ${crit ? `<div class="modal-critico-alert">Nota crítica — ${dias} dias sem resolução. Cobrar ação imediata de compras.</div>` : ''}
-    ${r.linkForm && r.linkForm.startsWith('http') ? `<div style="margin-top:14px"><a href="${r.linkForm}" target="_blank" class="link-btn" style="font-size:13px;padding:6px 14px">Ver formulário de inspeção ↗</a></div>` : ''}
-  `;
-  document.getElementById('modal-overlay').classList.add('open');
-}
-
-function closeModal(e) {
-  if (e.target === document.getElementById('modal-overlay'))
-    document.getElementById('modal-overlay').classList.remove('open');
-}
-
-// ══════════════════════════════════════════
-// CENTRAL DE AÇÃO
-// ══════════════════════════════════════════
-
-let acoesRegistradas = [];
-
-function renderAcao() {
-  const criticos = allRows.filter(isCritico);
-  const volCritico = criticos.reduce((a, r) => a + r.volRep + r.volFalt, 0);
-
-  document.getElementById('acao-alerta-titulo').textContent =
-    criticos.length > 0
-      ? `${criticos.length} nota${criticos.length > 1 ? 's' : ''} crítica${criticos.length > 1 ? 's' : ''} exigem ação imediata — ${volCritico.toLocaleString('pt-BR')} un. de volume em risco`
-      : '✅ Nenhuma nota crítica no momento';
-
-  const fornCriticos = [...new Set(criticos.map(r => r.fornecedor))];
-  document.getElementById('acao-alerta-sub').textContent =
-    criticos.length > 0
-      ? `Fornecedores envolvidos: ${fornCriticos.slice(0,5).join(', ')}${fornCriticos.length > 5 ? ` e mais ${fornCriticos.length - 5}` : ''}`
-      : 'Continue monitorando o painel de evolução mensal.';
-
-  renderListaAcoes();
-}
-
-// ── Prioridade: score = dias_parado * (1 + vol/100) ──
-function scoreCritico(r) {
-  const dias = daysDiff(r.dtEntrega);
-  const vol  = r.volRep + r.volFalt;
-  return dias * (1 + vol / 100);
-}
-
-function gerarPlanoAcao() {
-  const criticos = allRows
-    .filter(isCritico)
-    .sort((a, b) => scoreCritico(b) - scoreCritico(a));
-
-  if (criticos.length === 0) {
-    mostrarOutput('📋 Plano de Ação', '✅ Nenhuma nota crítica encontrada. Continue monitorando!');
-    return;
-  }
-
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  let txt = `PLANO DE AÇÃO — NOTAS PARADAS CRÍTICAS\n`;
-  txt += `Gerado em: ${hoje}\n`;
-  txt += `${'─'.repeat(60)}\n\n`;
-  txt += `RESUMO\n`;
-  txt += `  Total de notas críticas (+20 dias): ${criticos.length}\n`;
-  txt += `  Volume total em risco: ${criticos.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} un.\n`;
-  txt += `  Fornecedores envolvidos: ${[...new Set(criticos.map(r => r.fornecedor))].length}\n\n`;
-  txt += `${'─'.repeat(60)}\n\n`;
-  txt += `AÇÕES PRIORIZADAS (maior urgência primeiro)\n\n`;
-
-  criticos.forEach((r, i) => {
-    const dias = daysDiff(r.dtEntrega);
-    const vol  = r.volRep + r.volFalt;
-    const prazo = new Date(Date.now() + 2 * 86400000).toLocaleDateString('pt-BR');
-
-    txt += `${i + 1}. ${r.fornecedor}\n`;
-    txt += `   NF: ${r.nf || '—'}  |  Item: ${r.item || '—'}  |  ${dias} dias parado\n`;
-    txt += `   Descrição: ${r.desc || '—'}\n`;
-    if (vol > 0) txt += `   Volume em risco: ${vol.toLocaleString('pt-BR')} un. (reprov: ${r.volRep.toLocaleString('pt-BR')} / faltante: ${r.volFalt.toLocaleString('pt-BR')})\n`;
-    txt += `   Status atual: ${r.statusRaw || 'Pendente'}\n`;
-    if (r.obsComp) txt += `   Última obs. compras: "${r.obsComp}"\n`;
-    txt += `   ➤ AÇÃO: Contatar ${r.fornecedor} e exigir posição até ${prazo}\n`;
-    txt += `   ➤ RESPONSÁVEL: Compras\n`;
-    txt += `   ➤ PRAZO: ${prazo}\n\n`;
-  });
-
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `PRÓXIMA REVISÃO: ${new Date(Date.now() + 3 * 86400000).toLocaleDateString('pt-BR')}\n`;
-  txt += `Este plano foi gerado automaticamente a partir do dashboard de notas paradas.`;
-
-  mostrarOutput('📋 Plano de Ação', txt);
-}
-
-function gerarEmails() {
-  const criticos = allRows.filter(isCritico);
-
-  if (criticos.length === 0) {
-    mostrarOutput('✉️ E-mails de Cobrança', '✅ Nenhuma nota crítica para cobrar.');
-    return;
-  }
-
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  const prazo2d = new Date(Date.now() + 2 * 86400000).toLocaleDateString('pt-BR');
-  const prazo5d = new Date(Date.now() + 5 * 86400000).toLocaleDateString('pt-BR');
-
-  // Agrupa por fornecedor
-  const porForn = {};
-  criticos.forEach(r => {
-    if (!porForn[r.fornecedor]) porForn[r.fornecedor] = [];
-    porForn[r.fornecedor].push(r);
-  });
-
-  let txt = ``;
-
-  // E-mail 1: Para o setor de COMPRAS (interno)
-  txt += `══════════════════════════════════════════\n`;
-  txt += `E-MAIL 1 — PARA: Setor de Compras (Interno)\n`;
-  txt += `ASSUNTO: ⚠️ URGENTE — ${criticos.length} nota${criticos.length > 1 ? 's' : ''} parada${criticos.length > 1 ? 's' : ''} crítica${criticos.length > 1 ? 's' : ''} aguardam ação imediata\n`;
-  txt += `══════════════════════════════════════════\n\n`;
-  txt += `Prezados,\n\n`;
-  txt += `Conforme acompanhamento do painel de notas paradas, identificamos ${criticos.length} nota${criticos.length > 1 ? 's' : ''} com mais de 20 dias sem resolução, totalizando ${criticos.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} unidades de volume em risco.\n\n`;
-  txt += `Notas que requerem ação imediata:\n\n`;
-  criticos.sort((a,b) => scoreCritico(b) - scoreCritico(a)).forEach((r, i) => {
-    txt += `  ${i+1}. NF ${r.nf || '—'} — ${r.fornecedor} (${daysDiff(r.dtEntrega)} dias parada)\n`;
-    if (r.volRep + r.volFalt > 0) txt += `     Volume: ${(r.volRep + r.volFalt).toLocaleString('pt-BR')} un.\n`;
-  });
-  txt += `\nSolicito que cada nota acima seja tratada e que me enviem posicionamento até ${prazo2d}.\n\n`;
-  txt += `Atenciosamente,\n[Seu nome]\n\n\n`;
-
-  // E-mail 2: Para FORNECEDORES (um por um, modelo)
-  const fornTop = Object.entries(porForn).sort((a,b) => b[1].length - a[1].length)[0];
-  if (fornTop) {
-    const [forn, notas] = fornTop;
-    const volForn = notas.reduce((a,r) => a + r.volRep + r.volFalt, 0);
-    txt += `══════════════════════════════════════════\n`;
-    txt += `E-MAIL 2 — MODELO PARA FORNECEDOR (adapte para cada um)\n`;
-    txt += `PARA: ${forn}\n`;
-    txt += `ASSUNTO: Pendência de entrega — notas em aberto — prazo: ${prazo2d}\n`;
-    txt += `══════════════════════════════════════════\n\n`;
-    txt += `Prezados, ${forn},\n\n`;
-    txt += `Estamos com as seguintes notas fiscais pendentes de regularização em nossa base:\n\n`;
-    notas.forEach(r => {
-      txt += `  • NF ${r.nf || '—'} — ${r.desc || '—'} — ${daysDiff(r.dtEntrega)} dias em aberto\n`;
-      if (r.volRep > 0) txt += `    Volume reprovado: ${r.volRep.toLocaleString('pt-BR')} un.\n`;
-      if (r.volFalt > 0) txt += `    Volume faltante: ${r.volFalt.toLocaleString('pt-BR')} un.\n`;
-    });
-    if (volForn > 0) txt += `\nTotal de volume impactado: ${volForn.toLocaleString('pt-BR')} unidades.\n`;
-    txt += `\nSolicitamos posicionamento formal até ${prazo2d} com previsão de regularização. Caso não haja retorno, escalaremos para a gestão comercial.\n\n`;
-    txt += `Atenciosamente,\n[Seu nome] — [Empresa]\n\n\n`;
-  }
-
-  // E-mail 3: Para GESTÃO / ESCALADA
-  txt += `══════════════════════════════════════════\n`;
-  txt += `E-MAIL 3 — ESCALADA PARA GESTÃO\n`;
-  txt += `PARA: [Gestor / Diretoria]\n`;
-  txt += `ASSUNTO: Relatório semanal — notas críticas sem resolução\n`;
-  txt += `══════════════════════════════════════════\n\n`;
-  txt += `Prezado(a),\n\n`;
-  txt += `Segue atualização do painel de notas paradas referente a ${hoje}:\n\n`;
-  txt += `  • Notas críticas (+20 dias): ${criticos.length}\n`;
-  txt += `  • Volume total em risco: ${criticos.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} un.\n`;
-  txt += `  • Fornecedores envolvidos: ${Object.keys(porForn).length}\n\n`;
-  txt += `Os setores de Compras e Qualidade foram notificados. Aguardamos retorno até ${prazo2d}.\n`;
-  txt += `Caso não haja evolução até ${prazo5d}, solicito autorização para acionar medidas contratuais junto aos fornecedores.\n\n`;
-  txt += `Atenciosamente,\n[Seu nome]`;
-
-  mostrarOutput('✉️ E-mails de Cobrança (3 modelos)', txt);
-}
-
-function gerarReuniao() {
-  const criticos = allRows.filter(isCritico).sort((a,b) => scoreCritico(b) - scoreCritico(a));
-  const pendentes = allRows.filter(r => r.status === 'pendente' && !isCritico(r));
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  const proximaReuniao = new Date(Date.now() + 7 * 86400000).toLocaleDateString('pt-BR');
-
-  let txt = `PAUTA DE REUNIÃO — NOTAS PARADAS\n`;
-  txt += `Data: ${hoje}  |  Duração sugerida: 45 min\n`;
-  txt += `${'─'.repeat(60)}\n\n`;
-
-  txt += `PARTICIPANTES NECESSÁRIOS\n`;
-  txt += `  □ Compras\n`;
-  txt += `  □ Recebimento / Qualidade\n`;
-  txt += `  □ Gestor responsável\n`;
-  txt += `  □ Logística (se aplicável)\n\n`;
-
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `BLOCO 1 — ABERTURA (5 min)\n`;
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `  1. Objetivo da reunião: destravar notas críticas e definir responsáveis\n`;
-  txt += `  2. Regra: cada nota sai com um responsável e uma data de retorno\n\n`;
-
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `BLOCO 2 — NOTAS CRÍTICAS +20 DIAS (20 min)\n`;
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `Total: ${criticos.length} nota${criticos.length !== 1 ? 's' : ''}\n\n`;
-
-  if (criticos.length === 0) {
-    txt += `  ✅ Sem notas críticas no momento.\n\n`;
-  } else {
-    criticos.slice(0, 8).forEach((r, i) => {
-      const dias = daysDiff(r.dtEntrega);
-      txt += `  ${i+1}. ${r.fornecedor} — NF ${r.nf || '—'} (${dias} dias)\n`;
-      if (r.desc) txt += `     Desc: ${r.desc}\n`;
-      if (r.volRep + r.volFalt > 0) txt += `     Volume: ${(r.volRep + r.volFalt).toLocaleString('pt-BR')} un.\n`;
-      txt += `     Status: ${r.statusRaw || 'Pendente'}\n`;
-      if (r.obsComp) txt += `     Última obs: "${r.obsComp}"\n`;
-      txt += `     → DECISÃO: ________________________________\n`;
-      txt += `     → RESPONSÁVEL: ____________  PRAZO: ______\n\n`;
-    });
-    if (criticos.length > 8) txt += `  ... e mais ${criticos.length - 8} notas (ver painel completo)\n\n`;
-  }
-
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `BLOCO 3 — PENDENTES EM ANDAMENTO (10 min)\n`;
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `  Total pendentes sem andamento: ${pendentes.length}\n`;
-  txt += `  Volume: ${pendentes.reduce((a,r) => a + r.volRep + r.volFalt, 0).toLocaleString('pt-BR')} un.\n\n`;
-  txt += `  Ponto de atenção: quais têm risco de virar críticos esta semana?\n`;
-  txt += `  → Listar: ________________________________\n\n`;
-
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `BLOCO 4 — ENCAMINHAMENTOS (10 min)\n`;
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `  □ Definir responsável por cada nota crítica\n`;
-  txt += `  □ Confirmar prazo de retorno por fornecedor\n`;
-  txt += `  □ Identificar notas com risco de escalar\n`;
-  txt += `  □ Agendar próxima revisão: ${proximaReuniao}\n\n`;
-
-  txt += `${'─'.repeat(60)}\n`;
-  txt += `PRÓXIMA REUNIÃO: ${proximaReuniao}\n`;
-  txt += `Frequência recomendada: semanal enquanto houver notas críticas.\n`;
-  txt += `\nAta gerada automaticamente em ${hoje} via painel de notas paradas.`;
-
-  mostrarOutput('📅 Pauta de Reunião', txt);
-}
-
-function mostrarOutput(titulo, conteudo) {
-  document.getElementById('acao-output-titulo').textContent = titulo;
-  document.getElementById('acao-output-conteudo').textContent = conteudo;
-  const el = document.getElementById('acao-output');
-  el.style.display = 'block';
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function fecharOutput() {
-  document.getElementById('acao-output').style.display = 'none';
-}
-
-function copiarOutput() {
-  const txt = document.getElementById('acao-output-conteudo').textContent;
-  navigator.clipboard.writeText(txt).then(() => {
-    const btn = event.target;
-    const orig = btn.textContent;
-    btn.textContent = '✅ Copiado!';
-    setTimeout(() => { btn.textContent = orig; }, 2000);
-  });
-}
-
-// ══════════════════════════════════════════════════════════
-// DB — JSONBin.io  (armazenamento compartilhado)
-// Bin e chave fixos — todos os usuários lêem e escrevem no mesmo lugar.
-// ══════════════════════════════════════════════════════════
-const JSONBIN_API = 'https://api.jsonbin.io/v3';
-const JSONBIN_KEY = '$2a$10$RWlS0HYjce5Rc9/5PjZXHekEx290eYWiuNXOxI7Ke5vYuLr5ZLMmy';
-const JSONBIN_BIN = '6a05be89c0954111d8215e05';
-
-// --- ADIÇÃO DA SENHA ---
-const SENHA_MESTRA = '1234'; // <--- Altere para a senha que desejar
-let acessoAutorizado = false; 
-
-function validarAcesso() {
-    if (acessoAutorizado) return true;
-    const tentativa = prompt("🔒 Área Restrita: Digite a senha para salvar alterações:");
-    if (tentativa === SENHA_MESTRA) {
-        acessoAutorizado = true; 
-        return true;
-    }
-    alert("❌ Senha incorreta! As alterações não serão salvas na nuvem.");
-    return false;
-}
-// -----------------------
-
-const DB = {
-  binId: JSONBIN_BIN,
-
-  _headers(write = false) {
-    const h = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
-    if (!write) h['X-Bin-Meta'] = 'false';
-    return h;
-  },
-
-  async init() {
-    setSyncBadge('⏳ Conectando…', '#9a6200', '#fef8ec', '#f5d98a');
-    await this.load();
-  },
-
-  async load() {
-    try {
-      const res = await fetch(`${JSONBIN_API}/b/${this.binId}/latest`, { headers: this._headers() });
-      const data = await res.json();
-      const rec = data.record || data;
-      planos            = rec.planos   || [];
-      metas             = rec.metas   || metas;
-      acoesRegistradas  = rec.acoes   || [];
-      setSyncBadge('🟢 Compartilhado', '#2d6a1f', '#edf6e8', '#a8d898');
-    } catch(e) {
-      setSyncBadge('⚠️ Sem conexão', '#c0392b', '#fdf0ef', '#f5c6c3');
-    }
-    renderResumoPlanosRapido();
-    renderListaPlanos();
-  },
-
-  async save() {
-    // Solicita a senha antes de iniciar o processo de salvamento
-    if (!validarAcesso()) return; 
-
-    setSyncBadge('💾 Salvando…', '#1a4f8a', '#eaf1fb', '#b5d4f4');
-    try {
-      await fetch(`${JSONBIN_API}/b/${this.binId}`, {
-        method: 'PUT',
-        headers: this._headers(true),
-        body: JSON.stringify({ planos, metas, acoes: acoesRegistradas })
-      });
-      setSyncBadge('✅ Salvo', '#2d6a1f', '#edf6e8', '#a8d898');
-      setTimeout(() => setSyncBadge('🟢 Compartilhado', '#2d6a1f', '#edf6e8', '#a8d898'), 2000);
-    } catch(e) {
-      setSyncBadge('⚠️ Erro ao salvar', '#c0392b', '#fdf0ef', '#f5c6c3');
-    }
-  }
-};
-function setSyncBadge(txt, color, bg, border) {
-  const b = document.getElementById('sync-badge');
-  if (!b) return;
-  b.textContent = txt;
-  b.style.color = color;
-  b.style.background = bg;
-  b.style.borderColor = border;
-}
-
-// ── Auto-refresh a cada 30s ──
-let _pollTimer = null;
-function startPolling() {
-  if (_pollTimer) return;
-  _pollTimer = setInterval(() => DB.load(), 30000);
-}
-
-let planos = [];
-let planoEditandoId = null;
-let planoConcluindoId = null;
-
-async function salvarPlanos() {
-  await DB.save();
-}
-
-const PRIOR_CONFIG = {
-  critica: { label: '🔴 Crítica',  bg: '#fdf0ef', border: '#f5c6c3', color: '#c0392b' },
-  alta:    { label: '🟠 Alta',     bg: '#fef8ec', border: '#f5d98a', color: '#9a6200' },
-  media:   { label: '🟡 Média',    bg: '#fefbe8', border: '#f0e060', color: '#7a6800' },
-  baixa:   { label: '🟢 Baixa',    bg: '#edf6e8', border: '#a8d898', color: '#2d6a1f' },
-};
-const SETOR_COLORS = {
-  'Compras':'#1a4f8a','Recebimento':'#9a6200','Qualidade':'#6a2d8a',
-  'Fornecedor':'#c0392b','Logística':'#2d6a1f','Outro':'#6b6b66'
-};
-
-// salvarPlanos() definida acima como async → DB.save()
-
-// ── RENDER CENTRAL ──
-async function renderAcao() {
-  await DB.load();
-  startPolling();
-  const criticos = allRows.filter(isCritico);
-  const volCritico = criticos.reduce((a, r) => a + r.volRep + r.volFalt, 0);
-  document.getElementById('acao-alerta-titulo').textContent =
-    criticos.length > 0
-      ? `${criticos.length} nota${criticos.length > 1 ? 's' : ''} crítica${criticos.length > 1 ? 's' : ''} exigem ação imediata — ${volCritico.toLocaleString('pt-BR')} un. de volume em risco`
-      : '✅ Nenhuma nota crítica no momento';
-  const fornCriticos = [...new Set(criticos.map(r => r.fornecedor))];
-  document.getElementById('acao-alerta-sub').textContent =
-    criticos.length > 0
-      ? `Fornecedores: ${fornCriticos.slice(0,5).join(', ')}${fornCriticos.length > 5 ? ` e mais ${fornCriticos.length-5}` : ''}`
-      : 'Continue monitorando o painel de evolução mensal.';
-
-  renderResumoPlanosRapido();
-  renderListaPlanos();
-}
-
-function renderResumoPlanosRapido() {
-  const total     = planos.length;
-  const abertos   = planos.filter(p => p.status === 'aberto').length;
-  const atrasados = planos.filter(p => p.status === 'aberto' && p.prazo && new Date(p.prazo) < new Date()).length;
-  const concluidos= planos.filter(p => p.status === 'concluido').length;
-
-  const items = [
-    { label: 'Planos abertos',   val: abertos,    color: '#1a4f8a' },
-    { label: 'Atrasados',        val: atrasados,  color: '#c0392b' },
-    { label: 'Concluídos',       val: concluidos, color: '#2d6a1f' },
-    { label: 'Total de planos',  val: total,      color: '#6b6b66' },
-  ];
-
-  document.getElementById('planos-resumo').innerHTML = items.map(i => `
-    <div style="background:#fff;border:1px solid rgba(0,0,0,.09);border-radius:10px;padding:14px 16px;">
-      <div style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">${i.label}</div>
-      <div style="font-size:26px;font-weight:700;color:${i.color};letter-spacing:-0.03em;">${i.val}</div>
-    </div>`).join('');
-}
-
-// ── RENDER LISTA DE PLANOS ──
-function renderListaPlanos() {
-  const el = document.getElementById('lista-planos');
-  if (planos.length === 0) {
-    el.innerHTML = `
-      <div style="background:#fff;border:2px dashed rgba(0,0,0,.1);border-radius:12px;padding:48px;text-align:center;">
-        <div style="font-size:32px;margin-bottom:12px;">📋</div>
-        <div style="font-size:15px;font-weight:600;color:#1a1a18;margin-bottom:6px;">Nenhum plano de ação ainda</div>
-        <div style="font-size:13px;color:#9e9e98;margin-bottom:20px;">Clique em "Novo plano" ou gere um plano automático a partir das notas críticas</div>
-        <button onclick="abrirModalPlano()" style="font-size:13px;font-weight:600;background:#1a1a18;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;">+ Criar primeiro plano</button>
-      </div>`;
-    return;
-  }
-
-  // Ordena: críticos primeiro, depois por prazo
-  const ordemPrior = { critica: 0, alta: 1, media: 2, baixa: 3 };
-  const sorted = [...planos].sort((a, b) => {
-    if (a.status !== b.status) return a.status === 'aberto' ? -1 : 1;
-    const dp = (ordemPrior[a.prioridade]||2) - (ordemPrior[b.prioridade]||2);
-    if (dp !== 0) return dp;
-    return (a.prazo||'') < (b.prazo||'') ? -1 : 1;
-  });
-
-  el.innerHTML = sorted.map(p => renderCardPlano(p)).join('');
-}
-
-function renderCardPlano(p) {
-  const pc     = PRIOR_CONFIG[p.prioridade] || PRIOR_CONFIG.media;
-  const hoje   = new Date(); hoje.setHours(0,0,0,0);
-  const prazoD = p.prazo ? new Date(p.prazo + 'T00:00:00') : null;
-  const atrasado = p.status === 'aberto' && prazoD && prazoD < hoje;
-  const diasAtraso = atrasado ? Math.floor((hoje - prazoD) / 86400000) : 0;
-
-  // Status conclusão
-  let conclusaoInfo = '';
-  if (p.status === 'concluido' && p.dataConclusao && p.prazo) {
-    const dc = new Date(p.dataConclusao + 'T00:00:00');
-    const pr = new Date(p.prazo + 'T00:00:00');
-    const diff = Math.floor((dc - pr) / 86400000);
-    if (diff <= 0) {
-      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#2d6a1f;background:#edf6e8;border-radius:99px;padding:2px 9px;">✅ No prazo${diff < 0 ? ` (${Math.abs(diff)}d antes)` : ''}</span>`;
-    } else {
-      conclusaoInfo = `<span style="font-size:11px;font-weight:600;color:#c0392b;background:#fdf0ef;border-radius:99px;padding:2px 9px;">⚠️ ${diff}d de atraso</span>`;
-    }
-  }
-
-  // Tarefas
-  const tarefas = p.tarefas || [];
-  const tConcluidas = tarefas.filter(t => t.concluida).length;
-  const tTotal = tarefas.length;
-  const pctTarefas = tTotal > 0 ? Math.round((tConcluidas / tTotal) * 100) : 0;
-
-  const tarefasHTML = tarefas.map((t, ti) => {
-    const tAtrasada = t.prazo && !t.concluida && new Date(t.prazo + 'T00:00:00') < hoje;
-    const sc = SETOR_COLORS[t.setor] || '#6b6b66';
-    return `
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:${t.concluida ? '#f7f6f2' : '#fff'};border:1px solid ${tAtrasada ? '#f5c6c3' : 'rgba(0,0,0,.07)'};margin-bottom:6px;transition:all .15s;">
-        <button onclick="toggleTarefa('${p.id}',${ti})" style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid ${t.concluida ? '#3a8a28' : '#d0d0c8'};background:${t.concluida ? '#3a8a28' : '#fff'};cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;font-size:11px;color:#fff;">${t.concluida ? '✓' : ''}</button>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
-            <span style="font-size:13px;font-weight:600;color:${t.concluida ? '#9e9e98' : '#1a1a18'};${t.concluida ? 'text-decoration:line-through;' : ''}">${t.responsavel || '—'}</span>
-            <span style="font-size:11px;font-weight:500;background:${sc}18;color:${sc};border-radius:99px;padding:1px 8px;">${t.setor || '—'}</span>
-            ${t.prazo ? `<span style="font-size:11px;color:${tAtrasada ? '#c0392b' : '#9e9e98'};">📅 ${fmtDate(t.prazo)}${tAtrasada ? ' ⚠️' : ''}</span>` : ''}
-          </div>
-          <div style="font-size:12px;color:${t.concluida ? '#b0b0a8' : '#6b6b66'};">${t.desc || '—'}</div>
-        </div>
-        ${p.status === 'aberto' ? `<button onclick="editarTarefaInline('${p.id}',${ti})" style="font-size:11px;color:#9e9e98;background:none;border:none;cursor:pointer;padding:2px 4px;" title="Editar">✏️</button>` : ''}
-      </div>`;
-  }).join('');
-
-  const concluido = p.status === 'concluido';
-
-  return `
-    <div id="plano-${p.id}" style="background:#fff;border:1px solid ${atrasado ? '#f5c6c3' : concluido ? 'rgba(0,0,0,.06)' : 'rgba(0,0,0,.1)'};border-radius:12px;margin-bottom:14px;overflow:hidden;opacity:${concluido ? '.75' : '1'};">
-
-      <!-- CABEÇALHO DO PLANO -->
-      <div style="padding:18px 20px;border-bottom:1px solid rgba(0,0,0,.06);background:${atrasado ? '#fdf5f4' : concluido ? '#f9f9f7' : '#fafaf8'};">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-              <span style="font-size:15px;font-weight:700;color:#1a1a18;">${p.titulo}</span>
-              <span style="font-size:11px;font-weight:600;background:${pc.bg};border:1px solid ${pc.border};color:${pc.color};border-radius:99px;padding:2px 10px;">${pc.label}</span>
-              ${concluido ? `<span style="font-size:11px;font-weight:600;background:#edf6e8;color:#2d6a1f;border-radius:99px;padding:2px 10px;">✅ Concluído</span>` : ''}
-              ${atrasado ? `<span style="font-size:11px;font-weight:700;background:#fdf0ef;color:#c0392b;border-radius:99px;padding:2px 10px;">🔴 ${diasAtraso}d atrasado</span>` : ''}
-              ${conclusaoInfo}
-            </div>
-            ${p.responsavel ? `<div style="margin-bottom:6px;"><span style="font-size:12px;font-weight:500;background:#f0efe9;color:#6b6b66;border:1px solid rgba(0,0,0,.1);border-radius:99px;padding:2px 10px;">👤 ${p.responsavel}</span></div>` : ''}
-            ${p.desc ? `<div style="font-size:13px;color:#6b6b66;margin-bottom:8px;">${p.desc}</div>` : ''}
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-              <span style="font-size:12px;color:#9e9e98;">🔒 Prazo inicial: <strong style="color:${atrasado ? '#c0392b' : '#1a1a18'}">${prazoD ? fmtDate(p.prazo) : '—'}</strong></span>
-              ${p.dataConclusao ? `<span style="font-size:12px;color:#9e9e98;">✓ Concluído em: <strong style="color:#2d6a1f">${fmtDate(p.dataConclusao)}</strong></span>` : ''}
-              <span style="font-size:12px;color:#9e9e98;">📌 Criado: ${p.criadoEm}</span>
-              ${tTotal > 0 ? `<span style="font-size:12px;color:#9e9e98;">${tConcluidas}/${tTotal} tarefas concluídas</span>` : ''}
-            </div>
-          </div>
-          <!-- AÇÕES DO PLANO -->
-          <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;">
-            ${!concluido ? `<button onclick="abrirModalPlano('${p.id}')" style="font-size:12px;font-weight:500;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 12px;cursor:pointer;background:#fff;color:#1a1a18;">✏️ Editar</button>` : ''}
-            ${!concluido ? `<button onclick="abrirModalConcluir('${p.id}')" style="font-size:12px;font-weight:600;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;background:#2d6a1f;color:#fff;">✓ Concluir</button>` : ''}
-            <button onclick="excluirPlano('${p.id}')" style="font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 10px;cursor:pointer;background:#fff;color:#c0392b;" title="Excluir plano">🗑</button>
-          </div>
-        </div>
-
-        <!-- BARRA DE PROGRESSO DAS TAREFAS -->
-        ${tTotal > 0 ? `
-        <div style="margin-top:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="font-size:11px;color:#9e9e98;font-weight:500;">Progresso das tarefas</span>
-            <span style="font-size:11px;font-weight:700;color:${pctTarefas === 100 ? '#2d6a1f' : '#1a1a18'}">${pctTarefas}%</span>
-          </div>
-          <div style="height:6px;background:#f0efe9;border-radius:99px;overflow:hidden;">
-            <div style="height:100%;width:${pctTarefas}%;background:${pctTarefas === 100 ? '#3a8a28' : '#1a4f8a'};border-radius:99px;transition:width .4s;"></div>
-          </div>
-        </div>` : ''}
-      </div>
-
-      <!-- TAREFAS -->
-      ${tTotal > 0 ? `
-      <div style="padding:14px 20px 6px;">
-        <div style="font-size:11px;font-weight:600;color:#9e9e98;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Tarefas (${tTotal})</div>
-        ${tarefasHTML}
-      </div>` : `
-      <div style="padding:14px 20px;font-size:13px;color:#b0b0a8;font-style:italic;">Nenhuma tarefa cadastrada neste plano.</div>`}
-
-      <!-- ADD TAREFA INLINE (se aberto) -->
-      ${!concluido ? `
-      <div style="padding:0 20px 16px;">
-        <button onclick="adicionarTarefaRapida('${p.id}')" style="font-size:12px;font-weight:500;border:1px dashed rgba(0,0,0,.15);border-radius:6px;padding:6px 14px;cursor:pointer;background:none;color:#9e9e98;width:100%;text-align:center;">+ Adicionar tarefa</button>
-        <div id="form-tarefa-rapida-${p.id}" style="display:none;margin-top:10px;background:#f7f6f2;border-radius:8px;padding:14px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">RESPONSÁVEL</label>
-              <input id="tr-resp-${p.id}" type="text" placeholder="Nome de quem faz" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;">
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">SETOR</label>
-              <select id="tr-setor-${p.id}" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;color:#1a1a18;">
-                <option value="">Selecionar...</option>
-                <option>Compras</option><option>Recebimento</option><option>Qualidade</option>
-                <option>Fornecedor</option><option>Logística</option><option>Outro</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">PRAZO DA TAREFA</label>
-              <input id="tr-prazo-${p.id}" type="date" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;">
-            </div>
-          </div>
-          <div style="margin-bottom:8px;">
-            <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">O QUE FAZER</label>
-            <input id="tr-desc-${p.id}" type="text" placeholder="Ex: Entrar em contato com o fornecedor e solicitar NF corrigida" style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:7px 9px;outline:none;background:#fff;">
-          </div>
-          <div style="display:flex;gap:6px;justify-content:flex-end;">
-            <button onclick="document.getElementById('form-tarefa-rapida-${p.id}').style.display='none'" style="font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 12px;cursor:pointer;background:#fff;color:#6b6b66;">Cancelar</button>
-            <button onclick="salvarTarefaRapida('${p.id}')" style="font-size:12px;font-weight:600;background:#1a1a18;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;">Salvar tarefa</button>
-          </div>
-        </div>
-      </div>` : ''}
-
+  el.innerHTML = rows.map(r=>{
+    const trCls = r.aiCl==='critical'?'crit':r.aiCl==='warning'?'warn':r.ajCl==='critical'?'crit':'info';
+    const ageHtml = r.isOld6m
+      ? `<div class="price-alert" title="Última compra: ${fmtDate(r.ultCompra)}">🟠 ${fmtDate(r.ultCompra)}</div>`
+      : `<span class="mono" style="font-size:10px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
+    const saldoColor = r.saldoM0 < 0 ? 'var(--red)' : r.saldoM0 === 0 ? 'var(--amber)' : 'var(--text)';
+    return `<div class="tr ${trCls}" style="grid-template-columns:110px 1fr 90px 80px 75px 75px 75px 110px 130px 150px;padding:9px 18px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
+      <div style="font-size:12px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div>${ageHtml}</div>
+      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM0}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedido||'—'}</div>
+      <div>${statusBadge(r.statusAI)}</div>
+      <div>${statusBadge(r.statusAJ)}</div>
+      <div>${actionSuggest(r.statusAI, r.statusAJ, r.lt, r.isOld6m)}</div>
     </div>`;
+  }).join('');
 }
 
-function fmtDate(str) {
-  if (!str) return '—';
-  const d = new Date(str + 'T00:00:00');
-  return d.toLocaleDateString('pt-BR');
-}
+/* ═══════════════════════════════════════
+   TABLE PREÇO >6m
+═══════════════════════════════════════ */
+function renderPreco() {
+  const rows = rowsM0Preco.sort((a,b)=>(b.diasSemCompra||0)-(a.diasSemCompra||0));
+  document.getElementById('cnt-preco').textContent = rows.length+' itens com risco de reajuste';
 
-// ── MODAL PLANO ──
-let tarefasTemp = [];
-
-function abrirModalPlano(id) {
-  planoEditandoId = id || null;
-  tarefasTemp = [];
-  const p = id ? planos.find(x => x.id === id) : null;
-
-  document.getElementById('modal-plano-titulo').textContent = p ? 'Editar plano' : 'Novo plano de ação';
-  document.getElementById('mp-titulo').value = p ? p.titulo      : '';
-  document.getElementById('mp-resp').value   = p ? (p.responsavel || '') : '';
-  document.getElementById('mp-desc').value   = p ? p.desc         : '';
-  document.getElementById('mp-prior').value  = p ? p.prioridade   : 'media';
-
-  if (p) {
-    document.getElementById('mp-prazo').value = p.prazo || '';
-    document.getElementById('mp-prazo').disabled = true;
-    document.getElementById('mp-prazo').style.opacity = '.6';
-    document.getElementById('mp-prazo').title = 'Prazo inicial não pode ser alterado';
-    tarefasTemp = JSON.parse(JSON.stringify(p.tarefas || []));
-  } else {
-    document.getElementById('mp-prazo').value = '';
-    document.getElementById('mp-prazo').disabled = false;
-    document.getElementById('mp-prazo').style.opacity = '1';
-    document.getElementById('mp-prazo').title = '';
-  }
-
-  renderTarefasForm();
-  document.getElementById('modal-plano').style.display = 'flex';
-}
-
-function fecharModalPlano() {
-  document.getElementById('modal-plano').style.display = 'none';
-}
-
-function renderTarefasForm() {
-  const el = document.getElementById('mp-tarefas-lista');
-  if (tarefasTemp.length === 0) {
-    el.innerHTML = `<div style="font-size:12px;color:#b0b0a8;padding:8px 0;font-style:italic;">Nenhuma tarefa ainda. Clique em "+ Tarefa" para adicionar.</div>`;
+  const el = document.getElementById('tbl-preco');
+  if (!rows.length) {
+    el.innerHTML = `<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com última compra &gt; 6 meses ✓</div>`;
     return;
   }
-  el.innerHTML = tarefasTemp.map((t, i) => `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;background:#f7f6f2;border-radius:8px;padding:10px 12px;">
-      <div>
-        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">RESPONSÁVEL</label>
-        <input type="text" value="${t.responsavel||''}" onchange="tarefasTemp[${i}].responsavel=this.value" placeholder="Nome" style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;">
-      </div>
-      <div>
-        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">SETOR</label>
-        <select onchange="tarefasTemp[${i}].setor=this.value" style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;color:#1a1a18;">
-          ${['Compras','Recebimento','Qualidade','Fornecedor','Logística','Outro'].map(s => `<option value="${s}" ${t.setor===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">PRAZO</label>
-        <input type="date" value="${t.prazo||''}" onchange="tarefasTemp[${i}].prazo=this.value" style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;">
-      </div>
-      <button onclick="tarefasTemp.splice(${i},1);renderTarefasForm()" style="font-size:18px;background:none;border:none;color:#d0d0c8;cursor:pointer;padding:0 4px;align-self:center;" title="Remover">×</button>
-      <div style="grid-column:1/-1;">
-        <label style="font-size:10px;font-weight:600;color:#9e9e98;display:block;margin-bottom:3px;">O QUE FAZER</label>
-        <input type="text" value="${t.desc||''}" onchange="tarefasTemp[${i}].desc=this.value" placeholder="Descreva a tarefa..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:12px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:6px 8px;outline:none;background:#fff;">
-      </div>
-    </div>`).join('');
+
+  el.innerHTML = rows.map(r=>{
+    const diasColor = r.diasSemCompra > 365 ? 'var(--red)' : r.diasSemCompra > 270 ? '#f97316' : 'var(--amber)';
+    return `<div class="tr warn" style="grid-template-columns:110px 1fr 90px 110px 100px 80px 80px 160px;padding:9px 18px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
+      <div style="font-size:12px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.fornec||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${fmtDate(r.ultCompra)}</div>
+      <div class="mono" style="font-size:10px;color:${diasColor};font-weight:700">${r.diasSemCompra}d</div>
+      <div>${statusBadge(r.statusAI)}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.estoque||'—'}</div>
+      <div><span class="badge b-orange">🟠 Cotar + Revisar Preço</span></div>
+    </div>`;
+  }).join('');
 }
 
-function adicionarTarefaForm() {
-  tarefasTemp.push({ responsavel:'', setor:'Compras', prazo:'', desc:'', concluida:false });
-  renderTarefasForm();
-}
-
-async function salvarPlano() {
-  const titulo = document.getElementById('mp-titulo').value.trim();
-  const resp   = document.getElementById('mp-resp').value.trim();
-  const desc   = document.getElementById('mp-desc').value.trim();
-  const prazo  = document.getElementById('mp-prazo').value;
-  const prior  = document.getElementById('mp-prior').value;
-
-  if (!titulo) { alert('Informe o título do plano.'); return; }
-  if (!prazo && !planoEditandoId) { alert('Informe o prazo inicial.'); return; }
-
-  if (planoEditandoId) {
-    const p = planos.find(x => x.id === planoEditandoId);
-    if (p) {
-      p.titulo       = titulo;
-      p.responsavel  = resp;
-      p.desc         = desc;
-      p.prioridade   = prior;
-      p.tarefas      = tarefasTemp;
-    }
-  } else {
-    planos.unshift({
-      id: 'p' + Date.now(),
-      titulo, responsavel: resp, desc, prazo, prioridade: prior,
-      status: 'aberto',
-      tarefas: tarefasTemp,
-      criadoEm: new Date().toLocaleDateString('pt-BR'),
-      dataConclusao: null,
-    });
-  }
-
-  salvarPlanos();
-  fecharModalPlano();
-  renderResumoPlanosRapido();
-  renderListaPlanos();
-}
-
-// ── TAREFA RÁPIDA INLINE ──
-function adicionarTarefaRapida(pid) {
-  document.getElementById('form-tarefa-rapida-' + pid).style.display = 'block';
-}
-
-async function salvarTarefaRapida(pid) {
-  const resp  = document.getElementById('tr-resp-'  + pid).value.trim();
-  const setor = document.getElementById('tr-setor-' + pid).value;
-  const prazo = document.getElementById('tr-prazo-' + pid).value;
-  const desc  = document.getElementById('tr-desc-'  + pid).value.trim();
-
-  if (!resp || !desc) { alert('Informe o responsável e o que deve ser feito.'); return; }
-
-  const p = planos.find(x => x.id === pid);
-  if (p) {
-    if (!p.tarefas) p.tarefas = [];
-    p.tarefas.push({ responsavel: resp, setor, prazo, desc, concluida: false });
-    salvarPlanos();
-    renderListaPlanos();
-    renderResumoPlanosRapido();
-  }
-}
-
-// ── TOGGLE TAREFA ──
-async function toggleTarefa(pid, ti) {
-  const p = planos.find(x => x.id === pid);
-  if (!p || !p.tarefas[ti]) return;
-  p.tarefas[ti].concluida = !p.tarefas[ti].concluida;
-  salvarPlanos();
-  renderListaPlanos();
-  renderResumoPlanosRapido();
-}
-
-// ── EDITAR TAREFA INLINE ──
-function editarTarefaInline(pid, ti) {
-  planoEditandoId = pid;
-  const p = planos.find(x => x.id === pid);
-  if (!p) return;
-  tarefasTemp = JSON.parse(JSON.stringify(p.tarefas || []));
-  // Abre modal no modo edição
-  document.getElementById('modal-plano-titulo').textContent = 'Editar plano — tarefas';
-  document.getElementById('mp-titulo').value = p.titulo;
-  document.getElementById('mp-desc').value   = p.desc || '';
-  document.getElementById('mp-prior').value  = p.prioridade;
-  document.getElementById('mp-prazo').value  = p.prazo || '';
-  document.getElementById('mp-prazo').disabled = true;
-  document.getElementById('mp-prazo').style.opacity = '.6';
-  renderTarefasForm();
-  document.getElementById('modal-plano').style.display = 'flex';
-  // Scroll para a tarefa
-  setTimeout(() => {
-    const items = document.getElementById('mp-tarefas-lista').children;
-    if (items[ti]) items[ti].scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 100);
-}
-
-// ── CONCLUIR PLANO ──
-function abrirModalConcluir(pid) {
-  planoConcluindoId = pid;
-  const p = planos.find(x => x.id === pid);
-  document.getElementById('mc-subtitulo').textContent = p ? p.titulo : '';
-  document.getElementById('mc-data').value = new Date().toISOString().slice(0,10);
-  document.getElementById('modal-concluir').style.display = 'flex';
-}
-
-function fecharModalConcluir() {
-  document.getElementById('modal-concluir').style.display = 'none';
-}
-
-async function confirmarConclusao() {
-  const data = document.getElementById('mc-data').value;
-  if (!data) { alert('Informe a data de conclusão.'); return; }
-  const p = planos.find(x => x.id === planoConcluindoId);
-  if (p) {
-    p.status = 'concluido';
-    p.dataConclusao = data;
-    salvarPlanos();
-  }
-  fecharModalConcluir();
-  renderResumoPlanosRapido();
-  renderListaPlanos();
-}
-
-// ── EXCLUIR PLANO ──
-async function excluirPlano(pid) {
-  // 1. Primeiro de tudo, pede a senha
-  if (!validarAcesso()) return;
-
-  // 2. Se a senha estiver correta, pede a confirmação visual
-  if (!confirm('Excluir este plano de ação? Essa ação não pode ser desfeita.')) return;
-
-  // 3. Só então remove do array e salva na nuvem
-  planos = planos.filter(x => x.id !== pid);
-  
-  await DB.save(); // Garante que a exclusão suba para o JSONBin
-  renderResumoPlanosRapido();
-  renderListaPlanos();
-}
-
-// ── GERADOR DE PLANO AUTOMÁTICO ──
-function gerarPlanoAcao() {
-  const criticos = allRows.filter(isCritico).sort((a,b) => scoreCritico(b) - scoreCritico(a));
-  if (criticos.length === 0) {
-    mostrarOutput('📋 Plano de Ação', '✅ Nenhuma nota crítica encontrada.');
-    return;
-  }
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  const prazo2d = new Date(Date.now() + 2 * 86400000).toLocaleDateString('pt-BR');
-  let txt = `PLANO DE AÇÃO — NOTAS PARADAS CRÍTICAS\nGerado em: ${hoje}\n${'─'.repeat(60)}\n\n`;
-  txt += `RESUMO\n  Notas críticas: ${criticos.length}  |  Volume em risco: ${criticos.reduce((a,r)=>a+r.volRep+r.volFalt,0).toLocaleString('pt-BR')} un.\n\n${'─'.repeat(60)}\n\n`;
-  criticos.forEach((r, i) => {
-    const dias = daysDiff(r.dtEntrega);
-    const vol  = r.volRep + r.volFalt;
-    txt += `${i+1}. ${r.fornecedor} — NF ${r.nf||'—'} (${dias} dias parada)\n`;
-    txt += `   Desc: ${r.desc||'—'}\n`;
-    if (vol > 0) txt += `   Volume: ${vol.toLocaleString('pt-BR')} un.\n`;
-    txt += `   Status: ${r.statusRaw||'Pendente'}\n`;
-    if (r.obsComp) txt += `   Obs. compras: "${r.obsComp}"\n`;
-    txt += `   ➤ AÇÃO: Contatar fornecedor e exigir posição até ${prazo2d}\n`;
-    txt += `   ➤ RESPONSÁVEL: Compras  |  PRAZO: ${prazo2d}\n\n`;
+/* ═══════════════════════════════════════
+   TABLE M1
+═══════════════════════════════════════ */
+function filterM1(f) {
+  activeF1 = f;
+  ['all','morto','parcial'].forEach(k=>{
+    document.getElementById('f1-'+k)?.classList.toggle('on', k===f);
   });
-  txt += `${'─'.repeat(60)}\nPRÓXIMA REVISÃO: ${new Date(Date.now()+3*86400000).toLocaleDateString('pt-BR')}`;
-  mostrarOutput('📋 Plano de Ação (texto)', txt);
+  renderM1(f);
 }
 
-// Inicializa DB compartilhado assim que a página carrega
-DB.init().catch(console.error);
+function renderM1(f) {
+  const search = (document.getElementById('search-m1')?.value||'').toLowerCase();
+  let rows = rowsM1.filter(r=>{
+    if (search && !r.itemPai.toLowerCase().includes(search) && !r.desc.toLowerCase().includes(search)) return false;
+    if (f==='morto')   return r.asCl==='critical' && r.lt > 0;
+    if (f==='parcial') return r.asCl==='warning';
+    return r.asCl!=='ok'&&r.asCl!=='empty';
+  });
 
+  rows.sort((a,b)=>{
+    const order = {critical:0,warning:1,info:2,neutral:3,ok:4,empty:5};
+    return (order[a.asCl]||5)-(order[b.asCl]||5);
+  });
+
+  document.getElementById('cnt-m1').textContent = rows.length+' itens';
+  const el = document.getElementById('tbl-m1');
+
+  if (!rows.length) {
+    el.innerHTML = `<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com este filtro ✓</div>`;
+    return;
+  }
+
+  el.innerHTML = rows.map(r=>{
+    const trCls = r.asCl==='critical'?'crit':r.asCl==='warning'?'warn':'info';
+    const saldoColor = r.saldoM1<0?'var(--red)':r.saldoM1===0?'var(--amber)':'var(--text)';
+    return `<div class="tr ${trCls}" style="grid-template-columns:110px 1fr 90px 80px 80px 80px 110px 130px 150px;padding:9px 18px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
+      <div style="font-size:12px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM1}</div>
+      <div>${statusBadge(r.statusAS)}</div>
+      <div>${statusBadge(r.statusAT)}</div>
+      <div>${actionSuggestM1(r.statusAS, r.statusAT, r.lt)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   MONTH SWITCH
+═══════════════════════════════════════ */
+function switchMonth(m) {
+  document.getElementById('view-m0').style.display = m===0?'block':'none';
+  document.getElementById('view-m1').style.display = m===1?'block':'none';
+  document.getElementById('tab-m0').classList.toggle('active', m===0);
+  document.getElementById('tab-m1').classList.toggle('active', m===1);
+  // Update tab text color
+  document.querySelector('#tab-m0 span.mono').style.color = m===0?'var(--text)':'var(--text2)';
+  document.querySelector('#tab-m1 span.mono').style.color = m===1?'var(--text)':'var(--text2)';
+}
+
+/* ═══════════════════════════════════════
+   EXPORTS
+═══════════════════════════════════════ */
+function getExportData(type) {
+  if (type === 'm0') {
+    return {
+      headers: ['Item Pai','Descrição','Grupo','Fornecedor','Última Compra','Dias Sem Compra','LT (dias)','Saldo M0','Em Pedido','Status AI (O que falta)','Impacto AJ (Produto Pai)','Alerta Preço'],
+      rows: rowsM0.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty').map(r=>[
+        r.itemPai, r.desc, r.grupo, r.fornec,
+        fmtDate(r.ultCompra), r.diasSemCompra||'', r.lt||'',
+        r.saldoM0, r.emPedido,
+        r.statusAI, r.statusAJ,
+        r.isOld6m?'SIM — >6 meses':''
+      ]),
+      title: 'Acao_Compras_Mes0'
+    };
+  }
+  if (type === 'preco') {
+    return {
+      headers: ['Item','Descrição','Fornecedor','Última Compra','Dias Sem Compra','Status AI','Estoque'],
+      rows: rowsM0Preco.map(r=>[
+        r.itemPai, r.desc, r.fornec,
+        fmtDate(r.ultCompra), r.diasSemCompra||'',
+        r.statusAI, r.estoque
+      ]),
+      title: 'Risco_Reajuste_Preco'
+    };
+  }
+  if (type === 'm1') {
+    return {
+      headers: ['Item Pai','Descrição','Grupo','LT (dias)','Plano M1','Saldo M1','Status AS (O que falta M1)','Impacto AT (Produto Pai M1)'],
+      rows: rowsM1.filter(r=>r.asCl!=='ok'&&r.asCl!=='empty').map(r=>[
+        r.itemPai, r.desc, r.grupo, r.lt||'',
+        r.planoM1, r.saldoM1,
+        r.statusAS, r.statusAT
+      ]),
+      title: 'Acao_Compras_Mes1'
+    };
+  }
+}
+
+function exportCSV(type) {
+  const d = getExportData(type);
+  if (!d) return;
+  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
+  const csv = [d.headers.map(esc).join(','), ...d.rows.map(r=>r.map(esc).join(','))].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${d.title}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function exportPDF(type) {
+  const d = getExportData(type);
+  if (!d) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.setTextColor(220,228,240);
+  doc.setFillColor(7,9,15);
+  doc.rect(0,0,297,210,'F');
+
+  doc.text('Central de Compras — Supply Chain Intelligence', 14, 14);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(107,127,163);
+  doc.text(`${d.title.replace(/_/g,' ')} | Gerado: ${new Date().toLocaleString('pt-BR')}`, 14, 21);
+
+  doc.autoTable({
+    startY: 26,
+    head: [d.headers],
+    body: d.rows,
+    theme: 'grid',
+    styles: {
+      font: 'helvetica', fontSize: 7,
+      fillColor: [12,16,24], textColor: [200,210,230],
+      lineColor: [28,40,64], lineWidth: 0.2,
+      cellPadding: 2
+    },
+    headStyles: {
+      fillColor: [17,24,39], textColor: [147,197,253],
+      fontStyle: 'bold', fontSize: 7.5
+    },
+    alternateRowStyles: { fillColor: [15,20,30] },
+    columnStyles: { 0: {fontStyle:'bold'} }
+  });
+
+  doc.save(`${d.title}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
 loadData();
 </script>
 </body>
