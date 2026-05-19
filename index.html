@@ -452,7 +452,7 @@ function gn(row, key) {
 async function fetchCSV(gid) {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
   const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status} — GID ${gid}`);
+  if (!r.ok) throw new Error(`HTTPS ${r.status} — GID ${gid}`);
   return parseCSV(await r.text());
 }
 
