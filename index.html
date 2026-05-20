@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Central de Compras — Supply Chain</title>
+<title>Central de Decisão — Supply Chain</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,41 +12,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #07090f;
-  --bg1: #0c1018;
-  --bg2: #111827;
-  --bg3: #162033;
-  --border: #1c2840;
-  --border2: #243454;
-  --border3: #2e4470;
-  --blue: #3b82f6;
-  --blue-dim: rgba(59,130,246,0.12);
-  --cyan: #22d3ee;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --green: #10b981;
-  --purple: #a78bfa;
-  --text: #dde4f0;
-  --text2: #6b7fa3;
-  --text3: #2d3f5a;
-  --mono: 'DM Mono', monospace;
-  --syne: 'Syne', sans-serif;
+  --bg:#07090f;--bg1:#0c1018;--bg2:#111827;--bg3:#162033;
+  --border:#1c2840;--border2:#243454;--border3:#2e4470;
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
+  --cyan:#22d3ee;--amber:#f59e0b;--red:#ef4444;--green:#10b981;
+  --purple:#a78bfa;--orange:#f97316;--teal:#14b8a6;
+  --text:#dde4f0;--text2:#6b7fa3;--text3:#2d3f5a;
+  --mono:'DM Mono',monospace;--syne:'Syne',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:var(--syne);min-height:100vh;
-  background-image:
-    radial-gradient(ellipse 70% 40% at 5% 0%, rgba(34,211,238,0.04) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 50% at 95% 100%, rgba(59,130,246,0.05) 0%,transparent 55%);
-}
+  background-image:radial-gradient(ellipse 70% 40% at 5% 0%,rgba(34,211,238,.04) 0%,transparent 60%),
+  radial-gradient(ellipse 50% 50% at 95% 100%,rgba(59,130,246,.05) 0%,transparent 55%)}
 .mono{font-family:var(--mono)}
-/* ── Cards ── */
 .card{background:var(--bg1);border:1px solid var(--border);border-radius:10px;transition:border-color .2s}
 .card:hover{border-color:var(--border2)}
-.card-sm{background:var(--bg2);border:1px solid var(--border);border-radius:8px}
-/* ── Labels ── */
 .label{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
-/* ── Badges ── */
 .badge{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:2px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
 .b-red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.28)}
 .b-amber{background:rgba(245,158,11,.13);color:#fcd34d;border:1px solid rgba(245,158,11,.28)}
@@ -55,68 +37,83 @@ body{background:var(--bg);color:var(--text);font-family:var(--syne);min-height:1
 .b-purple{background:rgba(167,139,250,.13);color:#c4b5fd;border:1px solid rgba(167,139,250,.28)}
 .b-gray{background:rgba(107,127,163,.1);color:#94a3b8;border:1px solid rgba(107,127,163,.2)}
 .b-orange{background:rgba(234,88,12,.15);color:#fb923c;border:1px solid rgba(234,88,12,.3)}
-/* ── KPI ── */
+.b-teal{background:rgba(20,184,166,.13);color:#5eead4;border:1px solid rgba(20,184,166,.28)}
 .kpi-num{font-family:var(--syne);font-weight:800;line-height:1}
-/* ── Scrollbar ── */
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
-/* ── Tab system ── */
-.tab-pill{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:5px 14px;border-radius:6px;border:1px solid transparent;cursor:pointer;transition:all .15s;text-transform:uppercase;background:transparent;color:var(--text2)}
-.tab-pill.on{background:rgba(59,130,246,.14);border-color:rgba(59,130,246,.4);color:#93c5fd}
-.tab-pill:hover:not(.on){color:var(--text);background:rgba(255,255,255,.03)}
-/* ── Table rows ── */
+/* Nav tabs */
+.nav-tab{font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:7px 16px;border-radius:7px;border:1px solid transparent;cursor:pointer;transition:all .18s;text-transform:uppercase;background:transparent;color:var(--text2);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.nav-tab.on{border-color:rgba(59,130,246,.45);color:#93c5fd}
+.nav-tab:hover:not(.on){color:var(--text);background:rgba(255,255,255,.03)}
+.nav-tab.compras-tab.on{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:#fca5a5}
+.nav-tab.pcp-tab.on{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.4);color:#c4b5fd}
+.nav-tab.preco-tab.on{background:rgba(234,88,12,.1);border-color:rgba(234,88,12,.4);color:#fb923c}
+.nav-tab.alt-tab.on{background:rgba(20,184,166,.1);border-color:rgba(20,184,166,.4);color:#5eead4}
+.nav-tab.full-tab.on{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.4);color:#93c5fd}
+/* Table */
 .tr{display:grid;align-items:center;border-bottom:1px solid var(--border);transition:background .12s}
 .tr:hover{background:rgba(59,130,246,.04)}
 .tr.crit{border-left:3px solid var(--red)}
 .tr.warn{border-left:3px solid var(--amber)}
 .tr.safe{border-left:3px solid var(--green)}
 .tr.info{border-left:3px solid var(--blue)}
-/* ── Chips ── */
+.tr.teal{border-left:3px solid var(--teal)}
+.tr.purple{border-left:3px solid var(--purple)}
+/* Chips */
 .chip{font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:3px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:all .15s;color:var(--text2);background:transparent;white-space:nowrap}
 .chip.on,.chip:hover{border-color:var(--blue);color:#93c5fd;background:rgba(59,130,246,.1)}
-/* ── Export btns ── */
+/* Group chips */
+.gchip{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:2px 9px;border-radius:4px;border:1px solid var(--border);cursor:pointer;transition:all .15s;color:var(--text2);background:transparent;white-space:nowrap}
+.gchip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.08)}
+.gchip:hover:not(.on){color:var(--text);background:rgba(255,255,255,.02)}
+/* Export */
 .export-btn{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:4px 11px;border-radius:5px;cursor:pointer;transition:all .15s;text-transform:uppercase}
 .btn-csv{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
 .btn-csv:hover{background:rgba(16,185,129,.22)}
 .btn-pdf{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
 .btn-pdf:hover{background:rgba(239,68,68,.22)}
-/* ── Month tab ── */
-.month-tab{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;cursor:pointer;transition:all .2s;border:1px solid transparent}
-.month-tab.active{border-color:var(--border3);background:rgba(59,130,246,.08)}
-.month-tab:hover:not(.active){background:rgba(255,255,255,.03)}
-/* ── Loader ── */
+/* Decision cards */
+.dec-card{border-radius:10px;padding:14px 18px;border:1px solid transparent;transition:all .2s}
+.dec-compras{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25)}
+.dec-pcp{background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.25)}
+.dec-preco{background:rgba(234,88,12,.06);border-color:rgba(234,88,12,.25)}
+.dec-alt{background:rgba(20,184,166,.06);border-color:rgba(20,184,166,.25)}
+/* Loader */
 #loader{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
 .ring{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* ── Pulse ── */
 .dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
-/* ── Alert banner ── */
 .alert-bar{border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px}
 .alert-red{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2)}
 .alert-amber{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2)}
 .alert-blue{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2)}
-/* ── Section title ── */
+.alert-teal{background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.2)}
+.alert-purple{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2)}
 .sec-title{font-family:var(--syne);font-size:14px;font-weight:700}
-/* ── Qty indicator ── */
-.qty-bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
-.qty-fill{height:100%;border-radius:2px}
-/* ── Price alert ── */
 .price-alert{background:rgba(234,88,12,.1);border:1px solid rgba(234,88,12,.25);border-radius:5px;padding:2px 7px;font-family:var(--mono);font-size:9px;color:#fb923c}
+/* Month toggle */
+.month-tab{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.month-tab.active{border-color:var(--border3);background:rgba(59,130,246,.08)}
+.month-tab:hover:not(.active){background:rgba(255,255,255,.03)}
 #app{display:none}
+/* Decision badge row */
+.decision-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+.dp-comprar{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.dp-pcp{background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
+.dp-alt{background:rgba(20,184,166,.15);color:#5eead4;border:1px solid rgba(20,184,166,.3)}
+.dp-preco{background:rgba(234,88,12,.15);color:#fb923c;border:1px solid rgba(234,88,12,.3)}
 </style>
 </head>
 <body>
 
-<!-- LOADER -->
 <div id="loader">
   <div class="ring"></div>
   <div style="font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--text2)">CARREGANDO DADOS</div>
   <div id="ld-msg" style="font-family:var(--mono);font-size:10px;color:var(--text3)">Conectando ao Google Sheets...</div>
 </div>
 
-<!-- ERROR -->
 <div id="err" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px">
   <div style="font-size:28px">⚠️</div>
   <div style="font-family:var(--syne);font-size:16px;font-weight:700;color:#fca5a5">Erro ao carregar</div>
@@ -125,283 +122,503 @@ body{background:var(--bg);color:var(--text);font-family:var(--syne);min-height:1
   <button onclick="loadData()" style="padding:7px 20px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#93c5fd;border-radius:7px;font-family:var(--mono);font-size:11px;cursor:pointer">↺ Tentar novamente</button>
 </div>
 
-<!-- APP -->
 <div id="app">
 
-  <!-- ══ HEADER ══ -->
-  <header style="border-bottom:1px solid var(--border);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:rgba(7,9,15,.96);backdrop-filter:blur(14px)">
-    <div style="display:flex;align-items:center;gap:20px">
+  <!-- HEADER -->
+  <header style="border-bottom:1px solid var(--border);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:rgba(7,9,15,.97);backdrop-filter:blur(14px);gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:16px">
       <div>
-        <div style="font-family:var(--syne);font-size:17px;font-weight:800;letter-spacing:-.02em">
-          Central de <span style="color:var(--cyan)">Compras</span>
+        <div style="font-family:var(--syne);font-size:16px;font-weight:800;letter-spacing:-.02em">
+          Central de <span style="color:var(--cyan)">Decisão</span>
         </div>
-        <div class="label" style="margin-top:1px">Supply Chain Intelligence — Previsibilidade &amp; Ação</div>
+        <div class="label" style="margin-top:1px">Supply Chain Intelligence — Zerar o AI</div>
       </div>
       <!-- Month tabs -->
-      <div style="display:flex;gap:6px;margin-left:12px">
+      <div style="display:flex;gap:5px">
         <div class="month-tab active" id="tab-m0" onclick="switchMonth(0)">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan)"></div>
-          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text)">MÊS 0</span>
-          <span id="m0-badge" class="badge b-blue" style="padding:1px 6px">—</span>
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--cyan)"></div>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em">MÊS 0</span>
+          <span id="m0-badge" class="badge b-blue" style="padding:1px 5px">—</span>
         </div>
         <div class="month-tab" id="tab-m1" onclick="switchMonth(1)">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--purple)"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--purple)"></div>
           <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text2)">MÊS 1</span>
-          <span id="m1-badge" class="badge b-purple" style="padding:1px 6px">—</span>
+          <span id="m1-badge" class="badge b-purple" style="padding:1px 5px">—</span>
         </div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <!-- Group filter -->
+      <div style="display:flex;align-items:center;gap:5px">
+        <span class="label" style="white-space:nowrap">Grupo:</span>
+        <div id="group-chips" style="display:flex;gap:4px;flex-wrap:wrap;max-width:600px"></div>
+      </div>
       <div style="display:flex;align-items:center;gap:5px">
         <div class="dot" style="background:var(--green)"></div>
         <span class="mono" style="font-size:10px;color:var(--text2)" id="last-upd">—</span>
       </div>
-      <div id="freeze-pill" style="font-family:var(--mono);font-size:10px;padding:3px 11px;border-radius:5px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);color:#c4b5fd"></div>
-      <button onclick="loadData()" style="padding:5px 13px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);color:var(--cyan);border-radius:7px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.08em">↺ REFRESH</button>
+      <div id="freeze-pill" style="font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:5px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);color:#c4b5fd"></div>
+      <button onclick="loadData()" style="padding:5px 12px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);color:var(--cyan);border-radius:7px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.08em">↺ REFRESH</button>
     </div>
   </header>
 
-  <main style="padding:20px 28px;max-width:1700px;margin:0 auto">
+  <main style="padding:18px 24px;max-width:1800px;margin:0 auto">
 
-    <!-- ══ MÊS 0 VIEW ══ -->
+    <!-- MÊS 0 VIEW -->
     <div id="view-m0">
 
-      <!-- KPIs M0 -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
-        <!-- NS -->
-        <div class="card" style="padding:16px">
-          <div class="label">Nível de Serviço M0</div>
-          <div class="kpi-num" style="font-size:36px;margin-top:8px" id="ns-m0">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="ns-m0-d">—</div>
-          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden">
-            <div id="ns-m0-bar" style="height:100%;border-radius:2px;transition:width .8s;width:0%"></div>
+      <!-- Decision summary cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+        <div class="dec-card dec-compras" id="dec-compras-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div class="label" style="color:#fca5a5">⚡ Comprar de Fato</div>
+            <span style="font-size:18px">🛒</span>
+          </div>
+          <div class="kpi-num" style="font-size:32px;color:var(--red)" id="cnt-comprar">—</div>
+          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Sem alt. disponível · Ação de Compras</div>
+          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+            <span class="decision-pill dp-comprar">Sem alternativo</span>
+            <span class="decision-pill dp-comprar">Comprar agora</span>
           </div>
         </div>
-        <!-- Falta Comprar -->
-        <div class="card" style="padding:16px;border-color:rgba(239,68,68,.3)">
-          <div class="label" style="color:#fca5a5">Falta Comprar (AI)</div>
-          <div class="kpi-num" style="font-size:36px;color:var(--red);margin-top:8px" id="fc-m0">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="fc-m0-d">itens com status pendente</div>
+        <div class="dec-card dec-preco" id="dec-preco-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div class="label" style="color:#fb923c">🟠 Risco Reajuste</div>
+            <span style="font-size:18px">📊</span>
+          </div>
+          <div class="kpi-num" style="font-size:32px;color:var(--orange)" id="cnt-preco-risco">—</div>
+          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Última compra &gt; 6 meses · Cotar antes</div>
+          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+            <span class="decision-pill dp-preco">Solicitar cotação</span>
+            <span class="decision-pill dp-preco">&gt;6 meses</span>
+          </div>
         </div>
-        <!-- Impacto no Plano -->
-        <div class="card" style="padding:16px;border-color:rgba(245,158,11,.3)">
-          <div class="label" style="color:#fcd34d">Impacto no Plano (AJ)</div>
-          <div class="kpi-num" style="font-size:36px;color:var(--amber);margin-top:8px" id="imp-m0">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="imp-m0-d">produtos Pai travados</div>
+        <div class="dec-card dec-alt" id="dec-alt-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div class="label" style="color:#5eead4">♻ Usar Alternativo</div>
+            <span style="font-size:18px">🔄</span>
+          </div>
+          <div class="kpi-num" style="font-size:32px;color:var(--teal)" id="cnt-usar-alt">—</div>
+          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Alternativo disponível · Projetos decide</div>
+          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+            <span class="decision-pill dp-alt">Col. R disponível</span>
+            <span class="decision-pill dp-alt">Projetos</span>
+          </div>
         </div>
-        <!-- Alerta Preço >6m -->
-        <div class="card" style="padding:16px;border-color:rgba(234,88,12,.3)">
-          <div class="label" style="color:#fb923c">Risco de Reajuste &gt;6m</div>
-          <div class="kpi-num" style="font-size:36px;color:#f97316;margin-top:8px" id="old-m0">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px">última compra &gt; 6 meses</div>
-        </div>
-        <!-- Freeze -->
-        <div class="card" style="padding:16px;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(59,130,246,.05));border-color:rgba(167,139,250,.25)">
-          <div class="label" style="color:#c4b5fd">Freeze Period</div>
-          <div class="kpi-num" style="font-size:24px;color:var(--purple);margin-top:8px" id="freeze-v">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="freeze-d">Maior LT detectado</div>
+        <div class="dec-card dec-pcp" id="dec-pcp-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div class="label" style="color:#c4b5fd">✂ Reduzir Plano</div>
+            <span style="font-size:18px">📋</span>
+          </div>
+          <div class="kpi-num" style="font-size:32px;color:var(--purple)" id="cnt-reduzir">—</div>
+          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Saldo AG &gt; 0 · Sem pedido Z=0 · PCP age</div>
+          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+            <span class="decision-pill dp-pcp">Saldo disponível</span>
+            <span class="decision-pill dp-pcp">Sem pedido</span>
+          </div>
         </div>
       </div>
 
-      <!-- Alert banners M0 -->
-      <div id="banners-m0" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+      <!-- Alert banners -->
+      <div id="banners-m0" style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px"></div>
 
-      <!-- Charts row M0 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
-        <!-- Status AI -->
-        <div class="card" style="padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-            <div>
-              <div class="label">O que Falta Comprar</div>
-              <div class="sec-title" style="margin-top:3px">Status Mat. M0 — col. AI</div>
-            </div>
-            <div id="ai-legend" style="display:flex;flex-direction:column;gap:3px"></div>
+      <!-- View selector tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <span class="label" style="margin-right:4px">VISÃO:</span>
+        <button class="nav-tab full-tab on" id="vtab-all" onclick="setView('all')">📊 Visão Geral</button>
+        <button class="nav-tab compras-tab" id="vtab-comprar" onclick="setView('comprar')">🛒 Comprar de Fato</button>
+        <button class="nav-tab preco-tab" id="vtab-preco" onclick="setView('preco')">🟠 Risco Reajuste</button>
+        <button class="nav-tab alt-tab" id="vtab-alt" onclick="setView('alt')">♻ Usar Alternativo</button>
+        <button class="nav-tab pcp-tab" id="vtab-pcp" onclick="setView('pcp')">✂ Reduzir Plano (PCP)</button>
+        <div style="flex:1"></div>
+        <input id="search-global" oninput="renderCurrentView()" placeholder="Buscar item ou descrição…" style="padding:4px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:10px;width:200px;outline:none">
+      </div>
+
+      <!-- ── VIEW: GERAL ── -->
+      <div id="view-all">
+        <!-- Charts row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+          <div class="card" style="padding:16px">
+            <div class="label" style="margin-bottom:10px">Distribuição das Decisões — M0</div>
+            <div style="position:relative;height:180px"><canvas id="ch-decision"></canvas></div>
           </div>
-          <div style="position:relative;height:180px"><canvas id="ch-ai"></canvas></div>
+          <div class="card" style="padding:16px">
+            <div class="label" style="margin-bottom:10px">Status AI — O que Falta Comprar</div>
+            <div id="ai-legend" style="display:flex;flex-direction:column;gap:3px;margin-bottom:6px"></div>
+            <div style="position:relative;height:150px"><canvas id="ch-ai"></canvas></div>
+          </div>
+          <div class="card" style="padding:16px">
+            <div class="label" style="margin-bottom:10px">Antiguidade da Última Compra</div>
+            <div style="position:relative;height:180px"><canvas id="ch-age"></canvas></div>
+          </div>
         </div>
-        <!-- Impacto AJ -->
-        <div class="card" style="padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+
+        <!-- Main table: all AI non-ok -->
+        <div class="card" style="margin-bottom:16px">
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div>
-              <div class="label">Impacto no Plano</div>
-              <div class="sec-title" style="margin-top:3px">Status Produto — col. AJ</div>
+              <div class="label">Tabela Geral — Todos os Itens com AI pendente</div>
+              <div class="sec-title" style="margin-top:3px">Coluna AI ≠ OK — Rota de Decisão para cada item</div>
             </div>
-            <div id="aj-legend" style="display:flex;flex-direction:column;gap:3px"></div>
+            <div style="display:flex;gap:5px">
+              <button class="export-btn btn-csv" onclick="exportCSV('all')">↓ CSV</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('all')">↓ PDF</button>
+            </div>
           </div>
-          <div style="position:relative;height:180px"><canvas id="ch-aj"></canvas></div>
-        </div>
-        <!-- Última Compra -->
-        <div class="card" style="padding:16px">
-          <div style="margin-bottom:12px">
-            <div class="label">Antiguidade da Última Compra</div>
-            <div class="sec-title" style="margin-top:3px">Distribuição por Faixa</div>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">Fornecedor</div>
+              <div class="label">LT (AA)</div>
+              <div class="label">Saldo AG</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Em Pedido (AA)</div>
+              <div class="label">Status AI</div>
+              <div class="label">Impacto AJ</div>
+              <div class="label">Alternativo (R)</div>
+              <div class="label">Decisão →</div>
+            </div>
+            <div id="tbl-all" style="max-height:500px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-all">0 itens</span>
+              <span class="mono" style="font-size:9px;color:var(--text3)">Decisão calculada automaticamente pela regra de negócio</span>
+            </div>
           </div>
-          <div style="position:relative;height:180px"><canvas id="ch-age"></canvas></div>
         </div>
       </div>
 
-      <!-- TABLE: O que falta comprar M0 (AI) -->
-      <div class="card" style="margin-bottom:16px">
-        <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <!-- ── VIEW: COMPRAR DE FATO ── -->
+      <div id="view-comprar" style="display:none">
+        <div class="alert-bar alert-red" style="margin-bottom:14px">
+          <span style="font-size:18px">🛒</span>
           <div>
-            <div class="label">Tabela de Ação — Mês 0</div>
-            <div class="sec-title" style="margin-top:3px">Itens que Faltam Comprar × Impacto no Produto Pai (AJ)</div>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <button class="chip on" id="f0-all" onclick="filterM0('all')">Todos</button>
-            <button class="chip" id="f0-critico" onclick="filterM0('critico')">🔴 Crítico</button>
-            <button class="chip" id="f0-parcial" onclick="filterM0('parcial')">🟡 Parcial</button>
-            <button class="chip" id="f0-preco" onclick="filterM0('preco')">🟠 Risco Preço</button>
-            <input id="search-m0" oninput="filterM0(activeF0)" placeholder="Buscar…" style="padding:3px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;width:140px;outline:none">
-            <button class="export-btn btn-csv" onclick="exportCSV('m0')">↓ CSV</button>
-            <button class="export-btn btn-pdf" onclick="exportPDF('m0')">↓ PDF</button>
+            <div class="mono" style="font-size:11px;color:#fca5a5;font-weight:700">DESTINO: SETOR DE COMPRAS</div>
+            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens que precisam ser comprados de fato. Sem alternativo cadastrado, ou com pedido em aberto (col. AA &gt; 0) que não resolve o AI.</div>
           </div>
         </div>
-        <div style="border-top:1px solid var(--border)">
-          <!-- TH -->
-          <div class="tr" style="grid-template-columns:110px 1fr 90px 80px 75px 75px 75px 110px 130px 150px;padding:6px 18px;background:rgba(255,255,255,.02)">
-            <div class="label">Item Pai</div>
-            <div class="label">Descrição</div>
-            <div class="label">Grupo</div>
-            <div class="label">Últ. Compra</div>
-            <div class="label">LT (dias)</div>
-            <div class="label">Saldo M0</div>
-            <div class="label">Em Pedido</div>
-            <div class="label">Status AI</div>
-            <div class="label">Impacto AJ</div>
-            <div class="label">Ação Sugerida</div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="label">Comprar de Fato — Ação Imediata de Compras</div>
+              <div class="sec-title" style="margin-top:3px">AI pendente · Sem alternativo · Saldo AG insuficiente</div>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+              <button class="chip on" id="fc-chip-all" onclick="filterComprar('all')">Todos</button>
+              <button class="chip" id="fc-chip-urgente" onclick="filterComprar('urgente')">🚨 LT Longo (&gt;30d)</button>
+              <button class="chip" id="fc-chip-pedido" onclick="filterComprar('pedido')">📦 Com Pedido (AA&gt;0)</button>
+              <button class="chip" id="fc-chip-semped" onclick="filterComprar('semped')">⚠ Sem Pedido</button>
+              <button class="export-btn btn-csv" onclick="exportCSV('comprar')">↓ CSV Compras</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('comprar')">↓ PDF Compras</button>
+            </div>
           </div>
-          <div id="tbl-m0" style="max-height:440px;overflow-y:auto"></div>
-          <div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-            <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m0">0 itens</span>
-            <span class="mono" style="font-size:9px;color:var(--text3)">🟠 = última compra &gt;6 meses → risco de reajuste de preço</span>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">Fornecedor</div>
+              <div class="label">LT (AA dias)</div>
+              <div class="label">Saldo AG</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Em Pedido (AA)</div>
+              <div class="label">Últ. Compra</div>
+              <div class="label">Status AI</div>
+              <div class="label">Impacto AJ</div>
+              <div class="label">Ação Compras</div>
+            </div>
+            <div id="tbl-comprar" style="max-height:500px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-comprar-tbl">0 itens</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- TABLE: Risco de Reajuste > 6m -->
-      <div class="card" style="margin-bottom:16px">
-        <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">🟠</span>
-            <div>
-              <div class="label">Alerta de Preço</div>
-              <div class="sec-title" style="margin-top:3px">Itens com Última Compra &gt; 6 Meses — Reavaliação Necessária</div>
-            </div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="export-btn btn-csv" onclick="exportCSV('preco')">↓ CSV</button>
-            <button class="export-btn btn-pdf" onclick="exportPDF('preco')">↓ PDF</button>
+      <!-- ── VIEW: RISCO REAJUSTE ── -->
+      <div id="view-preco" style="display:none">
+        <div class="alert-bar alert-amber" style="margin-bottom:14px">
+          <span style="font-size:18px">🟠</span>
+          <div>
+            <div class="mono" style="font-size:11px;color:#fcd34d;font-weight:700">DESTINO: SETOR DE COMPRAS — COTAÇÃO PRIORITÁRIA</div>
+            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens com AI pendente e última compra há mais de 6 meses. Risco de reajuste de preço: solicite cotação atualizada antes de fechar o pedido.</div>
           </div>
         </div>
-        <div style="border-top:1px solid var(--border)">
-          <div class="tr" style="grid-template-columns:110px 1fr 90px 110px 100px 80px 80px 160px;padding:6px 18px;background:rgba(255,255,255,.02)">
-            <div class="label">Item</div>
-            <div class="label">Descrição</div>
-            <div class="label">Fornecedor</div>
-            <div class="label">Últ. Compra</div>
-            <div class="label">Dias Sem Compra</div>
-            <div class="label">Status AI</div>
-            <div class="label">Estoque</div>
-            <div class="label">Ação</div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="label" style="color:#fb923c">Risco de Reajuste de Preço — &gt; 6 Meses sem Comprar</div>
+              <div class="sec-title" style="margin-top:3px">AI pendente · Última compra &gt; 6 meses · Cotar primeiro</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="export-btn btn-csv" onclick="exportCSV('preco')">↓ CSV Compras</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('preco')">↓ PDF Compras</button>
+            </div>
           </div>
-          <div id="tbl-preco" style="max-height:320px;overflow-y:auto"></div>
-          <div style="padding:8px 18px;border-top:1px solid var(--border)">
-            <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-preco">0 itens</span>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 110px 90px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">Fornecedor</div>
+              <div class="label">Últ. Compra</div>
+              <div class="label">Dias Sem Compra</div>
+              <div class="label">LT (dias)</div>
+              <div class="label">Saldo AG</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Status AI</div>
+              <div class="label">Impacto AJ</div>
+              <div class="label">Ação</div>
+            </div>
+            <div id="tbl-preco" style="max-height:500px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-preco-tbl">0 itens</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: USAR ALTERNATIVO ── -->
+      <div id="view-alt" style="display:none">
+        <div class="alert-bar alert-teal" style="margin-bottom:14px">
+          <span style="font-size:18px">♻</span>
+          <div>
+            <div class="mono" style="font-size:11px;color:#5eead4;font-weight:700">DESTINO: SETOR DE PROJETOS</div>
+            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens com AI pendente mas que possuem alternativo cadastrado (col. R). Projetos avalia viabilidade técnica de substituição para liberar o plano.</div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="label" style="color:#5eead4">Usar Alternativo — Decisão do Setor de Projetos</div>
+              <div class="sec-title" style="margin-top:3px">AI pendente · Alternativo disponível (col. R) · Projetos avalia</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="export-btn btn-csv" onclick="exportCSV('alt')">↓ CSV Projetos</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('alt')">↓ PDF Projetos</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 200px 90px 110px 130px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">Fornecedor</div>
+              <div class="label">LT (dias)</div>
+              <div class="label">Saldo AG</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Em Pedido (AA)</div>
+              <div class="label">Alternativo (col. R)</div>
+              <div class="label">Status AI</div>
+              <div class="label">Impacto AJ</div>
+              <div class="label">Ação Projetos</div>
+            </div>
+            <div id="tbl-alt" style="max-height:500px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-alt-tbl">0 itens</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: REDUZIR PLANO (PCP) ── -->
+      <div id="view-pcp" style="display:none">
+        <div class="alert-bar alert-purple" style="margin-bottom:14px">
+          <span style="font-size:18px">✂</span>
+          <div>
+            <div class="mono" style="font-size:11px;color:#c4b5fd;font-weight:700">DESTINO: PCP — REVISÃO DO PLANO DE PRODUÇÃO</div>
+            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens onde o plano pode ser reduzido: saldo AG positivo E sem pedido em aberto (col. Z = 0). PCP pode ajustar o plano para eliminar o AI sem necessidade de compra.</div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="label" style="color:#c4b5fd">Reduzir Plano — Ação do PCP</div>
+              <div class="sec-title" style="margin-top:3px">AI pendente · Saldo AG &gt; 0 · Sem pedido (Z=0) · PCP ajusta o plano</div>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+              <button class="chip on" id="pcp-chip-all" onclick="filterPCP('all')">Todos</button>
+              <button class="chip" id="pcp-chip-alto" onclick="filterPCP('alto')">🟣 Saldo Alto</button>
+              <button class="chip" id="pcp-chip-baixo" onclick="filterPCP('baixo')">⚠ Saldo Baixo</button>
+              <button class="export-btn btn-csv" onclick="exportCSV('pcp')">↓ CSV PCP</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('pcp')">↓ PDF PCP</button>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">Fornecedor</div>
+              <div class="label">LT (dias)</div>
+              <div class="label">Saldo AG</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Em Pedido (AA)</div>
+              <div class="label">Status AI</div>
+              <div class="label">Impacto AJ</div>
+              <div class="label">Últ. Compra</div>
+              <div class="label">Ação PCP</div>
+            </div>
+            <div id="tbl-pcp" style="max-height:500px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-pcp-tbl">0 itens</span>
+            </div>
           </div>
         </div>
       </div>
 
     </div><!-- /view-m0 -->
 
-    <!-- ══ MÊS 1 VIEW ══ -->
+    <!-- MÊS 1 VIEW -->
     <div id="view-m1" style="display:none">
 
       <!-- KPIs M1 -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
-        <div class="card" style="padding:16px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div class="card" style="padding:14px">
           <div class="label">Nível de Serviço M1</div>
-          <div class="kpi-num" style="font-size:36px;margin-top:8px" id="ns-m1">—</div>
+          <div class="kpi-num" style="font-size:32px;margin-top:6px" id="ns-m1">—</div>
           <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="ns-m1-d">—</div>
-          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden">
+          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden">
             <div id="ns-m1-bar" style="height:100%;border-radius:2px;transition:width .8s;width:0%"></div>
           </div>
         </div>
-        <div class="card" style="padding:16px;border-color:rgba(167,139,250,.3)">
+        <div class="card" style="padding:14px;border-color:rgba(167,139,250,.3)">
           <div class="label" style="color:#c4b5fd">Falta Comprar M1 (AS)</div>
-          <div class="kpi-num" style="font-size:36px;color:var(--purple);margin-top:8px" id="fc-m1">—</div>
+          <div class="kpi-num" style="font-size:32px;color:var(--purple);margin-top:6px" id="fc-m1">—</div>
           <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="fc-m1-d">itens com pendência M1</div>
         </div>
-        <div class="card" style="padding:16px;border-color:rgba(245,158,11,.3)">
+        <div class="card" style="padding:14px;border-color:rgba(245,158,11,.3)">
           <div class="label" style="color:#fcd34d">Impacto no Plano M1 (AT)</div>
-          <div class="kpi-num" style="font-size:36px;color:var(--amber);margin-top:8px" id="imp-m1">—</div>
+          <div class="kpi-num" style="font-size:32px;color:var(--amber);margin-top:6px" id="imp-m1">—</div>
           <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="imp-m1-d">produtos travados em M1</div>
         </div>
-        <div class="card" style="padding:16px;border-color:rgba(239,68,68,.25)">
+        <div class="card" style="padding:14px;border-color:rgba(239,68,68,.25)">
           <div class="label" style="color:#fca5a5">Já Nasce em Falta (M1)</div>
-          <div class="kpi-num" style="font-size:36px;color:var(--red);margin-top:8px" id="dead-m1">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px">sem saída no prazo atual</div>
+          <div class="kpi-num" style="font-size:32px;color:var(--red);margin-top:6px" id="dead-m1">—</div>
+          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px">LT &gt; prazo disponível</div>
         </div>
       </div>
 
-      <!-- Alert banners M1 -->
-      <div id="banners-m1" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+      <div id="banners-m1" style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px"></div>
 
-      <!-- Charts M1 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-        <div class="card" style="padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <!-- M1 sub-views -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <span class="label" style="margin-right:4px">VISÃO M1:</span>
+        <button class="nav-tab full-tab on" id="m1vtab-all" onclick="setViewM1('all')">📊 Todos M1</button>
+        <button class="nav-tab compras-tab" id="m1vtab-comprar" onclick="setViewM1('comprar')">🛒 Comprar (M1)</button>
+        <button class="nav-tab pcp-tab" id="m1vtab-pcp" onclick="setViewM1('pcp')">✂ Reduzir Plano (M1)</button>
+        <div style="flex:1"></div>
+        <input id="search-m1" oninput="renderCurrentViewM1()" placeholder="Buscar…" style="padding:4px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:10px;width:180px;outline:none">
+      </div>
+
+      <!-- M1: Todos -->
+      <div id="m1view-all">
+        <div class="card" style="margin-bottom:14px">
+          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div>
-              <div class="label">O que Falta Comprar M1</div>
-              <div class="sec-title" style="margin-top:3px">Status Mat. M1 — col. AS</div>
+              <div class="label">Tabela M1 — AS × AT · Todos os pendentes</div>
+              <div class="sec-title" style="margin-top:3px">Itens com AS pendente no Mês 1 + Rota de Decisão</div>
             </div>
-            <div id="as-legend" style="display:flex;flex-direction:column;gap:3px"></div>
-          </div>
-          <div style="position:relative;height:200px"><canvas id="ch-as"></canvas></div>
-        </div>
-        <div class="card" style="padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-            <div>
-              <div class="label">Impacto no Plano M1</div>
-              <div class="sec-title" style="margin-top:3px">Status Produto M1 — col. AT</div>
+            <div style="display:flex;gap:5px">
+              <button class="export-btn btn-csv" onclick="exportCSV('m1-all')">↓ CSV</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('m1-all')">↓ PDF</button>
             </div>
-            <div id="at-legend" style="display:flex;flex-direction:column;gap:3px"></div>
           </div>
-          <div style="position:relative;height:200px"><canvas id="ch-at"></canvas></div>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 130px 140px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">LT (dias)</div>
+              <div class="label">Plano M1</div>
+              <div class="label">Saldo M1</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Status AS</div>
+              <div class="label">Impacto AT</div>
+              <div class="label">Alternativo (R)</div>
+              <div class="label">Decisão M1 →</div>
+            </div>
+            <div id="tbl-m1" style="max-height:480px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1">0 itens</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- TABLE M1 -->
-      <div class="card" style="margin-bottom:16px">
-        <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div class="label">Tabela de Ação — Mês 1</div>
-            <div class="sec-title" style="margin-top:3px">Itens que Nascem em Falta — AS × AT (Produto Pai)</div>
+      <!-- M1: Comprar -->
+      <div id="m1view-comprar" style="display:none">
+        <div class="alert-bar alert-red" style="margin-bottom:12px">
+          <span style="font-size:16px">🛒</span>
+          <div class="mono" style="font-size:10px;color:#fca5a5">Itens M1 que precisam ser comprados. Sem alternativo e sem pedido suficiente.</div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="label" style="color:#fca5a5">Comprar para M1 — Ação Compras</div>
+              <div class="sec-title" style="margin-top:3px">AS pendente · Sem alternativo · Saldo insuficiente</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="export-btn btn-csv" onclick="exportCSV('m1-comprar')">↓ CSV Compras M1</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('m1-comprar')">↓ PDF Compras M1</button>
+            </div>
           </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <button class="chip on" id="f1-all" onclick="filterM1('all')">Todos</button>
-            <button class="chip" id="f1-morto" onclick="filterM1('morto')">💀 Sem saída</button>
-            <button class="chip" id="f1-parcial" onclick="filterM1('parcial')">🟡 Parcial</button>
-            <input id="search-m1" oninput="filterM1(activeF1)" placeholder="Buscar…" style="padding:3px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:10px;width:140px;outline:none">
-            <button class="export-btn btn-csv" onclick="exportCSV('m1')">↓ CSV</button>
-            <button class="export-btn btn-pdf" onclick="exportPDF('m1')">↓ PDF</button>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">LT (dias)</div>
+              <div class="label">Plano M1</div>
+              <div class="label">Saldo M1</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Status AS</div>
+              <div class="label">Impacto AT</div>
+              <div class="label">Ação Compras</div>
+            </div>
+            <div id="tbl-m1-comprar" style="max-height:480px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1-comprar">0 itens</span>
+            </div>
           </div>
         </div>
-        <div style="border-top:1px solid var(--border)">
-          <div class="tr" style="grid-template-columns:110px 1fr 90px 80px 80px 80px 110px 130px 150px;padding:6px 18px;background:rgba(255,255,255,.02)">
-            <div class="label">Item Pai</div>
-            <div class="label">Descrição</div>
-            <div class="label">Grupo</div>
-            <div class="label">LT (dias)</div>
-            <div class="label">Plano M1</div>
-            <div class="label">Saldo M1</div>
-            <div class="label">Status AS (M1)</div>
-            <div class="label">Impacto AT (M1)</div>
-            <div class="label">Ação M1</div>
+      </div>
+
+      <!-- M1: PCP -->
+      <div id="m1view-pcp" style="display:none">
+        <div class="alert-bar alert-purple" style="margin-bottom:12px">
+          <span style="font-size:16px">✂</span>
+          <div class="mono" style="font-size:10px;color:#c4b5fd">Itens M1 onde PCP pode reduzir o plano: saldo M1 indica possibilidade de ajuste e sem pedido em aberto (Z=0).</div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div>
+              <div class="label" style="color:#c4b5fd">Reduzir Plano M1 — Ação PCP</div>
+              <div class="sec-title" style="margin-top:3px">AS pendente · Saldo M1 favorável · Sem pedido (Z=0)</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="export-btn btn-csv" onclick="exportCSV('m1-pcp')">↓ CSV PCP M1</button>
+              <button class="export-btn btn-pdf" onclick="exportPDF('m1-pcp')">↓ PDF PCP M1</button>
+            </div>
           </div>
-          <div id="tbl-m1" style="max-height:440px;overflow-y:auto"></div>
-          <div style="padding:8px 18px;border-top:1px solid var(--border)">
-            <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1">0 itens</span>
+          <div style="border-top:1px solid var(--border)">
+            <div class="tr" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
+              <div class="label">Item</div>
+              <div class="label">Descrição (B)</div>
+              <div class="label">Grupo (N)</div>
+              <div class="label">LT (dias)</div>
+              <div class="label">Plano M1</div>
+              <div class="label">Saldo M1</div>
+              <div class="label">Em Pedido (Z)</div>
+              <div class="label">Status AS</div>
+              <div class="label">Impacto AT</div>
+              <div class="label">Ação PCP</div>
+            </div>
+            <div id="tbl-m1-pcp" style="max-height:480px;overflow-y:auto"></div>
+            <div style="padding:7px 16px;border-top:1px solid var(--border)">
+              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1-pcp">0 itens</span>
+            </div>
           </div>
         </div>
       </div>
@@ -410,27 +627,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--syne);min-height:1
 
   </main>
 
-  <footer style="border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-    <span class="mono" style="font-size:9px;color:var(--text3)">CENTRAL DE COMPRAS — SUPPLY CHAIN INTELLIGENCE</span>
+  <footer style="border-top:1px solid var(--border);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+    <div style="display:flex;gap:16px;align-items:center">
+      <span class="mono" style="font-size:9px;color:var(--text3)">CENTRAL DE DECISÃO — SUPPLY CHAIN INTELLIGENCE</span>
+      <div style="display:flex;gap:8px">
+        <span class="decision-pill dp-comprar">🛒 Comprar de Fato</span>
+        <span class="decision-pill dp-preco">🟠 Risco Reajuste</span>
+        <span class="decision-pill dp-alt">♻ Usar Alternativo</span>
+        <span class="decision-pill dp-pcp">✂ Reduzir Plano</span>
+      </div>
+    </div>
     <span class="mono" style="font-size:9px;color:var(--text3)" id="foot-info">—</span>
   </footer>
 </div>
 
 <script>
 /* ═══════════════════════════════════════
-   CONFIG & GLOBALS
+   CONFIG
 ═══════════════════════════════════════ */
 const SHEET_ID = '14jb6fVTvH148n4qSyZtQLytLSy-t6mv9vq5VQ-dzlPg';
 const GID_BASE = '0';
 const GID_ALT  = '1285375729';
 const TODAY    = new Date(); TODAY.setHours(0,0,0,0);
-const SIX_MONTHS_MS = 180 * 86400000;
 
-let activeF0 = 'all', activeF1 = 'all';
-let rowsM0 = [], rowsM0Preco = [], rowsM1 = [];
+let currentView   = 'all';
+let currentViewM1 = 'all';
+let activeFilterComprar = 'all';
+let activeFilterPCP     = 'all';
+let activeGroup   = 'todos';
+
+let rowsM0 = [], rowsM1 = [];
+let allGroups = [];
 let charts = {};
 
-/* Column index map (0-based) */
+/* Column map (0-based) */
 const C = {
   A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,
   K:10,L:11,M:12,N:13,O:14,P:15,Q:16,R:17,S:18,
@@ -440,517 +670,600 @@ const C = {
   AQ:42,AR:43,AS:44,AT:45,AU:46,AV:47,AW:48
 };
 
-function gc(row, key) { return (row[C[key]] ?? '').toString().trim(); }
-function gn(row, key) {
-  const v = gc(row, key).replace(',', '.').replace(/[^\d.-]/g, '');
-  const n = parseFloat(v); return isNaN(n) ? 0 : n;
-}
+function gc(row,key){return(row[C[key]]??'').toString().trim()}
+function gn(row,key){const v=gc(row,key).replace(',','.').replace(/[^\d.-]/g,'');const n=parseFloat(v);return isNaN(n)?0:n}
 
 /* ═══════════════════════════════════════
-   CSV PARSING
+   CSV
 ═══════════════════════════════════════ */
-async function fetchCSV(gid) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTPS ${r.status} — GID ${gid}`);
+async function fetchCSV(gid){
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  const r=await fetch(url);
+  if(!r.ok)throw new Error(`HTTPS ${r.status} — GID ${gid}`);
   return parseCSV(await r.text());
 }
-
-function parseCSV(text) {
-  const lines = text.split('\n');
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    rows.push(splitCSVLine(line));
-  }
+function parseCSV(text){
+  const lines=text.split('\n');const rows=[];
+  for(let i=1;i<lines.length;i++){const line=lines[i].trim();if(!line)continue;rows.push(splitCSVLine(line))}
   return rows;
 }
-
-function splitCSVLine(line) {
-  const res = []; let cur = '', q = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') { if (q && line[i+1]==='"') { cur+='"'; i++; } else q=!q; }
-    else if (c === ',' && !q) { res.push(cur.trim()); cur=''; }
-    else cur += c;
+function splitCSVLine(line){
+  const res=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}
+    else if(c===','&&!q){res.push(cur.trim());cur=''}
+    else cur+=c;
   }
-  res.push(cur.trim()); return res;
+  res.push(cur.trim());return res;
 }
 
 /* ═══════════════════════════════════════
-   DATE HELPERS
+   DATE
 ═══════════════════════════════════════ */
-function parseDate(v) {
-  if (!v) return null;
-  const s = v.toString().trim();
-  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
-  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m2) return new Date(+m2[1], +m2[2]-1, +m2[3]);
-  const n = parseFloat(s);
-  if (!isNaN(n) && n > 40000) return new Date(Date.UTC(1899,11,30) + n*86400000);
+function parseDate(v){
+  if(!v)return null;const s=v.toString().trim();
+  const m1=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m1)return new Date(+m1[3],+m1[2]-1,+m1[1]);
+  const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m2)return new Date(+m2[1],+m2[2]-1,+m2[3]);
+  const n=parseFloat(s);if(!isNaN(n)&&n>40000)return new Date(Date.UTC(1899,11,30)+n*86400000);
   return null;
 }
-function fmtDate(d) { return d ? d.toLocaleDateString('pt-BR') : '—'; }
-function diffDays(a) { return a ? Math.round((TODAY - a)/86400000) : null; }
-function fmtDays(d) {
-  if (d === null) return '—';
-  if (d < 0) return `em ${Math.abs(d)}d`;
-  return `há ${d}d`;
-}
+function fmtDate(d){return d?d.toLocaleDateString('pt-BR'):'—'}
+function diffDays(a){return a?Math.round((TODAY-a)/86400000):null}
 
 /* ═══════════════════════════════════════
-   STATUS CLASSIFIER
+   STATUS
 ═══════════════════════════════════════ */
-function classify(s) {
-  const n = s.toLowerCase();
-  if (!s || s === '—' || s === '-') return 'empty';
-  if (n.includes('ok') || n.includes('disp') || n.includes('sufic')) return 'ok';
-  if (n.includes('falta') || n.includes('crít') || n.includes('insuf') || n.includes('comprar')) return 'critical';
-  if (n.includes('risco') || n.includes('parcial') || n.includes('aten') || n.includes('revisar')) return 'warning';
-  if (n.includes('pedido') || n.includes('aguard') || n.includes('em compra')) return 'info';
+function classify(s){
+  const n=(s||'').toLowerCase();
+  if(!s||s==='—'||s==='-')return 'empty';
+  if(n.includes('ok')||n.includes('disp')||n.includes('sufic'))return 'ok';
+  if(n.includes('falta')||n.includes('crít')||n.includes('insuf')||n.includes('comprar'))return 'critical';
+  if(n.includes('risco')||n.includes('parcial')||n.includes('aten')||n.includes('revisar'))return 'warning';
+  if(n.includes('pedido')||n.includes('aguard')||n.includes('em compra'))return 'info';
   return 'neutral';
 }
-
-function statusBadge(s) {
-  if (!s || s === '—' || s === '-') return '<span class="badge b-gray">—</span>';
-  const cl = classify(s);
-  const map = {critical:'b-red',warning:'b-amber',ok:'b-green',info:'b-blue',neutral:'b-gray',empty:'b-gray'};
-  const short = s.length > 20 ? s.substring(0,19)+'…' : s;
-  return `<span class="badge ${map[cl]||'b-gray'}" title="${s}">${short}</span>`;
-}
-
-function actionSuggest(aiStatus, ajStatus, lt, isOld) {
-  const ai = classify(aiStatus), aj = classify(ajStatus);
-  if (ai === 'ok' && aj === 'ok') return '<span class="badge b-green">✓ Nenhuma ação</span>';
-  if (ai === 'critical' && lt > 30) return '<span class="badge b-red">🚨 URGENTE — LT Longo</span>';
-  if (ai === 'critical') return '<span class="badge b-red">⚡ Acionar Fornecedor</span>';
-  if (ai === 'warning' && isOld) return '<span class="badge b-orange">🟠 Cotar + Comprar</span>';
-  if (ai === 'warning') return '<span class="badge b-amber">⚠ Monitorar / Negociar</span>';
-  if (ai === 'info') return '<span class="badge b-blue">📋 Acompanhar Pedido</span>';
-  if (aj === 'critical') return '<span class="badge b-red">🔴 Trava Produção</span>';
-  if (aj === 'warning') return '<span class="badge b-amber">⚠ Risco Parcial</span>';
-  return '<span class="badge b-gray">Verificar</span>';
-}
-
-function actionSuggestM1(asStatus, atStatus, lt) {
-  const as = classify(asStatus), at = classify(atStatus);
-  if (as === 'ok' && at === 'ok') return '<span class="badge b-green">✓ Planejado</span>';
-  if (as === 'critical' && lt > 30) return '<span class="badge b-red">💀 Sem saída no prazo</span>';
-  if (as === 'critical') return '<span class="badge b-red">⚡ Antecipar Compra</span>';
-  if (as === 'warning') return '<span class="badge b-amber">⚠ Planejar Agora</span>';
-  if (at === 'critical') return '<span class="badge b-red">🔴 Trava Prod. M1</span>';
-  return '<span class="badge b-gray">Monitorar</span>';
+function statusBadge(s){
+  if(!s||s==='—'||s==='-')return'<span class="badge b-gray">—</span>';
+  const cl=classify(s);
+  const map={critical:'b-red',warning:'b-amber',ok:'b-green',info:'b-blue',neutral:'b-gray',empty:'b-gray'};
+  const short=s.length>22?s.substring(0,21)+'…':s;
+  return`<span class="badge ${map[cl]||'b-gray'}" title="${s}">${short}</span>`;
 }
 
 /* ═══════════════════════════════════════
-   MAIN LOAD
+   DECISION ENGINE
+   Retorna: 'comprar' | 'preco' | 'alt' | 'pcp'
 ═══════════════════════════════════════ */
-async function loadData() {
-  document.getElementById('loader').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('err').style.display = 'none';
+function decideAction(r) {
+  const aiCl = classify(r.statusAI);
+  if (aiCl === 'ok' || aiCl === 'empty') return 'ok';
 
-  try {
-    setLd('Carregando aba BASE...');
-    const base = await fetchCSV(GID_BASE);
-    setLd('Carregando aba ALTERACAO...');
-    const alt = await fetchCSV(GID_ALT);
-    setLd('Processando...');
-    processAll(base, alt);
-    document.getElementById('last-upd').textContent = new Date().toLocaleTimeString('pt-BR');
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-  } catch(e) {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('err').style.display = 'flex';
-    document.getElementById('err-msg').textContent = e.message;
+  // 1. Pode reduzir plano? Saldo AG > 0 + sem pedido (Z=0)
+  if (r.saldoAG > 0 && r.emPedidoZ === 0 && !r.alternativo) return 'pcp';
+
+  // 2. Tem alternativo? Projetos decide
+  if (r.alternativo && r.alternativo !== '—' && r.alternativo !== '') return 'alt';
+
+  // 3. Risco de reajuste (>6m) → cotar antes de comprar
+  if (r.isOld6m) return 'preco';
+
+  // 4. Comprar de fato
+  return 'comprar';
+}
+
+function decisionBadge(dec) {
+  const map = {
+    comprar: '<span class="decision-pill dp-comprar">🛒 Comprar de Fato</span>',
+    preco:   '<span class="decision-pill dp-preco">🟠 Cotar + Comprar</span>',
+    alt:     '<span class="decision-pill dp-alt">♻ Usar Alternativo</span>',
+    pcp:     '<span class="decision-pill dp-pcp">✂ Reduzir Plano</span>',
+    ok:      '<span class="badge b-green">✓ OK</span>'
+  };
+  return map[dec] || '<span class="badge b-gray">Verificar</span>';
+}
+
+function decisionBadgeM1(r) {
+  const asCl = classify(r.statusAS);
+  if (asCl === 'ok' || asCl === 'empty') return '<span class="badge b-green">✓ Planejado</span>';
+  // Pode reduzir plano M1?
+  if (r.saldoM1 > 0 && r.emPedidoZ === 0 && !r.alternativo) {
+    return '<span class="decision-pill dp-pcp">✂ Reduzir Plano M1</span>';
+  }
+  if (r.alternativo && r.alternativo !== '—') {
+    return '<span class="decision-pill dp-alt">♻ Usar Alternativo</span>';
+  }
+  if (r.lt > 30) return '<span class="badge b-red">💀 LT Longo — Sem saída no prazo</span>';
+  return '<span class="decision-pill dp-comprar">🛒 Antecipar Compra M1</span>';
+}
+
+/* ═══════════════════════════════════════
+   LOAD
+═══════════════════════════════════════ */
+async function loadData(){
+  document.getElementById('loader').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('err').style.display='none';
+  try{
+    setLd('Carregando BASE...');
+    const base=await fetchCSV(GID_BASE);
+    setLd('Carregando ALTERACAO...');
+    const alt=await fetchCSV(GID_ALT);
+    setLd('Processando dados...');
+    processAll(base,alt);
+    document.getElementById('last-upd').textContent=new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('loader').style.display='none';
+    document.getElementById('app').style.display='block';
+  }catch(e){
+    document.getElementById('loader').style.display='none';
+    document.getElementById('err').style.display='flex';
+    document.getElementById('err-msg').textContent=e.message;
     console.error(e);
   }
 }
-function setLd(m) { document.getElementById('ld-msg').textContent = m; }
+function setLd(m){document.getElementById('ld-msg').textContent=m}
 
 /* ═══════════════════════════════════════
-   PROCESS ALL DATA
+   PROCESS
 ═══════════════════════════════════════ */
 function processAll(baseRows, altRows) {
   destroyCharts();
+  rowsM0 = []; rowsM1 = [];
 
-  /* ── Index alterações por Item Pai ── */
+  let totalM0=0,okM0=0,totalM1=0,okM1=0;
+  let fcM1=0,impM1=0,deadM1=0;
+  let maxLT=0,maxLTItem='';
+  const aiCount={};
+  const ageCounts={lt30:0,d30a90:0,d90a180:0,gt180:0,nodate:0};
+  const grupos = new Set();
+
+  // Index alterações
   const altByPai = {};
-  altRows.forEach(r => {
-    const pai = (r[0]||'').toString().trim();
-    if (!pai) return;
-    if (!altByPai[pai]) altByPai[pai] = [];
-    const dataMod = parseDate(r[8]);
-    altByPai[pai].push({ dataMod, valorAbs: parseFloat((r[11]||'0').replace(',','.')) || 0 });
+  altRows.forEach(r=>{
+    const pai=(r[0]||'').toString().trim();
+    if(!pai)return;
+    if(!altByPai[pai])altByPai[pai]=[];
+    const dataMod=parseDate(r[8]);
+    altByPai[pai].push({dataMod,valorAbs:parseFloat((r[11]||'0').replace(',','.'))||0});
   });
 
-  /* ── Processar BASE ── */
-  let totalM0 = 0, okM0 = 0, totalM1 = 0, okM1 = 0;
-  let fcM0 = 0, impM0 = 0, fcM1 = 0, impM1 = 0, deadM1 = 0, oldCount = 0;
-  let maxLT = 0, maxLTItem = '';
-  const aiCount = {}, ajCount = {}, asCount = {}, atCount = {};
-  const ageCounts = {lt30:0, d30a90:0, d90a180:0, gt180:0, nodate:0};
-
-  rowsM0 = []; rowsM0Preco = []; rowsM1 = [];
-
-  baseRows.forEach(r => {
-    if (!r || r.length < 36) return;
-    const itemPai = gc(r,'A');
-    const desc    = gc(r,'C');
-    const grupo   = gc(r,'N');
-    const fornec  = gc(r,'E');
-    const ltStr   = gc(r,'AA');
-    const lt      = parseFloat(ltStr) || 0;
-
-    // Datas
-    const ultCompraStr = gc(r,'I');
-    const ultCompra    = parseDate(ultCompraStr);
+  baseRows.forEach(r=>{
+    if(!r||r.length<36)return;
+    const itemPai  = gc(r,'A');
+    const desc     = gc(r,'B'); // col B = descrição
+    const grupo    = gc(r,'N');
+    const fornec   = gc(r,'E');
+    const lt       = parseFloat(gc(r,'AA').replace(',','.'))||0;
+    const alternativo = gc(r,'R'); // col R = alternativo
+    const emPedidoZ   = gn(r,'Z');  // col Z = em pedido (quantidade pedida)
+    const emPedidoAA  = gn(r,'AA'); // col AA = qtd em pedido (lead time col)
+    const saldoAG  = gn(r,'AG'); // col AG = saldo
+    const saldoM0  = gn(r,'AD');
+    const estoque  = gn(r,'J');
+    const statusAI = gc(r,'AI');
+    const statusAJ = gc(r,'AJ');
+    const ultCompra    = parseDate(gc(r,'I'));
     const diasSemCompra = diffDays(ultCompra);
     const isOld6m = diasSemCompra !== null && diasSemCompra > 180;
 
-    // Saldos e status M0
-    const saldoM0 = gn(r,'AD');
-    const emPedido = gn(r,'Z');
-    const estoque  = gn(r,'J');
-    const statusAI = gc(r,'AI'); // o que falta comprar M0
-    const statusAJ = gc(r,'AJ'); // impacto no produto pai M0
-
-    // Status M1
     const planoM1  = gn(r,'AO');
     const saldoM1  = gn(r,'AQ');
-    const statusAS = gc(r,'AS'); // o que falta comprar M1
-    const statusAT = gc(r,'AT'); // impacto no produto pai M1
+    const statusAS = gc(r,'AS');
+    const statusAT = gc(r,'AT');
 
-    if (!itemPai) return;
+    if(!itemPai)return;
+    if(grupo) grupos.add(grupo);
+    if(lt>maxLT){maxLT=lt;maxLTItem=itemPai}
 
-    // LT máximo
-    if (lt > maxLT) { maxLT = lt; maxLTItem = itemPai; }
-
-    // ── Contadores M0 ──
+    // M0 counters
     totalM0++;
-    const aiCl = classify(statusAI), ajCl = classify(statusAJ);
-    if (aiCl === 'ok' || aiCl === 'empty') okM0++;
-    if (aiCl === 'critical' || aiCl === 'warning') fcM0++;
-    if (ajCl === 'critical' || ajCl === 'warning') impM0++;
-    if (statusAI) aiCount[statusAI] = (aiCount[statusAI]||0) + 1;
-    if (statusAJ) ajCount[statusAJ] = (ajCount[statusAJ]||0) + 1;
+    const aiCl=classify(statusAI),ajCl=classify(statusAJ);
+    if(aiCl==='ok'||aiCl==='empty')okM0++;
+    if(statusAI)aiCount[statusAI]=(aiCount[statusAI]||0)+1;
 
-    // Risco preço
-    if (isOld6m && (aiCl==='critical'||aiCl==='warning')) oldCount++;
-
-    // Idade última compra
-    if (diasSemCompra === null) ageCounts.nodate++;
-    else if (diasSemCompra < 30) ageCounts.lt30++;
-    else if (diasSemCompra < 90) ageCounts.d30a90++;
-    else if (diasSemCompra < 180) ageCounts.d90a180++;
+    // Age
+    if(diasSemCompra===null)ageCounts.nodate++;
+    else if(diasSemCompra<30)ageCounts.lt30++;
+    else if(diasSemCompra<90)ageCounts.d30a90++;
+    else if(diasSemCompra<180)ageCounts.d90a180++;
     else ageCounts.gt180++;
 
-    // ── Contadores M1 ──
+    // M1
     totalM1++;
-    const asCl = classify(statusAS), atCl = classify(statusAT);
-    if (asCl === 'ok' || asCl === 'empty') okM1++;
-    if (asCl === 'critical' || asCl === 'warning') fcM1++;
-    if (atCl === 'critical' || atCl === 'warning') impM1++;
-    if (asCl === 'critical' && lt > 0) deadM1++; // já nasce morto: falta + LT longo
-    if (statusAS) asCount[statusAS] = (asCount[statusAS]||0) + 1;
-    if (statusAT) atCount[statusAT] = (atCount[statusAT]||0) + 1;
+    const asCl=classify(statusAS),atCl=classify(statusAT);
+    if(asCl==='ok'||asCl==='empty')okM1++;
+    if(asCl==='critical'||asCl==='warning')fcM1++;
+    if(atCl==='critical'||atCl==='warning')impM1++;
+    if(asCl==='critical'&&lt>0)deadM1++;
 
-    // ── Linha M0 ──
-    rowsM0.push({
-      itemPai, desc, grupo, fornec, lt,
-      ultCompra, diasSemCompra, isOld6m,
-      saldoM0, emPedido, estoque,
-      statusAI, statusAJ,
-      aiCl, ajCl
-    });
+    const rowObj = {
+      itemPai,desc,grupo,fornec,lt,alternativo,
+      emPedidoZ,emPedidoAA,saldoAG,saldoM0,estoque,
+      statusAI,statusAJ,aiCl,ajCl,
+      ultCompra,diasSemCompra,isOld6m,
+      planoM1,saldoM1,statusAS,statusAT,asCl,atCl
+    };
+    rowObj.decision = decideAction(rowObj);
 
-    // Risco preço: qualquer item com >6m e com falta ou warning
-    if (isOld6m && (aiCl==='critical'||aiCl==='warning'||aiCl==='empty')) {
-      rowsM0Preco.push({ itemPai, desc, grupo, fornec, lt, ultCompra, diasSemCompra, estoque, statusAI, aiCl });
-    }
-
-    // ── Linha M1 ──
-    rowsM1.push({
-      itemPai, desc, grupo, lt,
-      planoM1, saldoM1,
-      statusAS, statusAT,
-      asCl, atCl
-    });
+    rowsM0.push(rowObj);
+    rowsM1.push(rowObj);
   });
 
-  /* ── Freeze ── */
-  const proxMesInicio = new Date(TODAY.getFullYear(), TODAY.getMonth()+1, 1);
-  const freezeDate = new Date(proxMesInicio);
-  freezeDate.setDate(freezeDate.getDate() - maxLT);
-  document.getElementById('freeze-v').textContent = maxLT > 0 ? maxLT+'d' : '—';
-  document.getElementById('freeze-d').textContent = maxLT > 0 ? `Freeze: ${fmtDate(freezeDate)}` : 'Nenhum LT crítico detectado';
-  document.getElementById('freeze-pill').textContent = maxLT > 0 ? `FREEZE: ${fmtDate(freezeDate)}` : '—';
+  // Group chips
+  allGroups = Array.from(grupos).sort();
+  buildGroupChips(allGroups);
 
-  /* ── KPIs M0 ── */
-  const nsM0 = totalM0 ? (okM0/totalM0*100) : 0;
-  const nsM0Color = nsM0>=90?'var(--green)':nsM0>=70?'var(--amber)':'var(--red)';
-  setKPI('ns-m0', nsM0.toFixed(1)+'%', nsM0Color);
-  document.getElementById('ns-m0-d').textContent = `${okM0} OK de ${totalM0} itens`;
-  document.getElementById('ns-m0-bar').style.cssText = `width:${nsM0}%;background:${nsM0Color}`;
-  setKPI('fc-m0', fcM0, 'var(--red)');
-  document.getElementById('fc-m0-d').textContent = `itens com falta/risco em AI`;
-  setKPI('imp-m0', impM0, 'var(--amber)');
-  document.getElementById('imp-m0-d').textContent = `produtos Pai bloqueados em AJ`;
-  setKPI('old-m0', oldCount, '#f97316');
-  document.getElementById('m0-badge').textContent = `${fcM0} faltas`;
+  // Freeze
+  const proxMes = new Date(TODAY.getFullYear(),TODAY.getMonth()+1,1);
+  const freezeDate = new Date(proxMes);
+  freezeDate.setDate(freezeDate.getDate()-maxLT);
+  document.getElementById('freeze-pill').textContent = maxLT>0?`FREEZE: ${fmtDate(freezeDate)}`:'—';
 
-  /* ── KPIs M1 ── */
-  const nsM1 = totalM1 ? (okM1/totalM1*100) : 0;
-  const nsM1Color = nsM1>=90?'var(--green)':nsM1>=70?'var(--amber)':'var(--red)';
-  setKPI('ns-m1', nsM1.toFixed(1)+'%', nsM1Color);
-  document.getElementById('ns-m1-d').textContent = `${okM1} OK de ${totalM1} itens`;
-  document.getElementById('ns-m1-bar').style.cssText = `width:${nsM1}%;background:${nsM1Color}`;
-  setKPI('fc-m1', fcM1, 'var(--purple)');
-  document.getElementById('fc-m1-d').textContent = `itens com pendência M1`;
-  setKPI('imp-m1', impM1, 'var(--amber)');
-  document.getElementById('imp-m1-d').textContent = `produtos travados em M1`;
-  setKPI('dead-m1', deadM1, 'var(--red)');
-  document.getElementById('m1-badge').textContent = `${fcM1} faltas`;
+  // Decision counts
+  const decCounts = {comprar:0,preco:0,alt:0,pcp:0};
+  rowsM0.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty').forEach(r=>{ if(decCounts[r.decision]!==undefined) decCounts[r.decision]++; });
 
-  /* ── Banners M0 ── */
-  const b0 = [];
-  if (fcM0 > 0) b0.push({cls:'alert-red',icon:'🚨',msg:`<strong style="color:#fca5a5">${fcM0} itens</strong> precisam de ação imediata de compra (col. AI). ${impM0} produtos Pai têm produção bloqueada (col. AJ).`});
-  if (oldCount > 0) b0.push({cls:'alert-amber',icon:'🟠',msg:`<strong style="color:#fcd34d">${oldCount} itens</strong> com última compra há mais de 6 meses e com falta — <strong style="color:#fb923c">risco de reajuste de preço</strong>. Solicite cotação atualizada.`});
-  if (maxLT > 0) b0.push({cls:'alert-blue',icon:'📅',msg:`Maior Lead Time detectado: <strong style="color:#93c5fd">${maxLT} dias (item ${maxLTItem})</strong>. Para produzir em ${proxMesInicio.toLocaleDateString('pt-BR',{month:'long'})}, o plano deveria estar fechado desde <strong style="color:#a78bfa">${fmtDate(freezeDate)}</strong>.`});
-  document.getElementById('banners-m0').innerHTML = b0.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:11px;color:var(--text2)">${b.msg}</span></div>`).join('');
+  document.getElementById('cnt-comprar').textContent = decCounts.comprar;
+  document.getElementById('cnt-preco-risco').textContent = decCounts.preco;
+  document.getElementById('cnt-usar-alt').textContent = decCounts.alt;
+  document.getElementById('cnt-reduzir').textContent = decCounts.pcp;
+  document.getElementById('m0-badge').textContent = `${rowsM0.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty').length} faltas`;
 
-  /* ── Banners M1 ── */
-  const b1 = [];
-  if (deadM1 > 0) b1.push({cls:'alert-red',icon:'💀',msg:`<strong style="color:#fca5a5">${deadM1} itens</strong> já nascem em falta para M1 considerando o Lead Time atual — ruptura inevitável se não houver ação <em>agora</em>.`});
-  if (fcM1 > 0) b1.push({cls:'alert-amber',icon:'📋',msg:`<strong style="color:#fcd34d">${fcM1} itens</strong> ainda precisam ser comprados para garantir M1. Inicie o processo de compra imediatamente.`});
-  document.getElementById('banners-m1').innerHTML = b1.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:11px;color:var(--text2)">${b.msg}</span></div>`).join('');
+  // KPIs M1
+  const nsM1=totalM1?(okM1/totalM1*100):0;
+  const nsM1Color=nsM1>=90?'var(--green)':nsM1>=70?'var(--amber)':'var(--red)';
+  setKPI('ns-m1',nsM1.toFixed(1)+'%',nsM1Color);
+  document.getElementById('ns-m1-d').textContent=`${okM1} OK de ${totalM1}`;
+  document.getElementById('ns-m1-bar').style.cssText=`width:${nsM1}%;background:${nsM1Color}`;
+  setKPI('fc-m1',fcM1,'var(--purple)');
+  setKPI('imp-m1',impM1,'var(--amber)');
+  setKPI('dead-m1',deadM1,'var(--red)');
+  document.getElementById('m1-badge').textContent=`${fcM1} faltas`;
 
-  /* ── Charts ── */
-  buildDonut('ch-ai', aiCount, 'ai-legend');
-  buildDonut('ch-aj', ajCount, 'aj-legend');
-  buildDonut('ch-as', asCount, 'as-legend');
-  buildDonut('ch-at', atCount, 'at-legend');
-  buildAgeBar('ch-age', ageCounts);
+  // Banners M0
+  const b0=[];
+  const fc0=decCounts.comprar+decCounts.preco;
+  if(fc0>0)b0.push({cls:'alert-red',icon:'🚨',msg:`<strong style="color:#fca5a5">${fc0} itens</strong> precisam de ação de compras: <strong>${decCounts.comprar} comprar de fato</strong> e <strong style="color:#fb923c">${decCounts.preco} requerem cotação antes</strong> (risco de reajuste).`});
+  if(decCounts.alt>0)b0.push({cls:'alert-teal',icon:'♻',msg:`<strong style="color:#5eead4">${decCounts.alt} itens</strong> possuem alternativo cadastrado (col. R). Encaminhar para <strong>Projetos</strong> avaliar substituição.`});
+  if(decCounts.pcp>0)b0.push({cls:'alert-purple',icon:'✂',msg:`<strong style="color:#c4b5fd">${decCounts.pcp} itens</strong> têm saldo AG positivo e sem pedido — <strong>PCP pode reduzir o plano</strong> para zerar o AI sem comprar.`});
+  if(maxLT>0)b0.push({cls:'alert-blue',icon:'📅',msg:`Maior Lead Time: <strong style="color:#93c5fd">${maxLT} dias (item ${maxLTItem})</strong>. Freeze calculado em <strong style="color:#a78bfa">${fmtDate(freezeDate)}</strong>.`});
+  document.getElementById('banners-m0').innerHTML=b0.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:10px;color:var(--text2)">${b.msg}</span></div>`).join('');
 
-  /* ── Tables ── */
-  renderM0('all');
-  renderPreco();
-  renderM1('all');
+  // Banners M1
+  const b1=[];
+  if(deadM1>0)b1.push({cls:'alert-red',icon:'💀',msg:`<strong style="color:#fca5a5">${deadM1} itens</strong> já nascem em falta para M1 — LT maior que o prazo disponível. Ruptura inevitável sem ação imediata.`});
+  if(fcM1>0)b1.push({cls:'alert-amber',icon:'📋',msg:`<strong style="color:#fcd34d">${fcM1} itens</strong> precisam de ação para M1 (AS pendente).`});
+  document.getElementById('banners-m1').innerHTML=b1.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:10px;color:var(--text2)">${b.msg}</span></div>`).join('');
 
-  document.getElementById('foot-info').textContent =
-    `Sheet: ${SHEET_ID} | ${totalM0} itens | ${new Date().toLocaleString('pt-BR')}`;
+  // Charts
+  buildDecisionDonut(decCounts);
+  buildDonut('ch-ai',aiCount,'ai-legend');
+  buildAgeBar('ch-age',ageCounts);
+
+  document.getElementById('foot-info').textContent=`Sheet: ${SHEET_ID} | ${totalM0} itens | ${new Date().toLocaleString('pt-BR')}`;
+
+  renderCurrentView();
+  renderCurrentViewM1();
 }
 
-function setKPI(id, val, color) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = val;
-  if (color) el.style.color = color;
-}
+function setKPI(id,val,color){const el=document.getElementById(id);if(!el)return;el.textContent=val;if(color)el.style.color=color}
 
 /* ═══════════════════════════════════════
-   CHARTS
+   GROUP CHIPS
 ═══════════════════════════════════════ */
-Chart.defaults.color = '#6b7fa3';
-Chart.defaults.borderColor = '#1c2840';
-Chart.defaults.font.family = 'DM Mono';
-Chart.defaults.font.size = 9;
-
-function colorForStatus(s) {
-  const n = (s||'').toLowerCase();
-  if (n.includes('ok')||n.includes('disp')) return 'rgba(16,185,129,.75)';
-  if (n.includes('falta')||n.includes('crít')||n.includes('comprar')) return 'rgba(239,68,68,.75)';
-  if (n.includes('risco')||n.includes('parcial')||n.includes('aten')) return 'rgba(245,158,11,.75)';
-  if (n.includes('pedido')||n.includes('aguard')) return 'rgba(59,130,246,.75)';
-  return 'rgba(107,127,163,.5)';
-}
-
-function buildDonut(canvasId, countObj, legendId) {
-  const labels = Object.keys(countObj).sort((a,b)=>countObj[b]-countObj[a]).slice(0,8);
-  const values = labels.map(l=>countObj[l]);
-  const colors = labels.map(l=>colorForStatus(l));
-  const total  = values.reduce((a,b)=>a+b,0);
-
-  if (charts[canvasId]) charts[canvasId].destroy();
-  charts[canvasId] = new Chart(document.getElementById(canvasId), {
-    type:'doughnut',
-    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderColor:'#07090f', borderWidth:2 }] },
-    options:{
-      responsive:true, maintainAspectRatio:false, cutout:'62%',
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(0)}%)`}}
-      }
-    }
-  });
-
-  const el = document.getElementById(legendId);
-  if (el) el.innerHTML = labels.slice(0,5).map((l,i)=>
-    `<div style="display:flex;align-items:center;gap:4px">
-      <div style="width:7px;height:7px;border-radius:1px;background:${colors[i]};flex-shrink:0"></div>
-      <span class="mono" style="font-size:8px;color:var(--text2)">${l.length>18?l.substring(0,17)+'…':l} (${values[i]})</span>
-    </div>`
+function buildGroupChips(groups) {
+  const el = document.getElementById('group-chips');
+  const all = ['todos',...groups];
+  el.innerHTML = all.map(g =>
+    `<button class="gchip ${g==='todos'?'on':''}" id="gchip-${g.replace(/\s/g,'_')}" onclick="setGroup('${g}')">${g==='todos'?'Todos':g}</button>`
   ).join('');
 }
 
-function buildAgeBar(canvasId, ag) {
-  if (charts[canvasId]) charts[canvasId].destroy();
-  charts[canvasId] = new Chart(document.getElementById(canvasId), {
-    type:'bar',
-    data:{
-      labels:['<30d','30-90d','90-180d','>180d','Sem data'],
-      datasets:[{
-        data:[ag.lt30, ag.d30a90, ag.d90a180, ag.gt180, ag.nodate],
-        backgroundColor:['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(234,88,12,.7)','rgba(239,68,68,.7)','rgba(107,127,163,.4)'],
-        borderRadius:4, borderWidth:0
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}},
-        y:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}}
-      }
-    }
-  });
+function setGroup(g) {
+  activeGroup = g;
+  document.querySelectorAll('.gchip').forEach(el=>el.classList.remove('on'));
+  const id = `gchip-${g.replace(/\s/g,'_')}`;
+  document.getElementById(id)?.classList.add('on');
+  renderCurrentView();
+  renderCurrentViewM1();
 }
 
-function destroyCharts() { Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}}); charts={}; }
+function filteredRows(rows) {
+  let r = rows;
+  if (activeGroup !== 'todos') r = r.filter(x => x.grupo === activeGroup);
+  const search = (document.getElementById('search-global')?.value||'').toLowerCase();
+  if (search) r = r.filter(x => x.itemPai.toLowerCase().includes(search) || (x.desc||'').toLowerCase().includes(search));
+  return r;
+}
+function filteredRowsM1(rows) {
+  let r = rows;
+  if (activeGroup !== 'todos') r = r.filter(x => x.grupo === activeGroup);
+  const search = (document.getElementById('search-m1')?.value||'').toLowerCase();
+  if (search) r = r.filter(x => x.itemPai.toLowerCase().includes(search) || (x.desc||'').toLowerCase().includes(search));
+  return r;
+}
 
 /* ═══════════════════════════════════════
-   TABLE M0
+   VIEW SWITCHER M0
 ═══════════════════════════════════════ */
-function filterM0(f) {
-  activeF0 = f;
-  ['all','critico','parcial','preco'].forEach(k=>{
-    document.getElementById('f0-'+k)?.classList.toggle('on', k===f);
+function setView(v) {
+  currentView = v;
+  ['all','comprar','preco','alt','pcp'].forEach(k=>{
+    document.getElementById('view-'+k).style.display = k===v?'block':'none';
+    const tab = document.getElementById('vtab-'+k);
+    if(tab) {
+      tab.classList.remove('on');
+      if(k===v) tab.classList.add('on');
+    }
   });
-  renderM0(f);
+  renderCurrentView();
 }
 
-function renderM0(f) {
-  const search = (document.getElementById('search-m0')?.value||'').toLowerCase();
-  const rows = rowsM0.filter(r=>{
-    if (search && !r.itemPai.toLowerCase().includes(search) && !r.desc.toLowerCase().includes(search)) return false;
-    if (f==='critico') return r.aiCl==='critical'||r.ajCl==='critical';
-    if (f==='parcial') return r.aiCl==='warning'||r.ajCl==='warning';
-    if (f==='preco')   return r.isOld6m;
-    return r.aiCl!=='ok'&&r.aiCl!=='empty'; // default: apenas não-OK
-  });
+function renderCurrentView() {
+  if (currentView==='all')     renderAll();
+  else if(currentView==='comprar') renderComprar();
+  else if(currentView==='preco')   renderPreco();
+  else if(currentView==='alt')     renderAlt();
+  else if(currentView==='pcp')     renderPCP();
+}
 
-  document.getElementById('cnt-m0').textContent = rows.length+' itens';
-  const el = document.getElementById('tbl-m0');
-
-  if (!rows.length) {
-    el.innerHTML = `<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com este filtro ✓</div>`;
-    return;
-  }
-
-  // Sort: criticos primeiro
-  rows.sort((a,b)=>{
-    const order = {critical:0,warning:1,info:2,neutral:3,ok:4,empty:5};
-    return (order[a.aiCl]||5)-(order[b.aiCl]||5);
-  });
-
-  el.innerHTML = rows.map(r=>{
-    const trCls = r.aiCl==='critical'?'crit':r.aiCl==='warning'?'warn':r.ajCl==='critical'?'crit':'info';
-    const ageHtml = r.isOld6m
-      ? `<div class="price-alert" title="Última compra: ${fmtDate(r.ultCompra)}">🟠 ${fmtDate(r.ultCompra)}</div>`
-      : `<span class="mono" style="font-size:10px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
-    const saldoColor = r.saldoM0 < 0 ? 'var(--red)' : r.saldoM0 === 0 ? 'var(--amber)' : 'var(--text)';
-    return `<div class="tr ${trCls}" style="grid-template-columns:110px 1fr 90px 80px 75px 75px 75px 110px 130px 150px;padding:9px 18px;border-left-width:3px">
+/* ─ Geral ─ */
+function renderAll() {
+  const rows = filteredRows(rowsM0).filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty');
+  rows.sort((a,b)=>{const o={critical:0,warning:1,info:2,neutral:3,ok:4,empty:5};return(o[a.aiCl]||5)-(o[b.aiCl]||5)});
+  document.getElementById('cnt-all').textContent = rows.length+' itens';
+  const el=document.getElementById('tbl-all');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const dec = r.decision;
+    const trCls = dec==='comprar'?'crit':dec==='preco'?'warn':dec==='alt'?'teal':dec==='pcp'?'purple':'info';
+    const saldoColor = r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
+    const pedColor = r.emPedidoZ>0?'var(--blue)':'var(--text3)';
+    return `<div class="tr ${trCls}" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:8px 16px;border-left-width:3px">
       <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:12px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.desc}">${r.desc||'—'}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
       <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div>${ageHtml}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.fornec}">${r.fornec||'—'}</div>
       <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM0}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedido||'—'}</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor};font-weight:${r.saldoAG!==0?'700':'400'}">${r.saldoAG}</div>
+      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
       <div>${statusBadge(r.statusAI)}</div>
       <div>${statusBadge(r.statusAJ)}</div>
-      <div>${actionSuggest(r.statusAI, r.statusAJ, r.lt, r.isOld6m)}</div>
+      <div class="mono" style="font-size:9px;color:${r.alternativo&&r.alternativo!=='—'?'var(--teal)':'var(--text3)'}" title="${r.alternativo}">${r.alternativo&&r.alternativo!=='—'?'✓ '+r.alternativo.substring(0,12):'—'}</div>
+      <div>${decisionBadge(dec)}</div>
     </div>`;
   }).join('');
 }
 
-/* ═══════════════════════════════════════
-   TABLE PREÇO >6m
-═══════════════════════════════════════ */
-function renderPreco() {
-  const rows = rowsM0Preco.sort((a,b)=>(b.diasSemCompra||0)-(a.diasSemCompra||0));
-  document.getElementById('cnt-preco').textContent = rows.length+' itens com risco de reajuste';
-
-  const el = document.getElementById('tbl-preco');
-  if (!rows.length) {
-    el.innerHTML = `<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com última compra &gt; 6 meses ✓</div>`;
-    return;
-  }
-
-  el.innerHTML = rows.map(r=>{
-    const diasColor = r.diasSemCompra > 365 ? 'var(--red)' : r.diasSemCompra > 270 ? '#f97316' : 'var(--amber)';
-    return `<div class="tr warn" style="grid-template-columns:110px 1fr 90px 110px 100px 80px 80px 160px;padding:9px 18px;border-left-width:3px">
+/* ─ Comprar ─ */
+function filterComprar(f){
+  activeFilterComprar=f;
+  ['all','urgente','pedido','semped'].forEach(k=>document.getElementById('fc-chip-'+k)?.classList.toggle('on',k===f));
+  renderComprar();
+}
+function renderComprar() {
+  let rows = filteredRows(rowsM0).filter(r=>r.decision==='comprar');
+  if(activeFilterComprar==='urgente') rows=rows.filter(r=>r.lt>30);
+  else if(activeFilterComprar==='pedido') rows=rows.filter(r=>r.emPedidoZ>0||r.emPedidoAA>0);
+  else if(activeFilterComprar==='semped') rows=rows.filter(r=>r.emPedidoZ===0&&r.emPedidoAA===0);
+  rows.sort((a,b)=>(b.lt||0)-(a.lt||0));
+  document.getElementById('cnt-comprar-tbl').textContent=rows.length+' itens para comprar';
+  const el=document.getElementById('tbl-comprar');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const saldoColor=r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
+    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
+    const ltColor=r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)';
+    const ageHtml=r.isOld6m?`<div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>`:`<span class="mono" style="font-size:9px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
+    const acaoHtml = r.lt>45
+      ? '<span class="badge b-red">🚨 URGENTE — LT Crítico</span>'
+      : r.emPedidoZ>0||r.emPedidoAA>0
+        ? '<span class="badge b-blue">📦 Acompanhar Pedido</span>'
+        : '<span class="badge b-red">⚡ Acionar Fornecedor</span>';
+    return `<div class="tr crit" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
       <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:12px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.fornec||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${fmtDate(r.ultCompra)}</div>
-      <div class="mono" style="font-size:10px;color:${diasColor};font-weight:700">${r.diasSemCompra}d</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.fornec}">${r.fornec||'—'}</div>
+      <div class="mono" style="font-size:10px;color:${ltColor};font-weight:700">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoAG}</div>
+      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
+      <div>${ageHtml}</div>
       <div>${statusBadge(r.statusAI)}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.estoque||'—'}</div>
+      <div>${statusBadge(r.statusAJ)}</div>
+      <div>${acaoHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ─ Preço ─ */
+function renderPreco() {
+  const rows = filteredRows(rowsM0).filter(r=>r.decision==='preco').sort((a,b)=>(b.diasSemCompra||0)-(a.diasSemCompra||0));
+  document.getElementById('cnt-preco-tbl').textContent=rows.length+' itens com risco de reajuste';
+  const el=document.getElementById('tbl-preco');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const diasColor=r.diasSemCompra>365?'var(--red)':r.diasSemCompra>270?'#f97316':'var(--amber)';
+    const saldoColor=r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
+    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
+    return `<div class="tr warn" style="grid-template-columns:100px 180px 80px 80px 110px 90px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.fornec||'—'}</div>
+      <div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>
+      <div class="mono" style="font-size:10px;color:${diasColor};font-weight:700">${r.diasSemCompra}d</div>
+      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoAG}</div>
+      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
+      <div>${statusBadge(r.statusAI)}</div>
+      <div>${statusBadge(r.statusAJ)}</div>
       <div><span class="badge b-orange">🟠 Cotar + Revisar Preço</span></div>
     </div>`;
   }).join('');
 }
 
-/* ═══════════════════════════════════════
-   TABLE M1
-═══════════════════════════════════════ */
-function filterM1(f) {
-  activeF1 = f;
-  ['all','morto','parcial'].forEach(k=>{
-    document.getElementById('f1-'+k)?.classList.toggle('on', k===f);
-  });
-  renderM1(f);
+/* ─ Alternativo ─ */
+function renderAlt() {
+  const rows = filteredRows(rowsM0).filter(r=>r.decision==='alt');
+  rows.sort((a,b)=>{const o={critical:0,warning:1,info:2};return(o[a.aiCl]||3)-(o[b.aiCl]||3)});
+  document.getElementById('cnt-alt-tbl').textContent=rows.length+' itens com alternativo disponível';
+  const el=document.getElementById('tbl-alt');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const saldoColor=r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
+    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
+    return `<div class="tr teal" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 200px 90px 110px 130px;padding:8px 16px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.fornec||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoAG}</div>
+      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--teal);font-weight:700" title="${r.alternativo}">${r.alternativo}</div>
+      <div>${statusBadge(r.statusAI)}</div>
+      <div>${statusBadge(r.statusAJ)}</div>
+      <div><span class="badge b-teal">♻ Avaliar Substituição</span></div>
+    </div>`;
+  }).join('');
 }
 
-function renderM1(f) {
-  const search = (document.getElementById('search-m1')?.value||'').toLowerCase();
-  let rows = rowsM1.filter(r=>{
-    if (search && !r.itemPai.toLowerCase().includes(search) && !r.desc.toLowerCase().includes(search)) return false;
-    if (f==='morto')   return r.asCl==='critical' && r.lt > 0;
-    if (f==='parcial') return r.asCl==='warning';
-    return r.asCl!=='ok'&&r.asCl!=='empty';
+/* ─ PCP ─ */
+function filterPCP(f){
+  activeFilterPCP=f;
+  ['all','alto','baixo'].forEach(k=>document.getElementById('pcp-chip-'+k)?.classList.toggle('on',k===f));
+  renderPCP();
+}
+function renderPCP() {
+  let rows = filteredRows(rowsM0).filter(r=>r.decision==='pcp');
+  if(activeFilterPCP==='alto') rows=rows.filter(r=>r.saldoAG>10);
+  else if(activeFilterPCP==='baixo') rows=rows.filter(r=>r.saldoAG>0&&r.saldoAG<=10);
+  rows.sort((a,b)=>b.saldoAG-a.saldoAG);
+  document.getElementById('cnt-pcp-tbl').textContent=rows.length+' itens · PCP pode reduzir plano';
+  const el=document.getElementById('tbl-pcp');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const saldoColor=r.saldoAG>10?'var(--green)':r.saldoAG>0?'var(--amber)':'var(--red)';
+    const ageHtml=r.isOld6m?`<div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>`:`<span class="mono" style="font-size:9px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
+    return `<div class="tr purple" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:8px 16px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.fornec||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:12px;color:${saldoColor};font-weight:800">${r.saldoAG}</div>
+      <div class="mono" style="font-size:10px;color:var(--text3)">${r.emPedidoZ||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
+      <div>${statusBadge(r.statusAI)}</div>
+      <div>${statusBadge(r.statusAJ)}</div>
+      <div>${ageHtml}</div>
+      <div><span class="badge b-purple">✂ Reduzir Plano</span></div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   VIEW SWITCHER M1
+═══════════════════════════════════════ */
+function setViewM1(v) {
+  currentViewM1 = v;
+  ['all','comprar','pcp'].forEach(k=>{
+    document.getElementById('m1view-'+k).style.display = k===v?'block':'none';
+    const tab=document.getElementById('m1vtab-'+k);
+    if(tab){tab.classList.remove('on');if(k===v)tab.classList.add('on')}
   });
+  renderCurrentViewM1();
+}
+function renderCurrentViewM1() {
+  if(currentViewM1==='all')    renderM1All();
+  else if(currentViewM1==='comprar') renderM1Comprar();
+  else if(currentViewM1==='pcp')     renderM1PCP();
+}
 
-  rows.sort((a,b)=>{
-    const order = {critical:0,warning:1,info:2,neutral:3,ok:4,empty:5};
-    return (order[a.asCl]||5)-(order[b.asCl]||5);
-  });
-
-  document.getElementById('cnt-m1').textContent = rows.length+' itens';
-  const el = document.getElementById('tbl-m1');
-
-  if (!rows.length) {
-    el.innerHTML = `<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com este filtro ✓</div>`;
-    return;
-  }
-
-  el.innerHTML = rows.map(r=>{
-    const trCls = r.asCl==='critical'?'crit':r.asCl==='warning'?'warn':'info';
-    const saldoColor = r.saldoM1<0?'var(--red)':r.saldoM1===0?'var(--amber)':'var(--text)';
-    return `<div class="tr ${trCls}" style="grid-template-columns:110px 1fr 90px 80px 80px 80px 110px 130px 150px;padding:9px 18px;border-left-width:3px">
+function renderM1All() {
+  const rows = filteredRowsM1(rowsM1).filter(r=>r.asCl!=='ok'&&r.asCl!=='empty');
+  rows.sort((a,b)=>{const o={critical:0,warning:1,info:2,neutral:3};return(o[a.asCl]||4)-(o[b.asCl]||4)});
+  document.getElementById('cnt-m1').textContent=rows.length+' itens';
+  const el=document.getElementById('tbl-m1');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const trCls=r.asCl==='critical'?'crit':r.asCl==='warning'?'warn':'info';
+    const saldoColor=r.saldoM1<0?'var(--red)':r.saldoM1===0?'var(--amber)':'var(--green)';
+    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
+    return `<div class="tr ${trCls}" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 130px 140px;padding:8px 16px;border-left-width:3px">
       <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
-      <div style="font-size:12px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.desc}">${r.desc||'—'}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
       <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
       <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
       <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
       <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM1}</div>
+      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
       <div>${statusBadge(r.statusAS)}</div>
       <div>${statusBadge(r.statusAT)}</div>
-      <div>${actionSuggestM1(r.statusAS, r.statusAT, r.lt)}</div>
+      <div class="mono" style="font-size:9px;color:${r.alternativo&&r.alternativo!=='—'?'var(--teal)':'var(--text3)'}">${r.alternativo&&r.alternativo!=='—'?'✓ '+r.alternativo.substring(0,10):'—'}</div>
+      <div>${decisionBadgeM1(r)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderM1Comprar() {
+  const rows = filteredRowsM1(rowsM1).filter(r=>{
+    if(r.asCl==='ok'||r.asCl==='empty')return false;
+    // Não tem alternativo e saldo M1 insuficiente
+    if(r.alternativo&&r.alternativo!=='—')return false;
+    return r.saldoM1<=0||r.emPedidoZ===0;
+  });
+  rows.sort((a,b)=>(b.lt||0)-(a.lt||0));
+  document.getElementById('cnt-m1-comprar').textContent=rows.length+' itens a comprar para M1';
+  const el=document.getElementById('tbl-m1-comprar');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const saldoColor=r.saldoM1<0?'var(--red)':r.saldoM1===0?'var(--amber)':'var(--green)';
+    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
+    const acaoHtml=r.lt>45?'<span class="badge b-red">💀 Sem saída no prazo</span>':'<span class="badge b-red">⚡ Antecipar Compra M1</span>';
+    return `<div class="tr crit" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':'var(--amber)'}; font-weight:700">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
+      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM1}</div>
+      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
+      <div>${statusBadge(r.statusAS)}</div>
+      <div>${statusBadge(r.statusAT)}</div>
+      <div>${acaoHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderM1PCP() {
+  const rows = filteredRowsM1(rowsM1).filter(r=>{
+    if(r.asCl==='ok'||r.asCl==='empty')return false;
+    return r.saldoM1>0&&r.emPedidoZ===0;
+  });
+  rows.sort((a,b)=>b.saldoM1-a.saldoM1);
+  document.getElementById('cnt-m1-pcp').textContent=rows.length+' itens · PCP pode reduzir plano M1';
+  const el=document.getElementById('tbl-m1-pcp');
+  if(!rows.length){el.innerHTML=emptyRow();return}
+  el.innerHTML=rows.map(r=>{
+    const saldoColor=r.saldoM1>10?'var(--green)':r.saldoM1>0?'var(--amber)':'var(--red)';
+    return `<div class="tr purple" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
+      <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
+      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.lt||'—'}d</div>
+      <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
+      <div class="mono" style="font-size:12px;color:${saldoColor};font-weight:800">${r.saldoM1}</div>
+      <div class="mono" style="font-size:10px;color:var(--text3)">—</div>
+      <div>${statusBadge(r.statusAS)}</div>
+      <div>${statusBadge(r.statusAT)}</div>
+      <div><span class="badge b-purple">✂ Reduzir Plano M1</span></div>
     </div>`;
   }).join('');
 }
@@ -959,106 +1272,147 @@ function renderM1(f) {
    MONTH SWITCH
 ═══════════════════════════════════════ */
 function switchMonth(m) {
-  document.getElementById('view-m0').style.display = m===0?'block':'none';
-  document.getElementById('view-m1').style.display = m===1?'block':'none';
-  document.getElementById('tab-m0').classList.toggle('active', m===0);
-  document.getElementById('tab-m1').classList.toggle('active', m===1);
-  // Update tab text color
-  document.querySelector('#tab-m0 span.mono').style.color = m===0?'var(--text)':'var(--text2)';
-  document.querySelector('#tab-m1 span.mono').style.color = m===1?'var(--text)':'var(--text2)';
+  document.getElementById('view-m0').style.display=m===0?'block':'none';
+  document.getElementById('view-m1').style.display=m===1?'block':'none';
+  document.getElementById('tab-m0').classList.toggle('active',m===0);
+  document.getElementById('tab-m1').classList.toggle('active',m===1);
 }
 
 /* ═══════════════════════════════════════
-   EXPORTS
+   CHARTS
 ═══════════════════════════════════════ */
-function getExportData(type) {
-  if (type === 'm0') {
-    return {
-      headers: ['Item Pai','Descrição','Grupo','Fornecedor','Última Compra','Dias Sem Compra','LT (dias)','Saldo M0','Em Pedido','Status AI (O que falta)','Impacto AJ (Produto Pai)','Alerta Preço'],
-      rows: rowsM0.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty').map(r=>[
-        r.itemPai, r.desc, r.grupo, r.fornec,
-        fmtDate(r.ultCompra), r.diasSemCompra||'', r.lt||'',
-        r.saldoM0, r.emPedido,
-        r.statusAI, r.statusAJ,
-        r.isOld6m?'SIM — >6 meses':''
-      ]),
-      title: 'Acao_Compras_Mes0'
-    };
-  }
-  if (type === 'preco') {
-    return {
-      headers: ['Item','Descrição','Fornecedor','Última Compra','Dias Sem Compra','Status AI','Estoque'],
-      rows: rowsM0Preco.map(r=>[
-        r.itemPai, r.desc, r.fornec,
-        fmtDate(r.ultCompra), r.diasSemCompra||'',
-        r.statusAI, r.estoque
-      ]),
-      title: 'Risco_Reajuste_Preco'
-    };
-  }
-  if (type === 'm1') {
-    return {
-      headers: ['Item Pai','Descrição','Grupo','LT (dias)','Plano M1','Saldo M1','Status AS (O que falta M1)','Impacto AT (Produto Pai M1)'],
-      rows: rowsM1.filter(r=>r.asCl!=='ok'&&r.asCl!=='empty').map(r=>[
-        r.itemPai, r.desc, r.grupo, r.lt||'',
-        r.planoM1, r.saldoM1,
-        r.statusAS, r.statusAT
-      ]),
-      title: 'Acao_Compras_Mes1'
-    };
-  }
+Chart.defaults.color='#6b7fa3';
+Chart.defaults.borderColor='#1c2840';
+Chart.defaults.font.family='DM Mono';
+Chart.defaults.font.size=9;
+
+function buildDecisionDonut(counts) {
+  const labels=['Comprar de Fato','Risco Reajuste','Usar Alternativo','Reduzir Plano'];
+  const values=[counts.comprar,counts.preco,counts.alt,counts.pcp];
+  const colors=['rgba(239,68,68,.75)','rgba(234,88,12,.75)','rgba(20,184,166,.75)','rgba(167,139,250,.75)'];
+  if(charts['ch-decision'])charts['ch-decision'].destroy();
+  charts['ch-decision']=new Chart(document.getElementById('ch-decision'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#07090f',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{display:true,position:'right',labels:{color:'#6b7fa3',font:{size:9},boxWidth:10}},
+      tooltip:{callbacks:{label:c=>{const t=values.reduce((a,b)=>a+b,0);return` ${c.label}: ${c.raw} (${t?((c.raw/t)*100).toFixed(0):0}%)`;}}}}
+    }
+  });
+}
+
+function colorForStatus(s){
+  const n=(s||'').toLowerCase();
+  if(n.includes('ok')||n.includes('disp'))return'rgba(16,185,129,.75)';
+  if(n.includes('falta')||n.includes('crít')||n.includes('comprar'))return'rgba(239,68,68,.75)';
+  if(n.includes('risco')||n.includes('parcial')||n.includes('aten'))return'rgba(245,158,11,.75)';
+  if(n.includes('pedido')||n.includes('aguard'))return'rgba(59,130,246,.75)';
+  return'rgba(107,127,163,.5)';
+}
+
+function buildDonut(canvasId,countObj,legendId){
+  const labels=Object.keys(countObj).sort((a,b)=>countObj[b]-countObj[a]).slice(0,8);
+  const values=labels.map(l=>countObj[l]);
+  const colors=labels.map(l=>colorForStatus(l));
+  const total=values.reduce((a,b)=>a+b,0);
+  if(charts[canvasId])charts[canvasId].destroy();
+  charts[canvasId]=new Chart(document.getElementById(canvasId),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#07090f',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(0)}%)`}}}}
+  });
+  const el=document.getElementById(legendId);
+  if(el)el.innerHTML=labels.slice(0,5).map((l,i)=>
+    `<div style="display:flex;align-items:center;gap:4px">
+      <div style="width:7px;height:7px;border-radius:1px;background:${colors[i]};flex-shrink:0"></div>
+      <span class="mono" style="font-size:8px;color:var(--text2)">${l.length>20?l.substring(0,19)+'…':l} (${values[i]})</span>
+    </div>`
+  ).join('');
+}
+
+function buildAgeBar(canvasId,ag){
+  if(charts[canvasId])charts[canvasId].destroy();
+  charts[canvasId]=new Chart(document.getElementById(canvasId),{
+    type:'bar',
+    data:{labels:['<30d','30-90d','90-180d','>180d','Sem data'],
+      datasets:[{data:[ag.lt30,ag.d30a90,ag.d90a180,ag.gt180,ag.nodate],
+        backgroundColor:['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(234,88,12,.7)','rgba(239,68,68,.7)','rgba(107,127,163,.4)'],
+        borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}},y:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}}}}
+  });
+}
+
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={}}
+
+/* ═══════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════ */
+function getExportRows(type) {
+  const search = (document.getElementById('search-global')?.value||'').toLowerCase();
+  let base = rowsM0.filter(r=>{
+    if(activeGroup!=='todos'&&r.grupo!==activeGroup)return false;
+    if(search&&!r.itemPai.toLowerCase().includes(search)&&!(r.desc||'').toLowerCase().includes(search))return false;
+    return true;
+  });
+  if(type==='all')    return {rows:base.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','statusAI','statusAJ','alternativo','decision'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Status AI','Impacto AJ','Alternativo (R)','Decisão'],title:'Visao_Geral_AI'};
+  if(type==='comprar')return {rows:base.filter(r=>r.decision==='comprar'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Status AI','Impacto AJ'],title:'Comprar_de_Fato'};
+  if(type==='preco')  return {rows:base.filter(r=>r.decision==='preco'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Status AI','Impacto AJ'],title:'Risco_Reajuste'};
+  if(type==='alt')    return {rows:base.filter(r=>r.decision==='alt'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','alternativo','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Alternativo (R)','Status AI','Impacto AJ'],title:'Usar_Alternativo'};
+  if(type==='pcp')    return {rows:base.filter(r=>r.decision==='pcp'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Status AI','Impacto AJ'],title:'Reduzir_Plano_PCP'};
+
+  // M1
+  const searchM1=(document.getElementById('search-m1')?.value||'').toLowerCase();
+  let baseM1=rowsM1.filter(r=>{
+    if(activeGroup!=='todos'&&r.grupo!==activeGroup)return false;
+    if(searchM1&&!r.itemPai.toLowerCase().includes(searchM1)&&!(r.desc||'').toLowerCase().includes(searchM1))return false;
+    return r.asCl!=='ok'&&r.asCl!=='empty';
+  });
+  if(type==='m1-all') return {rows:baseM1,cols:['itemPai','desc','grupo','lt','planoM1','saldoM1','emPedidoZ','statusAS','statusAT','alternativo'],headers:['Item','Descrição (B)','Grupo','LT (dias)','Plano M1','Saldo M1','Em Pedido Z','Status AS','Impacto AT','Alternativo (R)'],title:'M1_Todos_Pendentes'};
+  if(type==='m1-comprar') return {rows:baseM1.filter(r=>!r.alternativo||r.alternativo==='—'),cols:['itemPai','desc','grupo','lt','planoM1','saldoM1','emPedidoZ','statusAS','statusAT'],headers:['Item','Descrição (B)','Grupo','LT (dias)','Plano M1','Saldo M1','Em Pedido Z','Status AS','Impacto AT'],title:'M1_Comprar'};
+  if(type==='m1-pcp') return {rows:baseM1.filter(r=>r.saldoM1>0&&r.emPedidoZ===0),cols:['itemPai','desc','grupo','lt','planoM1','saldoM1','emPedidoZ','statusAS','statusAT'],headers:['Item','Descrição (B)','Grupo','LT (dias)','Plano M1','Saldo M1','Em Pedido Z','Status AS','Impacto AT'],title:'M1_Reduzir_Plano'};
+  return null;
 }
 
 function exportCSV(type) {
-  const d = getExportData(type);
-  if (!d) return;
-  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
-  const csv = [d.headers.map(esc).join(','), ...d.rows.map(r=>r.map(esc).join(','))].join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${d.title}_${new Date().toISOString().slice(0,10)}.csv`;
+  const d=getExportRows(type);if(!d)return;
+  const esc=v=>`"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`;
+  const csv=[d.headers.map(esc).join(','),...d.rows.map(r=>d.cols.map(c=>esc(r[c])).join(','))].join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${d.title}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
 function exportPDF(type) {
-  const d = getExportData(type);
-  if (!d) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(13);
-  doc.setTextColor(220,228,240);
-  doc.setFillColor(7,9,15);
-  doc.rect(0,0,297,210,'F');
-
-  doc.text('Central de Compras — Supply Chain Intelligence', 14, 14);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
-  doc.setTextColor(107,127,163);
-  doc.text(`${d.title.replace(/_/g,' ')} | Gerado: ${new Date().toLocaleString('pt-BR')}`, 14, 21);
-
+  const d=getExportRows(type);if(!d)return;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  doc.setFillColor(7,9,15);doc.rect(0,0,297,210,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(220,228,240);
+  doc.text('Central de Decisão — Supply Chain Intelligence',14,12);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(107,127,163);
+  doc.text(`${d.title.replace(/_/g,' ')} | Grupo: ${activeGroup} | Gerado: ${new Date().toLocaleString('pt-BR')}`,14,19);
   doc.autoTable({
-    startY: 26,
-    head: [d.headers],
-    body: d.rows,
-    theme: 'grid',
-    styles: {
-      font: 'helvetica', fontSize: 7,
-      fillColor: [12,16,24], textColor: [200,210,230],
-      lineColor: [28,40,64], lineWidth: 0.2,
-      cellPadding: 2
-    },
-    headStyles: {
-      fillColor: [17,24,39], textColor: [147,197,253],
-      fontStyle: 'bold', fontSize: 7.5
-    },
-    alternateRowStyles: { fillColor: [15,20,30] },
-    columnStyles: { 0: {fontStyle:'bold'} }
+    startY:23,head:[d.headers],
+    body:d.rows.map(r=>d.cols.map(c=>String(r[c]===null||r[c]===undefined?'':r[c]))),
+    theme:'grid',
+    styles:{font:'helvetica',fontSize:6.5,fillColor:[12,16,24],textColor:[200,210,230],lineColor:[28,40,64],lineWidth:.18,cellPadding:1.8},
+    headStyles:{fillColor:[17,24,39],textColor:[147,197,253],fontStyle:'bold',fontSize:7},
+    alternateRowStyles:{fillColor:[15,20,30]},
+    columnStyles:{0:{fontStyle:'bold'}}
   });
-
   doc.save(`${d.title}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* ═══════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════ */
+function emptyRow(){
+  return`<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com este filtro ✓</div>`;
 }
 
 /* ═══════════════════════════════════════
