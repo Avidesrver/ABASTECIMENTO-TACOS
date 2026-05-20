@@ -1143,13 +1143,13 @@ function filterPCP(f){
 function renderPCP() {
   let rows = filteredRows(rowsM0).filter(r=>r.decision==='pcp');
   if(activeFilterPCP==='alto') rows=rows.filter(r=>r.saldoAG>10);
-  else if(activeFilterPCP==='baixo') rows=rows.filter(r=>r.saldoAG>0&&r.saldoAG<=10);
+  else if(activeFilterPCP==='baixo') rows=rows.filter(r=>r.saldoAG<0&&r.saldoAG<=10);
   rows.sort((a,b)=>b.saldoAG-a.saldoAG);
   document.getElementById('cnt-pcp-tbl').textContent=rows.length+' itens · PCP pode reduzir plano';
   const el=document.getElementById('tbl-pcp');
   if(!rows.length){el.innerHTML=emptyRow();return}
   el.innerHTML=rows.map(r=>{
-    const saldoColor=r.saldoAG>10?'var(--green)':r.saldoAG>0?'var(--amber)':'var(--red)';
+    const saldoColor=r.saldoAG>10?'var(--green)':r.saldoAG<0?'var(--amber)':'var(--red)';
     const ageHtml=r.isOld6m?`<div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>`:`<span class="mono" style="font-size:9px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
     return `<div class="tr purple" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:8px 16px;border-left-width:3px">
       <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
