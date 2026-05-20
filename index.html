@@ -742,7 +742,7 @@ function decideAction(r) {
   if (aiCl === 'ok' || aiCl === 'empty') return 'ok';
 
   // 1. Pode reduzir plano? Saldo AG > 0 + sem pedido (Z=0)
-  if (r.saldoAG > 0 && r.emPedidoZ === 0 && !r.alternativo) return 'pcp';
+  if (r.saldoAG < 0 && r.emPedidoZ === 0 && !r.alternativo) return 'pcp';
 
   // 2. Tem alternativo? Projetos decide
   if (r.alternativo && r.alternativo !== '—' && r.alternativo !== '') return 'alt';
