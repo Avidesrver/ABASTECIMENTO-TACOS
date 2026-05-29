@@ -3,1422 +3,891 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Central de Decisão — Supply Chain</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<title>Plano de Corte</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root {
-  --bg:#07090f;--bg1:#0c1018;--bg2:#111827;--bg3:#162033;
-  --border:#1c2840;--border2:#243454;--border3:#2e4470;
-  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
-  --cyan:#22d3ee;--amber:#f59e0b;--red:#ef4444;--green:#10b981;
-  --purple:#a78bfa;--orange:#f97316;--teal:#14b8a6;
-  --text:#dde4f0;--text2:#6b7fa3;--text3:#2d3f5a;
-  --mono:'DM Mono',monospace;--syne:'Syne',sans-serif;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f4f0;--bg3:#eeedea;
+  --tx:#1a1a18;--tx2:#5f5e5a;--tx3:#9b9a96;
+  --br:rgba(0,0,0,.11);--br2:rgba(0,0,0,.20);
+  --r:8px;--rl:12px;
+  --green-bg:#EAF3DE;--green-tx:#3B6D11;
+  --amber-bg:#FAEEDA;--amber-tx:#854F0B;
+  --red-bg:#FCEBEB;--red-tx:#A32D2D;
+  --f:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--syne);min-height:100vh;
-  background-image:radial-gradient(ellipse 70% 40% at 5% 0%,rgba(34,211,238,.04) 0%,transparent 60%),
-  radial-gradient(ellipse 50% 50% at 95% 100%,rgba(59,130,246,.05) 0%,transparent 55%)}
-.mono{font-family:var(--mono)}
-.card{background:var(--bg1);border:1px solid var(--border);border-radius:10px;transition:border-color .2s}
-.card:hover{border-color:var(--border2)}
-.label{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
-.badge{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:2px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
-.b-red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.28)}
-.b-amber{background:rgba(245,158,11,.13);color:#fcd34d;border:1px solid rgba(245,158,11,.28)}
-.b-green{background:rgba(16,185,129,.13);color:#6ee7b7;border:1px solid rgba(16,185,129,.28)}
-.b-blue{background:rgba(59,130,246,.13);color:#93c5fd;border:1px solid rgba(59,130,246,.28)}
-.b-purple{background:rgba(167,139,250,.13);color:#c4b5fd;border:1px solid rgba(167,139,250,.28)}
-.b-gray{background:rgba(107,127,163,.1);color:#94a3b8;border:1px solid rgba(107,127,163,.2)}
-.b-orange{background:rgba(234,88,12,.15);color:#fb923c;border:1px solid rgba(234,88,12,.3)}
-.b-teal{background:rgba(20,184,166,.13);color:#5eead4;border:1px solid rgba(20,184,166,.28)}
-.kpi-num{font-family:var(--syne);font-weight:800;line-height:1}
-::-webkit-scrollbar{width:3px;height:3px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
-/* Nav tabs */
-.nav-tab{font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:7px 16px;border-radius:7px;border:1px solid transparent;cursor:pointer;transition:all .18s;text-transform:uppercase;background:transparent;color:var(--text2);display:flex;align-items:center;gap:7px;white-space:nowrap}
-.nav-tab.on{border-color:rgba(59,130,246,.45);color:#93c5fd}
-.nav-tab:hover:not(.on){color:var(--text);background:rgba(255,255,255,.03)}
-.nav-tab.compras-tab.on{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:#fca5a5}
-.nav-tab.pcp-tab.on{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.4);color:#c4b5fd}
-.nav-tab.preco-tab.on{background:rgba(234,88,12,.1);border-color:rgba(234,88,12,.4);color:#fb923c}
-.nav-tab.alt-tab.on{background:rgba(20,184,166,.1);border-color:rgba(20,184,166,.4);color:#5eead4}
-.nav-tab.full-tab.on{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.4);color:#93c5fd}
-/* Table */
-.tr{display:grid;align-items:center;border-bottom:1px solid var(--border);transition:background .12s}
-.tr:hover{background:rgba(59,130,246,.04)}
-.tr.crit{border-left:3px solid var(--red)}
-.tr.warn{border-left:3px solid var(--amber)}
-.tr.safe{border-left:3px solid var(--green)}
-.tr.info{border-left:3px solid var(--blue)}
-.tr.teal{border-left:3px solid var(--teal)}
-.tr.purple{border-left:3px solid var(--purple)}
-/* Chips */
-.chip{font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:3px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:all .15s;color:var(--text2);background:transparent;white-space:nowrap}
-.chip.on,.chip:hover{border-color:var(--blue);color:#93c5fd;background:rgba(59,130,246,.1)}
-/* Group chips */
-.gchip{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:2px 9px;border-radius:4px;border:1px solid var(--border);cursor:pointer;transition:all .15s;color:var(--text2);background:transparent;white-space:nowrap}
-.gchip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.08)}
-.gchip:hover:not(.on){color:var(--text);background:rgba(255,255,255,.02)}
-/* Export */
-.export-btn{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:4px 11px;border-radius:5px;cursor:pointer;transition:all .15s;text-transform:uppercase}
-.btn-csv{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
-.btn-csv:hover{background:rgba(16,185,129,.22)}
-.btn-pdf{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
-.btn-pdf:hover{background:rgba(239,68,68,.22)}
-/* Decision cards */
-.dec-card{border-radius:10px;padding:14px 18px;border:1px solid transparent;transition:all .2s}
-.dec-compras{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25)}
-.dec-pcp{background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.25)}
-.dec-preco{background:rgba(234,88,12,.06);border-color:rgba(234,88,12,.25)}
-.dec-alt{background:rgba(20,184,166,.06);border-color:rgba(20,184,166,.25)}
-/* Loader */
-#loader{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
-.ring{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
-.alert-bar{border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px}
-.alert-red{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2)}
-.alert-amber{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2)}
-.alert-blue{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2)}
-.alert-teal{background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.2)}
-.alert-purple{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2)}
-.sec-title{font-family:var(--syne);font-size:14px;font-weight:700}
-.price-alert{background:rgba(234,88,12,.1);border:1px solid rgba(234,88,12,.25);border-radius:5px;padding:2px 7px;font-family:var(--mono);font-size:9px;color:#fb923c}
-/* Month toggle */
-.month-tab{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;cursor:pointer;transition:all .2s;border:1px solid transparent}
-.month-tab.active{border-color:var(--border3);background:rgba(59,130,246,.08)}
-.month-tab:hover:not(.active){background:rgba(255,255,255,.03)}
-#app{display:none}
-/* Decision badge row */
-.decision-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-family:var(--mono);font-size:9px;letter-spacing:.06em}
-.dp-comprar{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
-.dp-pcp{background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
-.dp-alt{background:rgba(20,184,166,.15);color:#5eead4;border:1px solid rgba(20,184,166,.3)}
-.dp-preco{background:rgba(234,88,12,.15);color:#fb923c;border:1px solid rgba(234,88,12,.3)}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+  --tx:#f0ede8;--tx2:#a8a69f;--tx3:#6b6a65;
+  --br:rgba(255,255,255,.09);--br2:rgba(255,255,255,.17);
+  --green-bg:#173404;--green-tx:#C0DD97;
+  --amber-bg:#412402;--amber-tx:#FAC775;
+  --red-bg:#501313;--red-tx:#F7C1C1;
+}}
+body{font-family:var(--f);background:var(--bg3);color:var(--tx);min-height:100vh;font-size:15px;line-height:1.6}
+header{background:var(--bg);border-bottom:.5px solid var(--br);padding:.9rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.logo{width:34px;height:34px;background:var(--tx);border-radius:var(--r);display:flex;align-items:center;justify-content:center}
+.logo i{color:var(--bg);font-size:19px}
+header h1{font-size:16px;font-weight:500}
+header span{font-size:12px;color:var(--tx2)}
+main{max-width:980px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+.card{background:var(--bg);border:.5px solid var(--br);border-radius:var(--rl);padding:1.25rem 1.5rem;margin-bottom:1.25rem}
+.card-title{font-size:14px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.badge-num{width:22px;height:22px;border-radius:50%;background:var(--tx);color:var(--bg);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.field label{font-size:12px;color:var(--tx2);display:block;margin-bottom:3px}
+.field input{width:100%;padding:7px 10px;font-size:14px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bg);color:var(--tx);font-family:var(--f);outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--tx)}
+.hint{font-size:12px;color:var(--tx3);display:flex;align-items:flex-start;gap:5px;margin-top:8px;line-height:1.5}
+.hint i{flex-shrink:0;margin-top:2px}
+.row-grid{display:grid;gap:8px;margin-bottom:8px;align-items:center}
+.row-grid.tabua-row{grid-template-columns:2fr 1fr 1fr 1fr 36px}
+.row-grid.painel-row{grid-template-columns:2fr 1fr 1fr 1fr 36px}
+.row-grid input{padding:6px 9px;font-size:13px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bg);color:var(--tx);font-family:var(--f);outline:none;width:100%}
+.row-grid input:focus{border-color:var(--tx)}
+.col-head{font-size:11px;color:var(--tx2)}
+.btn{background:transparent;border:.5px solid var(--br2);border-radius:var(--r);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--tx);font-family:var(--f);display:inline-flex;align-items:center;gap:5px;transition:background .12s,transform .1s}
+.btn:hover{background:var(--bg2)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--tx);color:var(--bg);border-color:var(--tx);padding:10px 28px;font-size:15px}
+.btn-primary:hover{opacity:.85;background:var(--tx)}
+.btn-sm{font-size:12px;padding:5px 10px}
+.btn-icon{padding:5px 7px;border-radius:var(--r)}
+.calc-zone{text-align:center;padding:1.25rem 0}
+.calc-status{font-size:12px;color:var(--tx3);margin-top:6px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
+.metric{background:var(--bg2);border-radius:var(--r);padding:1rem}
+.metric-label{font-size:11px;color:var(--tx2);margin-bottom:4px}
+.metric-val{font-size:22px;font-weight:500}
+.metric-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.results{display:none}.results.on{display:block}
+.tabs{display:flex;gap:2px;border-bottom:.5px solid var(--br);margin-bottom:1.1rem;flex-wrap:wrap}
+.tab{padding:7px 14px;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--f)}
+.tab:hover{color:var(--tx)}
+.tab.active{color:var(--tx);border-bottom-color:var(--tx);font-weight:500}
+.tc{display:none}.tc.on{display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;color:var(--tx2);font-weight:500;text-align:left;padding:6px 10px;border-bottom:.5px solid var(--br);white-space:nowrap}
+td{padding:7px 10px;border-bottom:.5px solid var(--br);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500}
+.ok{background:var(--green-bg);color:var(--green-tx)}
+.warn{background:var(--amber-bg);color:var(--amber-tx)}
+.bad{background:var(--red-bg);color:var(--red-tx)}
+.neutral{background:var(--bg2);color:var(--tx2)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2)}
+.leg-sw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+footer{text-align:center;padding:2rem;font-size:12px;color:var(--tx3);border-top:.5px solid var(--br)}
+.actions-row{display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.vis-block{margin-bottom:20px;padding-bottom:16px;border-bottom:.5px solid var(--br)}
+.vis-block:last-child{border-bottom:none}
+.vis-title{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:8px}
+.comp-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.comp-label{font-size:11px;color:var(--tx2);min-width:80px;text-align:right;flex-shrink:0}
+
+/* callout informativo */
+.callout{background:var(--bg2);border-left:3px solid var(--tx3);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--tx2);margin-top:12px;line-height:1.5}
+.callout strong{color:var(--tx)}
 </style>
 </head>
 <body>
+<header>
+  <div class="logo"><i class="ti ti-ruler-measure"></i></div>
+  <div><h1>Plano de Corte</h1><span>Otimizador de aproveitamento de madeira</span></div>
+</header>
+<main>
 
-<div id="loader">
-  <div class="ring"></div>
-  <div style="font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--text2)">CARREGANDO DADOS</div>
-  <div id="ld-msg" style="font-family:var(--mono);font-size:10px;color:var(--text3)">Conectando ao Google Sheets...</div>
+<!-- TÁBUAS -->
+<div class="card">
+  <div class="card-title"><div class="badge-num">1</div>Tábuas disponíveis (matéria-prima)</div>
+  <div class="row-grid tabua-row" style="margin-bottom:4px">
+    <span class="col-head">Nome / referência</span>
+    <span class="col-head">Largura bruta (mm)</span>
+    <span class="col-head">Comprimento (mm)</span>
+    <span class="col-head">Qtd disponível</span>
+    <span></span>
+  </div>
+  <div id="tabua-rows"></div>
+  <button class="btn btn-sm" onclick="addTabuaRow()"><i class="ti ti-plus"></i> Adicionar tábua</button>
+  <div class="hint"><i class="ti ti-info-circle"></i>
+    Informe a largura bruta real da tábua. O algoritmo considera que <strong>as bordas naturais só podem ficar nas bordas externas do painel</strong>. Tacos internos precisam de aparo em ambos os lados antes de colar.
+  </div>
 </div>
 
-<div id="err" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px">
-  <div style="font-size:28px">⚠️</div>
-  <div style="font-family:var(--syne);font-size:16px;font-weight:700;color:#fca5a5">Erro ao carregar</div>
-  <div id="err-msg" style="font-family:var(--mono);font-size:11px;color:var(--text2);max-width:440px;text-align:center;line-height:1.7"></div>
-  <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Certifique-se que a planilha está com acesso público (Qualquer pessoa com o link → Leitor)</div>
-  <button onclick="loadData()" style="padding:7px 20px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#93c5fd;border-radius:7px;font-family:var(--mono);font-size:11px;cursor:pointer">↺ Tentar novamente</button>
+<!-- PAINÉIS -->
+<div class="card">
+  <div class="card-title"><div class="badge-num">2</div>Painéis a produzir</div>
+  <div class="row-grid painel-row" style="margin-bottom:4px">
+    <span class="col-head">Nome do produto</span>
+    <span class="col-head">Largura do painel (mm)</span>
+    <span class="col-head">Comprimento do painel (mm)</span>
+    <span class="col-head">Quantidade</span>
+    <span></span>
+  </div>
+  <div id="painel-rows"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+    <button class="btn btn-sm" onclick="addPainelRow()"><i class="ti ti-plus"></i> Adicionar painel</button>
+    <button class="btn btn-sm" onclick="document.getElementById('file-input').click()"><i class="ti ti-upload"></i> Importar planilha</button>
+    <button class="btn btn-sm" onclick="downloadTemplate()"><i class="ti ti-download"></i> Baixar modelo</button>
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(event)">
+  </div>
+  <div class="hint"><i class="ti ti-info-circle"></i> Colunas da planilha: <strong>produto</strong>, <strong>largura_painel</strong>, <strong>comprimento_painel</strong>, <strong>qtd</strong></div>
 </div>
 
-<div id="app">
-
-  <!-- HEADER -->
-  <header style="border-bottom:1px solid var(--border);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:rgba(7,9,15,.97);backdrop-filter:blur(14px);gap:12px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:16px">
-      <div>
-        <div style="font-family:var(--syne);font-size:16px;font-weight:800;letter-spacing:-.02em">
-          Central de <span style="color:var(--cyan)">Decisão</span>
-        </div>
-        <div class="label" style="margin-top:1px">Supply Chain Intelligence — Zerar o AI</div>
-      </div>
-      <!-- Month tabs -->
-      <div style="display:flex;gap:5px">
-        <div class="month-tab active" id="tab-m0" onclick="switchMonth(0)">
-          <div style="width:7px;height:7px;border-radius:50%;background:var(--cyan)"></div>
-          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em">MÊS 0</span>
-          <span id="m0-badge" class="badge b-blue" style="padding:1px 5px">—</span>
-        </div>
-        <div class="month-tab" id="tab-m1" onclick="switchMonth(1)">
-          <div style="width:7px;height:7px;border-radius:50%;background:var(--purple)"></div>
-          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text2)">MÊS 1</span>
-          <span id="m1-badge" class="badge b-purple" style="padding:1px 5px">—</span>
-        </div>
-      </div>
+<!-- PARÂMETROS -->
+<div class="card">
+  <div class="card-title"><div class="badge-num">3</div>Parâmetros de corte</div>
+  <div class="grid3">
+    <div class="field">
+      <label>Constante de serra (mm)</label>
+      <input type="number" id="kerf" value="3" min="0" step="0.5">
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <!-- Group filter -->
-      <div style="display:flex;align-items:center;gap:5px">
-        <span class="label" style="white-space:nowrap">Grupo:</span>
-        <div id="group-chips" style="display:flex;gap:4px;flex-wrap:wrap;max-width:600px"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:5px">
-        <div class="dot" style="background:var(--green)"></div>
-        <span class="mono" style="font-size:10px;color:var(--text2)" id="last-upd">—</span>
-      </div>
-      <div id="freeze-pill" style="font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:5px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);color:#c4b5fd"></div>
-      <button onclick="loadData()" style="padding:5px 12px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);color:var(--cyan);border-radius:7px;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.08em">↺ REFRESH</button>
+    <div class="field">
+      <label>Aparo interno — cada lado (mm)</label>
+      <input type="number" id="aparoInterno" value="5" min="0" step="0.5">
     </div>
-  </header>
-
-  <main style="padding:18px 24px;max-width:1800px;margin:0 auto">
-
-    <!-- MÊS 0 VIEW -->
-    <div id="view-m0">
-
-      <!-- Decision summary cards -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
-        <div class="dec-card dec-compras" id="dec-compras-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div class="label" style="color:#fca5a5">⚡ Comprar de Fato</div>
-            <span style="font-size:18px">🛒</span>
-          </div>
-          <div class="kpi-num" style="font-size:32px;color:var(--red)" id="cnt-comprar">—</div>
-          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Sem alt. disponível · Ação de Compras</div>
-          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
-            <span class="decision-pill dp-comprar">Sem alternativo</span>
-            <span class="decision-pill dp-comprar">Comprar agora</span>
-          </div>
-        </div>
-        <div class="dec-card dec-preco" id="dec-preco-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div class="label" style="color:#fb923c">🟠 Risco Reajuste</div>
-            <span style="font-size:18px">📊</span>
-          </div>
-          <div class="kpi-num" style="font-size:32px;color:var(--orange)" id="cnt-preco-risco">—</div>
-          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Última compra &gt; 6 meses · Cotar antes</div>
-          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
-            <span class="decision-pill dp-preco">Solicitar cotação</span>
-            <span class="decision-pill dp-preco">&gt;6 meses</span>
-          </div>
-        </div>
-        <div class="dec-card dec-alt" id="dec-alt-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div class="label" style="color:#5eead4">♻ Usar Alternativo</div>
-            <span style="font-size:18px">🔄</span>
-          </div>
-          <div class="kpi-num" style="font-size:32px;color:var(--teal)" id="cnt-usar-alt">—</div>
-          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Alternativo disponível · Projetos decide</div>
-          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
-            <span class="decision-pill dp-alt">Col. R disponível</span>
-            <span class="decision-pill dp-alt">Projetos</span>
-          </div>
-        </div>
-        <div class="dec-card dec-pcp" id="dec-pcp-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div class="label" style="color:#c4b5fd">✂ Reduzir Plano</div>
-            <span style="font-size:18px">📋</span>
-          </div>
-          <div class="kpi-num" style="font-size:32px;color:var(--purple)" id="cnt-reduzir">—</div>
-          <div class="mono" style="font-size:9px;color:var(--text2);margin-top:4px">Saldo AG &gt; 0 · Sem pedido Z=0 · PCP age</div>
-          <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
-            <span class="decision-pill dp-pcp">Saldo disponível</span>
-            <span class="decision-pill dp-pcp">Sem pedido</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Alert banners -->
-      <div id="banners-m0" style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px"></div>
-
-      <!-- View selector tabs -->
-      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-        <span class="label" style="margin-right:4px">VISÃO:</span>
-        <button class="nav-tab full-tab on" id="vtab-all" onclick="setView('all')">📊 Visão Geral</button>
-        <button class="nav-tab compras-tab" id="vtab-comprar" onclick="setView('comprar')">🛒 Comprar de Fato</button>
-        <button class="nav-tab preco-tab" id="vtab-preco" onclick="setView('preco')">🟠 Risco Reajuste</button>
-        <button class="nav-tab alt-tab" id="vtab-alt" onclick="setView('alt')">♻ Usar Alternativo</button>
-        <button class="nav-tab pcp-tab" id="vtab-pcp" onclick="setView('pcp')">✂ Reduzir Plano (PCP)</button>
-        <div style="flex:1"></div>
-        <input id="search-global" oninput="renderCurrentView()" placeholder="Buscar item ou descrição…" style="padding:4px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:10px;width:200px;outline:none">
-      </div>
-
-      <!-- ── VIEW: GERAL ── -->
-      <div id="view-all">
-        <!-- Charts row -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-          <div class="card" style="padding:16px">
-            <div class="label" style="margin-bottom:10px">Distribuição das Decisões — M0</div>
-            <div style="position:relative;height:180px"><canvas id="ch-decision"></canvas></div>
-          </div>
-          <div class="card" style="padding:16px">
-            <div class="label" style="margin-bottom:10px">Status AI — O que Falta Comprar</div>
-            <div id="ai-legend" style="display:flex;flex-direction:column;gap:3px;margin-bottom:6px"></div>
-            <div style="position:relative;height:150px"><canvas id="ch-ai"></canvas></div>
-          </div>
-          <div class="card" style="padding:16px">
-            <div class="label" style="margin-bottom:10px">Antiguidade da Última Compra</div>
-            <div style="position:relative;height:180px"><canvas id="ch-age"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Main table: all AI non-ok -->
-        <div class="card" style="margin-bottom:16px">
-          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label">Tabela Geral — Todos os Itens com AI pendente</div>
-              <div class="sec-title" style="margin-top:3px">Coluna AI ≠ OK — Rota de Decisão para cada item</div>
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="export-btn btn-csv" onclick="exportCSV('all')">↓ CSV</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('all')">↓ PDF</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">Fornecedor</div>
-              <div class="label">LT (AA)</div>
-              <div class="label">Saldo AG</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Em Pedido (AA)</div>
-              <div class="label">Status AI</div>
-              <div class="label">Impacto AJ</div>
-              <div class="label">Alternativo (R)</div>
-              <div class="label">Decisão →</div>
-            </div>
-            <div id="tbl-all" style="max-height:500px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-all">0 itens</span>
-              <span class="mono" style="font-size:9px;color:var(--text3)">Decisão calculada automaticamente pela regra de negócio</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── VIEW: COMPRAR DE FATO ── -->
-      <div id="view-comprar" style="display:none">
-        <div class="alert-bar alert-red" style="margin-bottom:14px">
-          <span style="font-size:18px">🛒</span>
-          <div>
-            <div class="mono" style="font-size:11px;color:#fca5a5;font-weight:700">DESTINO: SETOR DE COMPRAS</div>
-            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens que precisam ser comprados de fato. Sem alternativo cadastrado, ou com pedido em aberto (col. AA &gt; 0) que não resolve o AI.</div>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label">Comprar de Fato — Ação Imediata de Compras</div>
-              <div class="sec-title" style="margin-top:3px">AI pendente · Sem alternativo · Saldo AG insuficiente</div>
-            </div>
-            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-              <button class="chip on" id="fc-chip-all" onclick="filterComprar('all')">Todos</button>
-              <button class="chip" id="fc-chip-urgente" onclick="filterComprar('urgente')">🚨 LT Longo (&gt;30d)</button>
-              <button class="chip" id="fc-chip-pedido" onclick="filterComprar('pedido')">📦 Com Pedido (AA&gt;0)</button>
-              <button class="chip" id="fc-chip-semped" onclick="filterComprar('semped')">⚠ Sem Pedido</button>
-              <button class="export-btn btn-csv" onclick="exportCSV('comprar')">↓ CSV Compras</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('comprar')">↓ PDF Compras</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">Fornecedor</div>
-              <div class="label">LT (AA dias)</div>
-              <div class="label">Saldo AG</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Em Pedido (AA)</div>
-              <div class="label">Últ. Compra</div>
-              <div class="label">Status AI</div>
-              <div class="label">Impacto AJ</div>
-              <div class="label">Ação Compras</div>
-            </div>
-            <div id="tbl-comprar" style="max-height:500px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-comprar-tbl">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── VIEW: RISCO REAJUSTE ── -->
-      <div id="view-preco" style="display:none">
-        <div class="alert-bar alert-amber" style="margin-bottom:14px">
-          <span style="font-size:18px">🟠</span>
-          <div>
-            <div class="mono" style="font-size:11px;color:#fcd34d;font-weight:700">DESTINO: SETOR DE COMPRAS — COTAÇÃO PRIORITÁRIA</div>
-            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens com AI pendente e última compra há mais de 6 meses. Risco de reajuste de preço: solicite cotação atualizada antes de fechar o pedido.</div>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label" style="color:#fb923c">Risco de Reajuste de Preço — &gt; 6 Meses sem Comprar</div>
-              <div class="sec-title" style="margin-top:3px">AI pendente · Última compra &gt; 6 meses · Cotar primeiro</div>
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="export-btn btn-csv" onclick="exportCSV('preco')">↓ CSV Compras</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('preco')">↓ PDF Compras</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 110px 90px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">Fornecedor</div>
-              <div class="label">Últ. Compra</div>
-              <div class="label">Dias Sem Compra</div>
-              <div class="label">LT (dias)</div>
-              <div class="label">Saldo AG</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Status AI</div>
-              <div class="label">Impacto AJ</div>
-              <div class="label">Ação</div>
-            </div>
-            <div id="tbl-preco" style="max-height:500px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-preco-tbl">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── VIEW: USAR ALTERNATIVO ── -->
-      <div id="view-alt" style="display:none">
-        <div class="alert-bar alert-teal" style="margin-bottom:14px">
-          <span style="font-size:18px">♻</span>
-          <div>
-            <div class="mono" style="font-size:11px;color:#5eead4;font-weight:700">DESTINO: SETOR DE PROJETOS</div>
-            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens com AI pendente mas que possuem alternativo cadastrado (col. R). Projetos avalia viabilidade técnica de substituição para liberar o plano.</div>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label" style="color:#5eead4">Usar Alternativo — Decisão do Setor de Projetos</div>
-              <div class="sec-title" style="margin-top:3px">AI pendente · Alternativo disponível (col. R) · Projetos avalia</div>
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="export-btn btn-csv" onclick="exportCSV('alt')">↓ CSV Projetos</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('alt')">↓ PDF Projetos</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 200px 90px 110px 130px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">Fornecedor</div>
-              <div class="label">LT (dias)</div>
-              <div class="label">Saldo AG</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Em Pedido (AA)</div>
-              <div class="label">Alternativo (col. R)</div>
-              <div class="label">Status AI</div>
-              <div class="label">Impacto AJ</div>
-              <div class="label">Ação Projetos</div>
-            </div>
-            <div id="tbl-alt" style="max-height:500px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-alt-tbl">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── VIEW: REDUZIR PLANO (PCP) ── -->
-      <div id="view-pcp" style="display:none">
-        <div class="alert-bar alert-purple" style="margin-bottom:14px">
-          <span style="font-size:18px">✂</span>
-          <div>
-            <div class="mono" style="font-size:11px;color:#c4b5fd;font-weight:700">DESTINO: PCP — REVISÃO DO PLANO DE PRODUÇÃO</div>
-            <div class="mono" style="font-size:10px;color:var(--text2);margin-top:2px">Itens onde o plano pode ser reduzido: saldo AG positivo E sem pedido em aberto (col. Z = 0). PCP pode ajustar o plano para eliminar o AI sem necessidade de compra.</div>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label" style="color:#c4b5fd">Reduzir Plano — Ação do PCP</div>
-              <div class="sec-title" style="margin-top:3px">AI pendente · Saldo AG &gt; 0 · Sem pedido (Z=0) · PCP ajusta o plano</div>
-            </div>
-            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-              <button class="chip on" id="pcp-chip-all" onclick="filterPCP('all')">Todos</button>
-              <button class="chip" id="pcp-chip-alto" onclick="filterPCP('alto')">🟣 Saldo Alto</button>
-              <button class="chip" id="pcp-chip-baixo" onclick="filterPCP('baixo')">⚠ Saldo Baixo</button>
-              <button class="export-btn btn-csv" onclick="exportCSV('pcp')">↓ CSV PCP</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('pcp')">↓ PDF PCP</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">Fornecedor</div>
-              <div class="label">LT (dias)</div>
-              <div class="label">Saldo AG</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Em Pedido (AA)</div>
-              <div class="label">Status AI</div>
-              <div class="label">Impacto AJ</div>
-              <div class="label">Últ. Compra</div>
-              <div class="label">Ação PCP</div>
-            </div>
-            <div id="tbl-pcp" style="max-height:500px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-pcp-tbl">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /view-m0 -->
-
-    <!-- MÊS 1 VIEW -->
-    <div id="view-m1" style="display:none">
-
-      <!-- KPIs M1 -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
-        <div class="card" style="padding:14px">
-          <div class="label">Nível de Serviço M1</div>
-          <div class="kpi-num" style="font-size:32px;margin-top:6px" id="ns-m1">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="ns-m1-d">—</div>
-          <div style="height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden">
-            <div id="ns-m1-bar" style="height:100%;border-radius:2px;transition:width .8s;width:0%"></div>
-          </div>
-        </div>
-        <div class="card" style="padding:14px;border-color:rgba(167,139,250,.3)">
-          <div class="label" style="color:#c4b5fd">Falta Comprar M1 (AS)</div>
-          <div class="kpi-num" style="font-size:32px;color:var(--purple);margin-top:6px" id="fc-m1">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="fc-m1-d">itens com pendência M1</div>
-        </div>
-        <div class="card" style="padding:14px;border-color:rgba(245,158,11,.3)">
-          <div class="label" style="color:#fcd34d">Impacto no Plano M1 (AT)</div>
-          <div class="kpi-num" style="font-size:32px;color:var(--amber);margin-top:6px" id="imp-m1">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px" id="imp-m1-d">produtos travados em M1</div>
-        </div>
-        <div class="card" style="padding:14px;border-color:rgba(239,68,68,.25)">
-          <div class="label" style="color:#fca5a5">Já Nasce em Falta (M1)</div>
-          <div class="kpi-num" style="font-size:32px;color:var(--red);margin-top:6px" id="dead-m1">—</div>
-          <div class="mono" style="font-size:10px;color:var(--text2);margin-top:3px">LT &gt; prazo disponível</div>
-        </div>
-      </div>
-
-      <div id="banners-m1" style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px"></div>
-
-      <!-- M1 sub-views -->
-      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-        <span class="label" style="margin-right:4px">VISÃO M1:</span>
-        <button class="nav-tab full-tab on" id="m1vtab-all" onclick="setViewM1('all')">📊 Todos M1</button>
-        <button class="nav-tab compras-tab" id="m1vtab-comprar" onclick="setViewM1('comprar')">🛒 Comprar (M1)</button>
-        <button class="nav-tab pcp-tab" id="m1vtab-pcp" onclick="setViewM1('pcp')">✂ Reduzir Plano (M1)</button>
-        <div style="flex:1"></div>
-        <input id="search-m1" oninput="renderCurrentViewM1()" placeholder="Buscar…" style="padding:4px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:10px;width:180px;outline:none">
-      </div>
-
-      <!-- M1: Todos -->
-      <div id="m1view-all">
-        <div class="card" style="margin-bottom:14px">
-          <div style="padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label">Tabela M1 — AS × AT · Todos os pendentes</div>
-              <div class="sec-title" style="margin-top:3px">Itens com AS pendente no Mês 1 + Rota de Decisão</div>
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="export-btn btn-csv" onclick="exportCSV('m1-all')">↓ CSV</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('m1-all')">↓ PDF</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 130px 140px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">LT (dias)</div>
-              <div class="label">Plano M1</div>
-              <div class="label">Saldo M1</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Status AS</div>
-              <div class="label">Impacto AT</div>
-              <div class="label">Alternativo (R)</div>
-              <div class="label">Decisão M1 →</div>
-            </div>
-            <div id="tbl-m1" style="max-height:480px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- M1: Comprar -->
-      <div id="m1view-comprar" style="display:none">
-        <div class="alert-bar alert-red" style="margin-bottom:12px">
-          <span style="font-size:16px">🛒</span>
-          <div class="mono" style="font-size:10px;color:#fca5a5">Itens M1 que precisam ser comprados. Sem alternativo e sem pedido suficiente.</div>
-        </div>
-        <div class="card" style="margin-bottom:14px">
-          <div style="padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label" style="color:#fca5a5">Comprar para M1 — Ação Compras</div>
-              <div class="sec-title" style="margin-top:3px">AS pendente · Sem alternativo · Saldo insuficiente</div>
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="export-btn btn-csv" onclick="exportCSV('m1-comprar')">↓ CSV Compras M1</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('m1-comprar')">↓ PDF Compras M1</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">LT (dias)</div>
-              <div class="label">Plano M1</div>
-              <div class="label">Saldo M1</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Status AS</div>
-              <div class="label">Impacto AT</div>
-              <div class="label">Ação Compras</div>
-            </div>
-            <div id="tbl-m1-comprar" style="max-height:480px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1-comprar">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- M1: PCP -->
-      <div id="m1view-pcp" style="display:none">
-        <div class="alert-bar alert-purple" style="margin-bottom:12px">
-          <span style="font-size:16px">✂</span>
-          <div class="mono" style="font-size:10px;color:#c4b5fd">Itens M1 onde PCP pode reduzir o plano: saldo M1 indica possibilidade de ajuste e sem pedido em aberto (Z=0).</div>
-        </div>
-        <div class="card" style="margin-bottom:14px">
-          <div style="padding:14px 18px 10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-            <div>
-              <div class="label" style="color:#c4b5fd">Reduzir Plano M1 — Ação PCP</div>
-              <div class="sec-title" style="margin-top:3px">AS pendente · Saldo M1 favorável · Sem pedido (Z=0)</div>
-            </div>
-            <div style="display:flex;gap:5px">
-              <button class="export-btn btn-csv" onclick="exportCSV('m1-pcp')">↓ CSV PCP M1</button>
-              <button class="export-btn btn-pdf" onclick="exportPDF('m1-pcp')">↓ PDF PCP M1</button>
-            </div>
-          </div>
-          <div style="border-top:1px solid var(--border)">
-            <div class="tr" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:6px 16px;background:rgba(255,255,255,.02)">
-              <div class="label">Item</div>
-              <div class="label">Descrição (B)</div>
-              <div class="label">Grupo (N)</div>
-              <div class="label">LT (dias)</div>
-              <div class="label">Plano M1</div>
-              <div class="label">Saldo M1</div>
-              <div class="label">Em Pedido (Z)</div>
-              <div class="label">Status AS</div>
-              <div class="label">Impacto AT</div>
-              <div class="label">Ação PCP</div>
-            </div>
-            <div id="tbl-m1-pcp" style="max-height:480px;overflow-y:auto"></div>
-            <div style="padding:7px 16px;border-top:1px solid var(--border)">
-              <span class="mono" style="font-size:9px;color:var(--text2)" id="cnt-m1-pcp">0 itens</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /view-m1 -->
-
-  </main>
-
-  <footer style="border-top:1px solid var(--border);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-    <div style="display:flex;gap:16px;align-items:center">
-      <span class="mono" style="font-size:9px;color:var(--text3)">CENTRAL DE DECISÃO — SUPPLY CHAIN INTELLIGENCE</span>
-      <div style="display:flex;gap:8px">
-        <span class="decision-pill dp-comprar">🛒 Comprar de Fato</span>
-        <span class="decision-pill dp-preco">🟠 Risco Reajuste</span>
-        <span class="decision-pill dp-alt">♻ Usar Alternativo</span>
-        <span class="decision-pill dp-pcp">✂ Reduzir Plano</span>
-      </div>
+    <div class="field">
+      <label>Largura mínima de taco (mm)</label>
+      <input type="number" id="minTaco" value="20" min="1" step="1">
     </div>
-    <span class="mono" style="font-size:9px;color:var(--text3)" id="foot-info">—</span>
-  </footer>
+  </div>
+  <div class="callout">
+    <strong>Como funciona o aparo interno:</strong> a borda natural da tábua não cola. Por isso:<br>
+    • <strong>Taco de borda</strong> (extremidade do painel): borda natural vira a lateral — sem perda.<br>
+    • <strong>Taco interno</strong> (entre outros tacos): ambos os lados precisam ser serrados antes de colar → perde <em>aparo × 2</em> mm da largura bruta.<br>
+    O algoritmo minimiza a quantidade de tacos internos e o desperdício total.
+  </div>
 </div>
+
+<div class="calc-zone">
+  <button class="btn btn-primary" id="calc-btn" onclick="calcular()" disabled>
+    <i class="ti ti-calculator"></i> Calcular plano de corte
+  </button>
+  <p class="calc-status" id="calc-status">Adicione tábuas e painéis para continuar</p>
+</div>
+
+<!-- RESULTADOS -->
+<div class="results" id="results">
+  <div class="metrics" id="metrics"></div>
+  <div class="card">
+    <div class="actions-row">
+      <button class="btn btn-sm" onclick="exportar()"><i class="ti ti-download"></i> Exportar (.xlsx)</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="tab('montagem')">Montagem dos painéis</button>
+      <button class="tab" onclick="tab('vis')">Visualização de colagem</button>
+      <button class="tab" onclick="tab('cortes')">Cortes por comprimento</button>
+      <button class="tab" onclick="tab('consumo')">Consumo de tábuas</button>
+    </div>
+    <div id="tc-montagem" class="tc on">
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Painel</th><th>Larg. alvo</th><th>Comp.</th><th>Qtd</th>
+          <th>Composição de tacos (esq → dir)</th>
+          <th>Larg. colada</th><th>Sobra CNC</th><th>Tacos internos</th>
+        </tr></thead>
+        <tbody id="tb-montagem"></tbody>
+      </table></div>
+    </div>
+    <div id="tc-vis" class="tc">
+      <div id="vis-content"></div>
+    </div>
+    <div id="tc-cortes" class="tc">
+      <p style="font-size:12px;color:var(--tx3);margin-bottom:12px">Para cada tipo de tábua, os tacos que saem de cada tábua física (cortes no comprimento).</p>
+      <div id="cortes-content"></div>
+    </div>
+    <div id="tc-consumo" class="tc">
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Tipo</th><th>Larg. bruta</th><th>Comp.</th><th>Estoque</th><th>Usar</th><th>Sobra</th><th>Tacos/tábua</th></tr></thead>
+        <tbody id="tb-consumo"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+</main>
+<footer>Plano de Corte — borda natural sempre na borda do painel</footer>
 
 <script>
-/* ═══════════════════════════════════════
-   CONFIG
-═══════════════════════════════════════ */
-const SHEET_ID = '14jb6fVTvH148n4qSyZtQLytLSy-t6mv9vq5VQ-dzlPg';
-const GID_BASE = '0';
-const GID_ALT  = '1285375729';
-const TODAY    = new Date(); TODAY.setHours(0,0,0,0);
+let tabuaRows=[], painelRows=[], lastResult=null;
+let tRc=0, pRc=0;
 
-let currentView   = 'all';
-let currentViewM1 = 'all';
-let activeFilterComprar = 'all';
-let activeFilterPCP     = 'all';
-let activeGroup   = 'todos';
-
-let rowsM0 = [], rowsM1 = [];
-let allGroups = [];
-let charts = {};
-
-/* Column map (0-based) */
-const C = {
-  A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,
-  K:10,L:11,M:12,N:13,O:14,P:15,Q:16,R:17,S:18,
-  T:19,U:20,V:21,W:22,X:23,Y:24,Z:25,
-  AA:26,AB:27,AC:28,AD:29,AE:30,AF:31,AG:32,AH:33,
-  AI:34,AJ:35,AK:36,AL:37,AM:38,AN:39,AO:40,AP:41,
-  AQ:42,AR:43,AS:44,AT:45,AU:46,AV:47,AW:48
-};
-
-function gc(row,key){return(row[C[key]]??'').toString().trim()}
-function gn(row,key){const v=gc(row,key).replace(',','.').replace(/[^\d.-]/g,'');const n=parseFloat(v);return isNaN(n)?0:n}
-
-/* ═══════════════════════════════════════
-   CSV
-═══════════════════════════════════════ */
-async function fetchCSV(gid){
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
-  const r=await fetch(url);
-  if(!r.ok)throw new Error(`HTTPS ${r.status} — GID ${gid}`);
-  return parseCSV(await r.text());
+function addTabuaRow(nome='',larg='',comp='',qtd=''){
+  tRc++; const id=tRc;
+  const d=document.createElement('div');
+  d.id='tr-'+id; d.className='row-grid tabua-row';
+  d.innerHTML=`
+    <input type="text" placeholder="ex: Pinus 100" value="${nome}" oninput="syncState()">
+    <input type="number" placeholder="ex: 101.6" value="${larg}" min="1" step="0.1" oninput="syncState()">
+    <input type="number" placeholder="ex: 2300" value="${comp}" min="1" oninput="syncState()">
+    <input type="number" placeholder="ex: 100" value="${qtd}" min="1" oninput="syncState()">
+    <button class="btn btn-icon btn-sm" onclick="removeRow('tr-${id}');syncState()" title="Remover"><i class="ti ti-trash"></i></button>`;
+  document.getElementById('tabua-rows').appendChild(d);
+  syncState();
 }
-function parseCSV(text){
-  const lines=text.split('\n');const rows=[];
-  for(let i=1;i<lines.length;i++){const line=lines[i].trim();if(!line)continue;rows.push(splitCSVLine(line))}
-  return rows;
+function addPainelRow(nome='',larg='',comp='',qtd=''){
+  pRc++; const id=pRc;
+  const d=document.createElement('div');
+  d.id='pr-'+id; d.className='row-grid painel-row';
+  d.innerHTML=`
+    <input type="text" placeholder="ex: Painel gaveta" value="${nome}" oninput="syncState()">
+    <input type="number" placeholder="ex: 290" value="${larg}" min="1" step="0.1" oninput="syncState()">
+    <input type="number" placeholder="ex: 410" value="${comp}" min="1" oninput="syncState()">
+    <input type="number" placeholder="ex: 10" value="${qtd}" min="1" oninput="syncState()">
+    <button class="btn btn-icon btn-sm" onclick="removeRow('pr-${id}');syncState()" title="Remover"><i class="ti ti-trash"></i></button>`;
+  document.getElementById('painel-rows').appendChild(d);
+  syncState();
 }
-function splitCSVLine(line){
-  const res=[];let cur='',q=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}
-    else if(c===','&&!q){res.push(cur.trim());cur=''}
-    else cur+=c;
-  }
-  res.push(cur.trim());return res;
+function removeRow(id){ const el=document.getElementById(id); if(el)el.remove(); }
+function syncState(){
+  tabuaRows=[];
+  document.querySelectorAll('[id^="tr-"]').forEach(r=>{
+    const ins=r.querySelectorAll('input');
+    const w=parseFloat(ins[1].value),l=parseFloat(ins[2].value),q=parseInt(ins[3].value);
+    if(w>0&&l>0&&q>0) tabuaRows.push({nome:ins[0].value||'Tábua',largura:w,comprimento:l,qtd:q});
+  });
+  painelRows=[];
+  document.querySelectorAll('[id^="pr-"]').forEach(r=>{
+    const ins=r.querySelectorAll('input');
+    const w=parseFloat(ins[1].value),l=parseFloat(ins[2].value),q=parseInt(ins[3].value)||1;
+    if(w>0&&l>0) painelRows.push({nome:ins[0].value||'Painel',largura:w,comprimento:l,qtd:q});
+  });
+  const ok=tabuaRows.length>0&&painelRows.length>0;
+  document.getElementById('calc-btn').disabled=!ok;
+  document.getElementById('calc-status').textContent=ok?
+    `${tabuaRows.length} tipo(s) de tábua · ${painelRows.reduce((s,p)=>s+p.qtd,0)} painel(is) prontos`:
+    'Adicione tábuas e painéis para continuar';
 }
-
-/* ═══════════════════════════════════════
-   DATE
-═══════════════════════════════════════ */
-function parseDate(v){
-  if(!v)return null;const s=v.toString().trim();
-  const m1=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(m1)return new Date(+m1[3],+m1[2]-1,+m1[1]);
-  const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m2)return new Date(+m2[1],+m2[2]-1,+m2[3]);
-  const n=parseFloat(s);if(!isNaN(n)&&n>40000)return new Date(Date.UTC(1899,11,30)+n*86400000);
-  return null;
-}
-function fmtDate(d){return d?d.toLocaleDateString('pt-BR'):'—'}
-function diffDays(a){return a?Math.round((TODAY-a)/86400000):null}
-
-/* ═══════════════════════════════════════
-   STATUS
-═══════════════════════════════════════ */
-function classify(s){
-  const n=(s||'').toLowerCase();
-  if(!s||s==='—'||s==='-')return 'empty';
-  if(n.includes('ok')||n.includes('disp')||n.includes('sufic'))return 'ok';
-  if(n.includes('falta')||n.includes('crít')||n.includes('insuf')||n.includes('comprar'))return 'critical';
-  if(n.includes('risco')||n.includes('parcial')||n.includes('aten')||n.includes('revisar'))return 'warning';
-  if(n.includes('pedido')||n.includes('aguard')||n.includes('em compra'))return 'info';
-  return 'neutral';
-}
-function statusBadge(s){
-  if(!s||s==='—'||s==='-')return'<span class="badge b-gray">—</span>';
-  const cl=classify(s);
-  const map={critical:'b-red',warning:'b-amber',ok:'b-green',info:'b-blue',neutral:'b-gray',empty:'b-gray'};
-  const short=s.length>22?s.substring(0,21)+'…':s;
-  return`<span class="badge ${map[cl]||'b-gray'}" title="${s}">${short}</span>`;
-}
-
-/* ═══════════════════════════════════════
-   DECISION ENGINE
-   Retorna: 'comprar' | 'preco' | 'alt' | 'pcp'
-═══════════════════════════════════════ */
-function decideAction(r) {
-  const aiCl = classify(r.statusAI);
-  if (aiCl === 'ok' || aiCl === 'empty') return 'ok';
-
-  // 1. Pode reduzir plano? Saldo AG > 0 + sem pedido (Z=0)
-  if (r.saldoAG < 0 && r.emPedidoZ === 0 && !r.alternativo) return 'pcp';
-
-  // 2. Tem alternativo? Projetos decide
-  if (r.alternativo && r.alternativo !== '—' && r.alternativo !== '') return 'alt';
-
-  // 3. Risco de reajuste (>6m) → cotar antes de comprar
-  if (r.isOld6m) return 'preco';
-
-  // 4. Comprar de fato
-  return 'comprar';
-}
-
-function decisionBadge(dec) {
-  const map = {
-    comprar: '<span class="decision-pill dp-comprar">🛒 Comprar de Fato</span>',
-    preco:   '<span class="decision-pill dp-preco">🟠 Cotar + Comprar</span>',
-    alt:     '<span class="decision-pill dp-alt">♻ Usar Alternativo</span>',
-    pcp:     '<span class="decision-pill dp-pcp">✂ Reduzir Plano</span>',
-    ok:      '<span class="badge b-green">✓ OK</span>'
+function handleFile(e){ if(e.target.files[0]) readXLSX(e.target.files[0]); }
+function readXLSX(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!data.length){alert('Arquivo vazio.');return;}
+      const norm=k=>k.toLowerCase().trim().replace(/\s+/g,'_');
+      data.forEach(row=>{
+        const nr={};Object.keys(row).forEach(k=>{nr[norm(k)]=row[k];});
+        const w=parseFloat(nr['largura_painel']||nr['largura']);
+        const l=parseFloat(nr['comprimento_painel']||nr['comprimento']);
+        const q=parseInt(nr['qtd']||nr['quantidade'])||1;
+        const n=String(nr['produto']||nr['nome']||'Painel');
+        if(w>0&&l>0) addPainelRow(n,w,l,q);
+      });
+    }catch(err){alert('Erro: '+err.message);}
   };
-  return map[dec] || '<span class="badge b-gray">Verificar</span>';
+  r.readAsBinaryString(file);
+}
+function downloadTemplate(){
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['produto','largura_painel','comprimento_painel','qtd'],
+    ['Painel gaveta',290,410,10],['Tampa superior',350,600,2]
+  ]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Painéis');
+  XLSX.writeFile(wb,'modelo_paineis.xlsx');
 }
 
-function decisionBadgeM1(r) {
-  const asCl = classify(r.statusAS);
-  if (asCl === 'ok' || asCl === 'empty') return '<span class="badge b-green">✓ Planejado</span>';
-  // Pode reduzir plano M1?
-  if (r.saldoM1 > 0 && r.emPedidoZ === 0 && !r.alternativo) {
-    return '<span class="decision-pill dp-pcp">✂ Reduzir Plano M1</span>';
-  }
-  if (r.alternativo && r.alternativo !== '—') {
-    return '<span class="decision-pill dp-alt">♻ Usar Alternativo</span>';
-  }
-  if (r.lt > 30) return '<span class="badge b-red">💀 LT Longo — Sem saída no prazo</span>';
-  return '<span class="decision-pill dp-comprar">🛒 Antecipar Compra M1</span>';
-}
+// ══════════════════════════════════════════════════════════════
+//  MODELO DE NEGÓCIO
+// ══════════════════════════════════════════════════════════════
+//
+//  Cada TACO tem uma POSIÇÃO no painel:
+//
+//  ┌────────────────────────────────────────────────────────┐
+//  │ [BORDA ESQ] │ kerf │ [INTERNO] │ kerf │ [BORDA DIR]   │
+//  └────────────────────────────────────────────────────────┘
+//
+//  BORDA ESQ / BORDA DIR:
+//    - A borda natural da tábua fica na extremidade do painel ✓
+//    - Só precisa de 1 corte reto no lado interno (para colar)
+//    - Largura usável = largura_bruta da tábua inteira
+//      (o lado externo é a borda natural → CNC apara depois)
+//
+//  INTERNO:
+//    - Ambos os lados precisam ser serrados antes de colar
+//    - Cada lado perde `aparoInterno` mm
+//    - Largura usável = largura_bruta − 2 × aparoInterno
+//
+//  OBJETIVO: encontrar a combinação com menor desperdício total:
+//    Desperdício = (largura_colada − alvo) + Σ(2×aparoInterno por taco interno)
+//              + Σ(largura_bruta − largura_usada) de cada taco
+//  A CNC apara (largura_colada − alvo) → isso é tolerável
+//  Os aparos internos são descarte real de madeira
+// ══════════════════════════════════════════════════════════════
 
-/* ═══════════════════════════════════════
-   LOAD
-═══════════════════════════════════════ */
-async function loadData(){
-  document.getElementById('loader').style.display='flex';
-  document.getElementById('app').style.display='none';
-  document.getElementById('err').style.display='none';
-  try{
-    setLd('Carregando BASE...');
-    const base=await fetchCSV(GID_BASE);
-    setLd('Carregando ALTERACAO...');
-    const alt=await fetchCSV(GID_ALT);
-    setLd('Processando dados...');
-    processAll(base,alt);
-    document.getElementById('last-upd').textContent=new Date().toLocaleTimeString('pt-BR');
-    document.getElementById('loader').style.display='none';
-    document.getElementById('app').style.display='block';
-  }catch(e){
-    document.getElementById('loader').style.display='none';
-    document.getElementById('err').style.display='flex';
-    document.getElementById('err-msg').textContent=e.message;
-    console.error(e);
-  }
-}
-function setLd(m){document.getElementById('ld-msg').textContent=m}
+function calcular(){
+  const kerf        = parseFloat(document.getElementById('kerf').value)||3;
+  const aparoInt    = parseFloat(document.getElementById('aparoInterno').value)||5;
+  const minTaco     = parseFloat(document.getElementById('minTaco').value)||20;
 
-/* ═══════════════════════════════════════
-   PROCESS
-═══════════════════════════════════════ */
-function processAll(baseRows, altRows) {
-  destroyCharts();
-  rowsM0 = []; rowsM1 = [];
+  const resultado=[], erros=[];
 
-  let totalM0=0,okM0=0,totalM1=0,okM1=0;
-  let fcM1=0,impM1=0,deadM1=0;
-  let maxLT=0,maxLTItem='';
-  const aiCount={};
-  const ageCounts={lt30:0,d30a90:0,d90a180:0,gt180:0,nodate:0};
-  const grupos = new Set();
+  for(const painel of painelRows){
+    const tiposValidos = tabuaRows
+      .map(t=>({...t, tacosPerPeca:Math.floor(t.comprimento/painel.comprimento)}))
+      .filter(t=>t.tacosPerPeca>0 && t.largura>=minTaco);
 
-  // Index alterações
-  const altByPai = {};
-  altRows.forEach(r=>{
-    const pai=(r[0]||'').toString().trim();
-    if(!pai)return;
-    if(!altByPai[pai])altByPai[pai]=[];
-    const dataMod=parseDate(r[8]);
-    altByPai[pai].push({dataMod,valorAbs:parseFloat((r[11]||'0').replace(',','.'))||0});
-  });
-
-  baseRows.forEach(r=>{
-    if(!r||r.length<36)return;
-    const itemPai  = gc(r,'A');
-    const desc     = gc(r,'B'); // col B = descrição
-    const grupo    = gc(r,'N');
-    const fornec   = gc(r,'E');
-    const lt       = parseFloat(gc(r,'AA').replace(',','.'))||0;
-    const alternativo = gc(r,'R'); // col R = alternativo
-    const emPedidoZ   = gn(r,'Z');  // col Z = em pedido (quantidade pedida)
-    const emPedidoAA  = gn(r,'AA'); // col AA = qtd em pedido (lead time col)
-    const saldoAG  = gn(r,'AG'); // col AG = saldo
-    const saldoM0  = gn(r,'AD');
-    const estoque  = gn(r,'J');
-    const statusAI = gc(r,'AI');
-    const statusAJ = gc(r,'AJ');
-    const ultCompra    = parseDate(gc(r,'I'));
-    const diasSemCompra = diffDays(ultCompra);
-    const isOld6m = diasSemCompra !== null && diasSemCompra > 180;
-
-    const planoM1  = gn(r,'AO');
-    const saldoM1  = gn(r,'AQ');
-    const statusAS = gc(r,'AS');
-    const statusAT = gc(r,'AT');
-
-    if(!itemPai)return;
-    if(grupo) grupos.add(grupo);
-    if(lt>maxLT){maxLT=lt;maxLTItem=itemPai}
-
-    // M0 counters
-    totalM0++;
-    const aiCl=classify(statusAI),ajCl=classify(statusAJ);
-    if(aiCl==='ok'||aiCl==='empty')okM0++;
-    if(statusAI)aiCount[statusAI]=(aiCount[statusAI]||0)+1;
-
-    // Age
-    if(diasSemCompra===null)ageCounts.nodate++;
-    else if(diasSemCompra<30)ageCounts.lt30++;
-    else if(diasSemCompra<90)ageCounts.d30a90++;
-    else if(diasSemCompra<180)ageCounts.d90a180++;
-    else ageCounts.gt180++;
-
-    // M1
-    totalM1++;
-    const asCl=classify(statusAS),atCl=classify(statusAT);
-    if(asCl==='ok'||asCl==='empty')okM1++;
-    if(asCl==='critical'||asCl==='warning')fcM1++;
-    if(atCl==='critical'||atCl==='warning')impM1++;
-    if(asCl==='critical'&&lt>0)deadM1++;
-
-    const rowObj = {
-      itemPai,desc,grupo,fornec,lt,alternativo,
-      emPedidoZ,emPedidoAA,saldoAG,saldoM0,estoque,
-      statusAI,statusAJ,aiCl,ajCl,
-      ultCompra,diasSemCompra,isOld6m,
-      planoM1,saldoM1,statusAS,statusAT,asCl,atCl
-    };
-    rowObj.decision = decideAction(rowObj);
-
-    rowsM0.push(rowObj);
-    rowsM1.push(rowObj);
-  });
-
-  // Group chips
-  allGroups = Array.from(grupos).sort();
-  buildGroupChips(allGroups);
-
-  // Freeze
-  const proxMes = new Date(TODAY.getFullYear(),TODAY.getMonth()+1,1);
-  const freezeDate = new Date(proxMes);
-  freezeDate.setDate(freezeDate.getDate()-maxLT);
-  document.getElementById('freeze-pill').textContent = maxLT>0?`FREEZE: ${fmtDate(freezeDate)}`:'—';
-
-  // Decision counts
-  const decCounts = {comprar:0,preco:0,alt:0,pcp:0};
-  rowsM0.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty').forEach(r=>{ if(decCounts[r.decision]!==undefined) decCounts[r.decision]++; });
-
-  document.getElementById('cnt-comprar').textContent = decCounts.comprar;
-  document.getElementById('cnt-preco-risco').textContent = decCounts.preco;
-  document.getElementById('cnt-usar-alt').textContent = decCounts.alt;
-  document.getElementById('cnt-reduzir').textContent = decCounts.pcp;
-  document.getElementById('m0-badge').textContent = `${rowsM0.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty').length} faltas`;
-
-  // KPIs M1
-  const nsM1=totalM1?(okM1/totalM1*100):0;
-  const nsM1Color=nsM1>=90?'var(--green)':nsM1>=70?'var(--amber)':'var(--red)';
-  setKPI('ns-m1',nsM1.toFixed(1)+'%',nsM1Color);
-  document.getElementById('ns-m1-d').textContent=`${okM1} OK de ${totalM1}`;
-  document.getElementById('ns-m1-bar').style.cssText=`width:${nsM1}%;background:${nsM1Color}`;
-  setKPI('fc-m1',fcM1,'var(--purple)');
-  setKPI('imp-m1',impM1,'var(--amber)');
-  setKPI('dead-m1',deadM1,'var(--red)');
-  document.getElementById('m1-badge').textContent=`${fcM1} faltas`;
-
-  // Banners M0
-  const b0=[];
-  const fc0=decCounts.comprar+decCounts.preco;
-  if(fc0>0)b0.push({cls:'alert-red',icon:'🚨',msg:`<strong style="color:#fca5a5">${fc0} itens</strong> precisam de ação de compras: <strong>${decCounts.comprar} comprar de fato</strong> e <strong style="color:#fb923c">${decCounts.preco} requerem cotação antes</strong> (risco de reajuste).`});
-  if(decCounts.alt>0)b0.push({cls:'alert-teal',icon:'♻',msg:`<strong style="color:#5eead4">${decCounts.alt} itens</strong> possuem alternativo cadastrado (col. R). Encaminhar para <strong>Projetos</strong> avaliar substituição.`});
-  if(decCounts.pcp>0)b0.push({cls:'alert-purple',icon:'✂',msg:`<strong style="color:#c4b5fd">${decCounts.pcp} itens</strong> têm saldo AG positivo e sem pedido — <strong>PCP pode reduzir o plano</strong> para zerar o AI sem comprar.`});
-  if(maxLT>0)b0.push({cls:'alert-blue',icon:'📅',msg:`Maior Lead Time: <strong style="color:#93c5fd">${maxLT} dias (item ${maxLTItem})</strong>. Freeze calculado em <strong style="color:#a78bfa">${fmtDate(freezeDate)}</strong>.`});
-  document.getElementById('banners-m0').innerHTML=b0.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:10px;color:var(--text2)">${b.msg}</span></div>`).join('');
-
-  // Banners M1
-  const b1=[];
-  if(deadM1>0)b1.push({cls:'alert-red',icon:'💀',msg:`<strong style="color:#fca5a5">${deadM1} itens</strong> já nascem em falta para M1 — LT maior que o prazo disponível. Ruptura inevitável sem ação imediata.`});
-  if(fcM1>0)b1.push({cls:'alert-amber',icon:'📋',msg:`<strong style="color:#fcd34d">${fcM1} itens</strong> precisam de ação para M1 (AS pendente).`});
-  document.getElementById('banners-m1').innerHTML=b1.map(b=>`<div class="alert-bar ${b.cls}"><span style="font-size:16px">${b.icon}</span><span class="mono" style="font-size:10px;color:var(--text2)">${b.msg}</span></div>`).join('');
-
-  // Charts
-  buildDecisionDonut(decCounts);
-  buildDonut('ch-ai',aiCount,'ai-legend');
-  buildAgeBar('ch-age',ageCounts);
-
-  document.getElementById('foot-info').textContent=`Sheet: ${SHEET_ID} | ${totalM0} itens | ${new Date().toLocaleString('pt-BR')}`;
-
-  renderCurrentView();
-  renderCurrentViewM1();
-}
-
-function setKPI(id,val,color){const el=document.getElementById(id);if(!el)return;el.textContent=val;if(color)el.style.color=color}
-
-/* ═══════════════════════════════════════
-   GROUP CHIPS
-═══════════════════════════════════════ */
-function buildGroupChips(groups) {
-  const el = document.getElementById('group-chips');
-  const all = ['todos',...groups];
-  el.innerHTML = all.map(g =>
-    `<button class="gchip ${g==='todos'?'on':''}" id="gchip-${g.replace(/\s/g,'_')}" onclick="setGroup('${g}')">${g==='todos'?'Todos':g}</button>`
-  ).join('');
-}
-
-function setGroup(g) {
-  activeGroup = g;
-  document.querySelectorAll('.gchip').forEach(el=>el.classList.remove('on'));
-  const id = `gchip-${g.replace(/\s/g,'_')}`;
-  document.getElementById(id)?.classList.add('on');
-  renderCurrentView();
-  renderCurrentViewM1();
-}
-
-function filteredRows(rows) {
-  let r = rows;
-  if (activeGroup !== 'todos') r = r.filter(x => x.grupo === activeGroup);
-  const search = (document.getElementById('search-global')?.value||'').toLowerCase();
-  if (search) r = r.filter(x => x.itemPai.toLowerCase().includes(search) || (x.desc||'').toLowerCase().includes(search));
-  return r;
-}
-function filteredRowsM1(rows) {
-  let r = rows;
-  if (activeGroup !== 'todos') r = r.filter(x => x.grupo === activeGroup);
-  const search = (document.getElementById('search-m1')?.value||'').toLowerCase();
-  if (search) r = r.filter(x => x.itemPai.toLowerCase().includes(search) || (x.desc||'').toLowerCase().includes(search));
-  return r;
-}
-
-/* ═══════════════════════════════════════
-   VIEW SWITCHER M0
-═══════════════════════════════════════ */
-function setView(v) {
-  currentView = v;
-  ['all','comprar','preco','alt','pcp'].forEach(k=>{
-    document.getElementById('view-'+k).style.display = k===v?'block':'none';
-    const tab = document.getElementById('vtab-'+k);
-    if(tab) {
-      tab.classList.remove('on');
-      if(k===v) tab.classList.add('on');
+    if(!tiposValidos.length){
+      erros.push(`Nenhuma tábua compatível com "${painel.nome}" (comprimento ${painel.comprimento}mm)`);
+      continue;
     }
-  });
-  renderCurrentView();
-}
 
-function renderCurrentView() {
-  if (currentView==='all')     renderAll();
-  else if(currentView==='comprar') renderComprar();
-  else if(currentView==='preco')   renderPreco();
-  else if(currentView==='alt')     renderAlt();
-  else if(currentView==='pcp')     renderPCP();
-}
+    const combo = otimizarLargura(tiposValidos, painel.largura, kerf, aparoInt, minTaco);
 
-/* ─ Geral ─ */
-function renderAll() {
-  const rows = filteredRows(rowsM0).filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty');
-  rows.sort((a,b)=>{const o={critical:0,warning:1,info:2,neutral:3,ok:4,empty:5};return(o[a.aiCl]||5)-(o[b.aiCl]||5)});
-  document.getElementById('cnt-all').textContent = rows.length+' itens';
-  const el=document.getElementById('tbl-all');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const dec = r.decision;
-    const trCls = dec==='comprar'?'crit':dec==='preco'?'warn':dec==='alt'?'teal':dec==='pcp'?'purple':'info';
-    const saldoColor = r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
-    const pedColor = r.emPedidoZ>0?'var(--blue)':'var(--text3)';
-    return `<div class="tr ${trCls}" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.fornec}">${r.fornec||'—'}</div>
-      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor};font-weight:${r.saldoAG!==0?'700':'400'}">${r.saldoAG}</div>
-      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
-      <div>${statusBadge(r.statusAI)}</div>
-      <div>${statusBadge(r.statusAJ)}</div>
-      <div class="mono" style="font-size:9px;color:${r.alternativo&&r.alternativo!=='—'?'var(--teal)':'var(--text3)'}" title="${r.alternativo}">${r.alternativo&&r.alternativo!=='—'?'✓ '+r.alternativo.substring(0,12):'—'}</div>
-      <div>${decisionBadge(dec)}</div>
-    </div>`;
-  }).join('');
-}
-
-/* ─ Comprar ─ */
-function filterComprar(f){
-  activeFilterComprar=f;
-  ['all','urgente','pedido','semped'].forEach(k=>document.getElementById('fc-chip-'+k)?.classList.toggle('on',k===f));
-  renderComprar();
-}
-function renderComprar() {
-  let rows = filteredRows(rowsM0).filter(r=>r.decision==='comprar');
-  if(activeFilterComprar==='urgente') rows=rows.filter(r=>r.lt>30);
-  else if(activeFilterComprar==='pedido') rows=rows.filter(r=>r.emPedidoZ>0||r.emPedidoAA>0);
-  else if(activeFilterComprar==='semped') rows=rows.filter(r=>r.emPedidoZ===0&&r.emPedidoAA===0);
-  rows.sort((a,b)=>(b.lt||0)-(a.lt||0));
-  document.getElementById('cnt-comprar-tbl').textContent=rows.length+' itens para comprar';
-  const el=document.getElementById('tbl-comprar');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const saldoColor=r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
-    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
-    const ltColor=r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)';
-    const ageHtml=r.isOld6m?`<div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>`:`<span class="mono" style="font-size:9px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
-    const acaoHtml = r.lt>45
-      ? '<span class="badge b-red">🚨 URGENTE — LT Crítico</span>'
-      : r.emPedidoZ>0||r.emPedidoAA>0
-        ? '<span class="badge b-blue">📦 Acompanhar Pedido</span>'
-        : '<span class="badge b-red">⚡ Acionar Fornecedor</span>';
-    return `<div class="tr crit" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.fornec}">${r.fornec||'—'}</div>
-      <div class="mono" style="font-size:10px;color:${ltColor};font-weight:700">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoAG}</div>
-      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
-      <div>${ageHtml}</div>
-      <div>${statusBadge(r.statusAI)}</div>
-      <div>${statusBadge(r.statusAJ)}</div>
-      <div>${acaoHtml}</div>
-    </div>`;
-  }).join('');
-}
-
-/* ─ Preço ─ */
-function renderPreco() {
-  const rows = filteredRows(rowsM0).filter(r=>r.decision==='preco').sort((a,b)=>(b.diasSemCompra||0)-(a.diasSemCompra||0));
-  document.getElementById('cnt-preco-tbl').textContent=rows.length+' itens com risco de reajuste';
-  const el=document.getElementById('tbl-preco');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const diasColor=r.diasSemCompra>365?'var(--red)':r.diasSemCompra>270?'#f97316':'var(--amber)';
-    const saldoColor=r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
-    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
-    return `<div class="tr warn" style="grid-template-columns:100px 180px 80px 80px 110px 90px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.fornec||'—'}</div>
-      <div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>
-      <div class="mono" style="font-size:10px;color:${diasColor};font-weight:700">${r.diasSemCompra}d</div>
-      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoAG}</div>
-      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
-      <div>${statusBadge(r.statusAI)}</div>
-      <div>${statusBadge(r.statusAJ)}</div>
-      <div><span class="badge b-orange">🟠 Cotar + Revisar Preço</span></div>
-    </div>`;
-  }).join('');
-}
-
-/* ─ Alternativo ─ */
-function renderAlt() {
-  const rows = filteredRows(rowsM0).filter(r=>r.decision==='alt');
-  rows.sort((a,b)=>{const o={critical:0,warning:1,info:2};return(o[a.aiCl]||3)-(o[b.aiCl]||3)});
-  document.getElementById('cnt-alt-tbl').textContent=rows.length+' itens com alternativo disponível';
-  const el=document.getElementById('tbl-alt');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const saldoColor=r.saldoAG<0?'var(--red)':r.saldoAG===0?'var(--amber)':'var(--green)';
-    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
-    return `<div class="tr teal" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 200px 90px 110px 130px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.fornec||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoAG}</div>
-      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--teal);font-weight:700" title="${r.alternativo}">${r.alternativo}</div>
-      <div>${statusBadge(r.statusAI)}</div>
-      <div>${statusBadge(r.statusAJ)}</div>
-      <div><span class="badge b-teal">♻ Avaliar Substituição</span></div>
-    </div>`;
-  }).join('');
-}
-
-/* ─ PCP ─ */
-function filterPCP(f){
-  activeFilterPCP=f;
-  ['all','alto','baixo'].forEach(k=>document.getElementById('pcp-chip-'+k)?.classList.toggle('on',k===f));
-  renderPCP();
-}
-function renderPCP() {
-  let rows = filteredRows(rowsM0).filter(r=>r.decision==='pcp');
-  if(activeFilterPCP==='alto') rows=rows.filter(r=>r.saldoAG>10);
-  else if(activeFilterPCP==='baixo') rows=rows.filter(r=>r.saldoAG<0&&r.saldoAG<=10);
-  rows.sort((a,b)=>b.saldoAG-a.saldoAG);
-  document.getElementById('cnt-pcp-tbl').textContent=rows.length+' itens · PCP pode reduzir plano';
-  const el=document.getElementById('tbl-pcp');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const saldoColor=r.saldoAG>10?'var(--green)':r.saldoAG<0?'var(--amber)':'var(--red)';
-    const ageHtml=r.isOld6m?`<div class="price-alert">🟠 ${fmtDate(r.ultCompra)}</div>`:`<span class="mono" style="font-size:9px;color:var(--text2)">${fmtDate(r.ultCompra)}</span>`;
-    return `<div class="tr purple" style="grid-template-columns:100px 180px 80px 80px 65px 65px 65px 65px 90px 110px 140px 150px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--cyan)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.fornec||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:12px;color:${saldoColor};font-weight:800">${r.saldoAG}</div>
-      <div class="mono" style="font-size:10px;color:var(--text3)">${r.emPedidoZ||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.emPedidoAA||'—'}</div>
-      <div>${statusBadge(r.statusAI)}</div>
-      <div>${statusBadge(r.statusAJ)}</div>
-      <div>${ageHtml}</div>
-      <div><span class="badge b-purple">✂ Reduzir Plano</span></div>
-    </div>`;
-  }).join('');
-}
-
-/* ═══════════════════════════════════════
-   VIEW SWITCHER M1
-═══════════════════════════════════════ */
-function setViewM1(v) {
-  currentViewM1 = v;
-  ['all','comprar','pcp'].forEach(k=>{
-    document.getElementById('m1view-'+k).style.display = k===v?'block':'none';
-    const tab=document.getElementById('m1vtab-'+k);
-    if(tab){tab.classList.remove('on');if(k===v)tab.classList.add('on')}
-  });
-  renderCurrentViewM1();
-}
-function renderCurrentViewM1() {
-  if(currentViewM1==='all')    renderM1All();
-  else if(currentViewM1==='comprar') renderM1Comprar();
-  else if(currentViewM1==='pcp')     renderM1PCP();
-}
-
-function renderM1All() {
-  const rows = filteredRowsM1(rowsM1).filter(r=>r.asCl!=='ok'&&r.asCl!=='empty');
-  rows.sort((a,b)=>{const o={critical:0,warning:1,info:2,neutral:3};return(o[a.asCl]||4)-(o[b.asCl]||4)});
-  document.getElementById('cnt-m1').textContent=rows.length+' itens';
-  const el=document.getElementById('tbl-m1');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const trCls=r.asCl==='critical'?'crit':r.asCl==='warning'?'warn':'info';
-    const saldoColor=r.saldoM1<0?'var(--red)':r.saldoM1===0?'var(--amber)':'var(--green)';
-    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
-    return `<div class="tr ${trCls}" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 130px 140px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':r.lt>20?'var(--amber)':'var(--text2)'}">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM1}</div>
-      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
-      <div>${statusBadge(r.statusAS)}</div>
-      <div>${statusBadge(r.statusAT)}</div>
-      <div class="mono" style="font-size:9px;color:${r.alternativo&&r.alternativo!=='—'?'var(--teal)':'var(--text3)'}">${r.alternativo&&r.alternativo!=='—'?'✓ '+r.alternativo.substring(0,10):'—'}</div>
-      <div>${decisionBadgeM1(r)}</div>
-    </div>`;
-  }).join('');
-}
-
-function renderM1Comprar() {
-  const rows = filteredRowsM1(rowsM1).filter(r=>{
-    if(r.asCl==='ok'||r.asCl==='empty')return false;
-    // Não tem alternativo e saldo M1 insuficiente
-    if(r.alternativo&&r.alternativo!=='—')return false;
-    return r.saldoM1<=0||r.emPedidoZ===0;
-  });
-  rows.sort((a,b)=>(b.lt||0)-(a.lt||0));
-  document.getElementById('cnt-m1-comprar').textContent=rows.length+' itens a comprar para M1';
-  const el=document.getElementById('tbl-m1-comprar');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const saldoColor=r.saldoM1<0?'var(--red)':r.saldoM1===0?'var(--amber)':'var(--green)';
-    const pedColor=r.emPedidoZ>0?'var(--blue)':'var(--text3)';
-    const acaoHtml=r.lt>45?'<span class="badge b-red">💀 Sem saída no prazo</span>':'<span class="badge b-red">⚡ Antecipar Compra M1</span>';
-    return `<div class="tr crit" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:10px;color:${r.lt>45?'var(--red)':'var(--amber)'}; font-weight:700">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
-      <div class="mono" style="font-size:10px;color:${saldoColor}">${r.saldoM1}</div>
-      <div class="mono" style="font-size:10px;color:${pedColor}">${r.emPedidoZ||'—'}</div>
-      <div>${statusBadge(r.statusAS)}</div>
-      <div>${statusBadge(r.statusAT)}</div>
-      <div>${acaoHtml}</div>
-    </div>`;
-  }).join('');
-}
-
-function renderM1PCP() {
-  const rows = filteredRowsM1(rowsM1).filter(r=>{
-    if(r.asCl==='ok'||r.asCl==='empty')return false;
-    return r.saldoM1>0&&r.emPedidoZ===0;
-  });
-  rows.sort((a,b)=>b.saldoM1-a.saldoM1);
-  document.getElementById('cnt-m1-pcp').textContent=rows.length+' itens · PCP pode reduzir plano M1';
-  const el=document.getElementById('tbl-m1-pcp');
-  if(!rows.length){el.innerHTML=emptyRow();return}
-  el.innerHTML=rows.map(r=>{
-    const saldoColor=r.saldoM1>10?'var(--green)':r.saldoM1>0?'var(--amber)':'var(--red)';
-    return `<div class="tr purple" style="grid-template-columns:100px 180px 80px 65px 65px 65px 65px 90px 110px 150px;padding:8px 16px;border-left-width:3px">
-      <div class="mono" style="font-size:10px;color:var(--purple)">${r.itemPai}</div>
-      <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px" title="${r.desc}">${r.desc||'—'}</div>
-      <div class="mono" style="font-size:9px;color:var(--text2)">${r.grupo||'—'}</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.lt||'—'}d</div>
-      <div class="mono" style="font-size:10px;color:var(--text2)">${r.planoM1||'—'}</div>
-      <div class="mono" style="font-size:12px;color:${saldoColor};font-weight:800">${r.saldoM1}</div>
-      <div class="mono" style="font-size:10px;color:var(--text3)">—</div>
-      <div>${statusBadge(r.statusAS)}</div>
-      <div>${statusBadge(r.statusAT)}</div>
-      <div><span class="badge b-purple">✂ Reduzir Plano M1</span></div>
-    </div>`;
-  }).join('');
-}
-
-/* ═══════════════════════════════════════
-   MONTH SWITCH
-═══════════════════════════════════════ */
-function switchMonth(m) {
-  document.getElementById('view-m0').style.display=m===0?'block':'none';
-  document.getElementById('view-m1').style.display=m===1?'block':'none';
-  document.getElementById('tab-m0').classList.toggle('active',m===0);
-  document.getElementById('tab-m1').classList.toggle('active',m===1);
-}
-
-/* ═══════════════════════════════════════
-   CHARTS
-═══════════════════════════════════════ */
-Chart.defaults.color='#6b7fa3';
-Chart.defaults.borderColor='#1c2840';
-Chart.defaults.font.family='DM Mono';
-Chart.defaults.font.size=9;
-
-function buildDecisionDonut(counts) {
-  const labels=['Comprar de Fato','Risco Reajuste','Usar Alternativo','Reduzir Plano'];
-  const values=[counts.comprar,counts.preco,counts.alt,counts.pcp];
-  const colors=['rgba(239,68,68,.75)','rgba(234,88,12,.75)','rgba(20,184,166,.75)','rgba(167,139,250,.75)'];
-  if(charts['ch-decision'])charts['ch-decision'].destroy();
-  charts['ch-decision']=new Chart(document.getElementById('ch-decision'),{
-    type:'doughnut',
-    data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#07090f',borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-      plugins:{legend:{display:true,position:'right',labels:{color:'#6b7fa3',font:{size:9},boxWidth:10}},
-      tooltip:{callbacks:{label:c=>{const t=values.reduce((a,b)=>a+b,0);return` ${c.label}: ${c.raw} (${t?((c.raw/t)*100).toFixed(0):0}%)`;}}}}
+    if(!combo){
+      erros.push(`Não foi possível montar "${painel.nome}" (${painel.largura}mm). Verifique os parâmetros ou aumente as tábuas disponíveis.`);
+      continue;
     }
+
+    const larguraColada = combo.reduce((s,t)=>s+t.larguraUsada,0) + (combo.length-1)*kerf;
+    const sobraCNC      = +(larguraColada - painel.largura).toFixed(2);
+    const desperdicioAparo = combo.filter(t=>!t.isBorda).length * 2 * aparoInt;
+    const desperdicioCorte = combo.reduce((s,t)=>s+(t.larguraMax-t.larguraUsada),0);
+
+    resultado.push({painel, combo, larguraColada, sobraCNC, desperdicioAparo, desperdicioCorte, kerf, aparoInt});
+  }
+
+  if(erros.length) alert('Avisos:\n'+erros.join('\n\n'));
+  if(!resultado.length){alert('Nenhum painel calculado.');return;}
+
+  // CONSUMO
+  const grupoMap={};
+  resultado.forEach(r=>{
+    r.combo.forEach(taco=>{
+      const k=`${taco.nome}||${taco.largura}||${taco.comprimento}||${r.painel.comprimento}`;
+      if(!grupoMap[k]) grupoMap[k]={tabua:taco,compPainel:r.painel.comprimento,tacosPerPeca:taco.tacosPerPeca,totalTacos:0};
+      grupoMap[k].totalTacos++;
+    });
+  });
+  const consumoFinal=[];
+  let estoqueOk=true;
+  Object.values(grupoMap).forEach(g=>{
+    const fisicas=Math.ceil(g.totalTacos/g.tacosPerPeca);
+    const disp=tabuaRows.find(t=>t.nome===g.tabua.nome&&t.largura===g.tabua.largura&&t.comprimento===g.tabua.comprimento);
+    const estq=disp?disp.qtd:0;
+    const sobra=estq-fisicas;
+    if(sobra<0) estoqueOk=false;
+    consumoFinal.push({...g,fisicas,estq,sobra,ok:sobra>=0});
+  });
+
+  const totalPaineis=resultado.length;
+  const totalTabuasUsadas=consumoFinal.reduce((s,c)=>s+c.fisicas,0);
+  const areaPaineis=resultado.reduce((s,r)=>s+r.painel.largura*r.painel.comprimento,0);
+  const areaTabuas=consumoFinal.reduce((s,c)=>s+c.fisicas*c.tabua.largura*c.tabua.comprimento,0);
+  const aprov=areaTabuas>0?(areaPaineis/areaTabuas*100):0;
+
+  lastResult={resultado,consumoFinal,totalPaineis,totalTabuasUsadas,aprov,estoqueOk};
+  renderResultados(lastResult);
+  document.getElementById('results').classList.add('on');
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ALGORITMO: otimizarLargura
+//
+//  Para N tacos totais:
+//    Posição 0      → BORDA ESQ: largura_max = W (borda natural vira lateral)
+//    Posições 1..N-2 → INTERNOS: largura_max = W − 2*aparoInt
+//    Posição N-1    → BORDA DIR: largura_max = W (borda natural vira lateral)
+//
+//  Estratégia:
+//  1. Enumerar todas as combinações com repetição de tipos de tábua para N slots
+//  2. Para cada combinação, colocar os maiores nas bordas
+//  3. Calcular se a soma das larguras_max + (N-1)*kerf ≥ target
+//  4. Se sim: fazer 1 corte para reduzir ao target exato (ou próximo)
+//  5. Minimizar desperdício = aparos internos + sobra do corte
+// ══════════════════════════════════════════════════════════════
+function otimizarLargura(tipos, target, kerf, aparoInt, minTaco){
+  const MAX_N = 14;
+  let best = null, bestWaste = Infinity;
+
+  // Gera combinações com repetição de `k` elementos de `arr`
+  function* combosComRepeticao(arr, k){
+    if(k===0){yield [];return;}
+    for(let i=0;i<arr.length;i++){
+      for(const rest of combosComRepeticao(arr.slice(i),k-1)){
+        yield [arr[i],...rest];
+      }
+    }
+  }
+
+  for(let N=1; N<=MAX_N; N++){
+    const nInterno = Math.max(0, N-2);
+
+    // Filtrar tipos que têm largura útil suficiente para posição interna
+    const tiposInterno = tipos.filter(t => t.largura - 2*aparoInt >= minTaco);
+    // Se precisamos de internos mas não há tipos com largura suficiente, pular
+    if(nInterno > 0 && tiposInterno.length === 0) continue;
+
+    // Gerar combos de bordas (posições 0 e N-1)
+    const nBorda = Math.min(N, 2);
+    const bordaCombos = [...combosComRepeticao(tipos, nBorda)];
+    // Gerar combos de internos
+    const internoCombos = nInterno===0 ? [[]] : [...combosComRepeticao(tiposInterno, nInterno)];
+
+    for(const bc of bordaCombos){
+      for(const ic of internoCombos){
+        // Montar arranjo: borda_esq, internos (sorted desc), borda_dir
+        // Colocar os maiores nas bordas para maximizar eficiência
+        const allTypes = [...bc, ...ic].sort((a,b)=>b.largura-a.largura);
+
+        let arrangement;
+        if(N===1){
+          arrangement = [{tipo:allTypes[0], pos:'borda'}];
+        } else if(N===2){
+          arrangement = [
+            {tipo:allTypes[0], pos:'borda'},
+            {tipo:allTypes[1], pos:'borda'}
+          ];
+        } else {
+          // 2 maiores nas bordas, menores no interior
+          arrangement = [
+            {tipo:allTypes[0], pos:'borda'},
+            ...allTypes.slice(1,N-1).map(t=>({tipo:t, pos:'interno'})),
+            {tipo:allTypes[N-1], pos:'borda'}
+          ];
+        }
+
+        // Largura máxima usável por posição
+        const maxW = arrangement.map(a =>
+          a.pos==='borda' ? a.tipo.largura : a.tipo.largura - 2*aparoInt
+        );
+
+        // Verificar que nenhum interno ficou abaixo do mínimo
+        if(maxW.some((w,i) => arrangement[i].pos==='interno' && w < minTaco)) continue;
+
+        const somaMax = maxW.reduce((s,w)=>s+w, 0) + (N-1)*kerf;
+        if(somaMax < target) continue; // Não consegue atingir o alvo
+
+        // Calcular desperdício se usar todas as larguras máximas
+        const sobraCNC = somaMax - target;
+
+        // Tentar fazer 1 corte de redução (para chegar mais perto do target)
+        // Cortar o taco com maior excesso (borda com maior W, geralmente)
+        // O melhor corte é aquele que deixa a largura resultante ≥ minTaco
+        let melhorCorte = {pos:-1, waste:Infinity, novasLarg:[...maxW]};
+
+        for(let pos=0; pos<N; pos++){
+          const cortado = maxW[pos] - sobraCNC;
+          if(cortado >= minTaco){
+            // Quanto de madeira se perde neste corte?
+            const wasteCorte = sobraCNC; // pedaço que cai da tábua
+            const wasteAparos = nInterno * 2 * aparoInt;
+            const wasteTotal = wasteCorte + wasteAparos;
+            if(wasteTotal < melhorCorte.waste){
+              melhorCorte = {pos, waste:wasteTotal, novasLarg:[...maxW]};
+              melhorCorte.novasLarg[pos] = cortado;
+            }
+          }
+        }
+
+        // Se nenhum corte simples funciona, tente sem corte (sobra vai pra CNC)
+        if(melhorCorte.pos===-1){
+          const wasteAparos = nInterno*2*aparoInt;
+          const wasteTotal = sobraCNC + wasteAparos;
+          if(wasteTotal < bestWaste){
+            bestWaste = wasteTotal;
+            best = montarCombo(arrangement, maxW, target, kerf, aparoInt);
+          }
+        } else if(melhorCorte.waste < bestWaste){
+          bestWaste = melhorCorte.waste;
+          best = montarCombo(arrangement, melhorCorte.novasLarg, target, kerf, aparoInt);
+        }
+      }
+    }
+    if(bestWaste === 0) break;
+  }
+  return best;
+}
+
+function montarCombo(arrangement, larguras, target, kerf, aparoInt){
+  return arrangement.map((a, i)=>({
+    nome        : a.tipo.nome,
+    largura     : a.tipo.largura,          // largura bruta da tábua
+    larguraMax  : a.pos==='borda' ? a.tipo.largura : a.tipo.largura - 2*aparoInt,
+    larguraUsada: +larguras[i].toFixed(2), // largura usada neste taco
+    comprimento : a.tipo.comprimento,
+    tacosPerPeca: a.tipo.tacosPerPeca,
+    isBorda     : a.pos==='borda',
+    aparoInterno: a.pos==='borda' ? 0 : aparoInt
+  }));
+}
+
+// ── TABS ──
+function tab(t){
+  ['montagem','vis','cortes','consumo'].forEach(id=>{
+    document.getElementById('tc-'+id).classList.toggle('on',id===t);
+  });
+  document.querySelectorAll('.tabs .tab').forEach((b,i)=>{
+    b.classList.toggle('active',['montagem','vis','cortes','consumo'][i]===t);
   });
 }
 
-function colorForStatus(s){
-  const n=(s||'').toLowerCase();
-  if(n.includes('ok')||n.includes('disp'))return'rgba(16,185,129,.75)';
-  if(n.includes('falta')||n.includes('crít')||n.includes('comprar'))return'rgba(239,68,68,.75)';
-  if(n.includes('risco')||n.includes('parcial')||n.includes('aten'))return'rgba(245,158,11,.75)';
-  if(n.includes('pedido')||n.includes('aguard'))return'rgba(59,130,246,.75)';
-  return'rgba(107,127,163,.5)';
+const CORES=['#185FA5','#0F6E56','#854F0B','#993556','#3B6D11','#534AB7','#993C1D','#2A7A7A','#6D4B11'];
+function tabuaColor(nome, larg){
+  const k=nome+'||'+larg;
+  if(!tabuaColor._m) tabuaColor._m={};
+  if(!tabuaColor._m[k]){ tabuaColor._m[k]=CORES[Object.keys(tabuaColor._m).length%CORES.length]; }
+  return tabuaColor._m[k];
+}
+function painelColor(nome){
+  if(!painelColor._m) painelColor._m={};
+  if(!painelColor._m[nome]){ painelColor._m[nome]=CORES[Object.keys(painelColor._m).length%CORES.length]; }
+  return painelColor._m[nome];
 }
 
-function buildDonut(canvasId,countObj,legendId){
-  const labels=Object.keys(countObj).sort((a,b)=>countObj[b]-countObj[a]).slice(0,8);
-  const values=labels.map(l=>countObj[l]);
-  const colors=labels.map(l=>colorForStatus(l));
-  const total=values.reduce((a,b)=>a+b,0);
-  if(charts[canvasId])charts[canvasId].destroy();
-  charts[canvasId]=new Chart(document.getElementById(canvasId),{
-    type:'doughnut',
-    data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#07090f',borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(0)}%)`}}}}
+function renderResultados({resultado,consumoFinal,totalPaineis,totalTabuasUsadas,aprov,estoqueOk}){
+  tabuaColor._m={}; painelColor._m={};
+  // seed cores de tábua
+  tabuaRows.forEach(t=>tabuaColor(t.nome,t.largura));
+  resultado.forEach(r=>painelColor(r.painel.nome));
+
+  const sobraCNCMedia = resultado.reduce((s,r)=>s+r.sobraCNC,0)/resultado.length;
+  const totalAparos = resultado.reduce((s,r)=>s+r.desperdicioAparo,0);
+
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Painéis calculados</div><div class="metric-val">${totalPaineis}</div></div>
+    <div class="metric"><div class="metric-label">Tábuas físicas</div><div class="metric-val">${totalTabuasUsadas}</div></div>
+    <div class="metric"><div class="metric-label">Aproveitamento</div><div class="metric-val">${aprov.toFixed(1)}%</div><div class="metric-sub">${(100-aprov).toFixed(1)}% de perda</div></div>
+    <div class="metric"><div class="metric-label">Sobra CNC média</div><div class="metric-val" style="font-size:16px">+${sobraCNCMedia.toFixed(1)} mm</div></div>
+    <div class="metric"><div class="metric-label">Descarte de aparo</div><div class="metric-val" style="font-size:16px">${totalAparos.toFixed(0)} mm</div><div class="metric-sub">total de aparos internos</div></div>
+    <div class="metric"><div class="metric-label">Estoque</div><div class="metric-val"><span class="badge ${estoqueOk?'ok':'bad'}">${estoqueOk?'ok':'insuficiente'}</span></div></div>
+  `;
+  renderMontagem(resultado);
+  renderVisColagem(resultado);
+  renderCortes(consumoFinal, resultado);
+  renderConsumo(consumoFinal);
+}
+
+function renderMontagem(resultado){
+  const tb=document.getElementById('tb-montagem');
+  tb.innerHTML='';
+  const byP={};
+  resultado.forEach(r=>{
+    const k=r.painel.nome+'||'+r.painel.largura+'||'+r.painel.comprimento;
+    if(!byP[k]) byP[k]={r,count:0};
+    byP[k].count++;
   });
-  const el=document.getElementById(legendId);
-  if(el)el.innerHTML=labels.slice(0,5).map((l,i)=>
-    `<div style="display:flex;align-items:center;gap:4px">
-      <div style="width:7px;height:7px;border-radius:1px;background:${colors[i]};flex-shrink:0"></div>
-      <span class="mono" style="font-size:8px;color:var(--text2)">${l.length>20?l.substring(0,19)+'…':l} (${values[i]})</span>
-    </div>`
-  ).join('');
-}
+  Object.values(byP).forEach(({r,count})=>{
+    const comboStr=r.combo.map((t,i)=>{
+      const tipo = t.isBorda
+        ? (i===0?'↤ borda esq':'borda dir ↦')
+        : '⬡ interno';
+      const cortado = Math.abs(t.larguraUsada-t.larguraMax)>0.05;
+      return `<span title="${t.nome} ${t.largura}mm bruta" style="white-space:nowrap">`+
+        `${t.larguraUsada.toFixed(1)}mm`+
+        `<small style="color:var(--tx3);font-size:10px"> [${t.nome}${cortado?' ✂':''}] ${tipo}</small>`+
+        `</span>`;
+    }).join(' <span style="color:var(--tx3)">+</span> ');
 
-function buildAgeBar(canvasId,ag){
-  if(charts[canvasId])charts[canvasId].destroy();
-  charts[canvasId]=new Chart(document.getElementById(canvasId),{
-    type:'bar',
-    data:{labels:['<30d','30-90d','90-180d','>180d','Sem data'],
-      datasets:[{data:[ag.lt30,ag.d30a90,ag.d90a180,ag.gt180,ag.nodate],
-        backgroundColor:['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(234,88,12,.7)','rgba(239,68,68,.7)','rgba(107,127,163,.4)'],
-        borderRadius:4,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}},y:{ticks:{color:'#6b7fa3'},grid:{color:'#1c2840'}}}}
+    const nInt = r.combo.filter(t=>!t.isBorda).length;
+    const badge=r.sobraCNC<1?'ok':r.sobraCNC<15?'warn':'neutral';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${r.painel.nome}</td>
+      <td>${r.painel.largura} mm</td>
+      <td>${r.painel.comprimento} mm</td>
+      <td>${count}</td>
+      <td style="font-size:12px;line-height:1.8">${comboStr}</td>
+      <td>${r.larguraColada.toFixed(1)} mm</td>
+      <td><span class="badge ${badge}">+${r.sobraCNC.toFixed(1)}mm</span></td>
+      <td>${nInt===0?'<span style="color:var(--green-tx)">nenhum ✓</span>':nInt+` taco${nInt>1?'s':''} (−${(r.aparoInt*2*nInt).toFixed(0)}mm)`}</td>
+    `;
+    tb.appendChild(tr);
   });
 }
 
-function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={}}
+function renderVisColagem(resultado){
+  const container=document.getElementById('vis-content');
+  container.innerHTML='';
 
-/* ═══════════════════════════════════════
-   EXPORT
-═══════════════════════════════════════ */
-function getExportRows(type) {
-  const search = (document.getElementById('search-global')?.value||'').toLowerCase();
-  let base = rowsM0.filter(r=>{
-    if(activeGroup!=='todos'&&r.grupo!==activeGroup)return false;
-    if(search&&!r.itemPai.toLowerCase().includes(search)&&!(r.desc||'').toLowerCase().includes(search))return false;
-    return true;
+  // Nota explicativa única
+  const nota=document.createElement('div');
+  nota.style.cssText='font-size:12px;color:var(--tx3);margin-bottom:14px;line-height:1.5';
+  nota.innerHTML=`
+    <span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px">
+      <svg width="14" height="14"><rect x="0" y="0" width="14" height="14" rx="2" fill="#185FA5"/><text x="7" y="10" text-anchor="middle" fill="white" font-size="8" font-family="sans-serif">↤↦</text></svg>
+      Borda — borda natural da tábua na lateral do painel
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px">
+      <svg width="14" height="14"><rect x="0" y="0" width="14" height="14" rx="2" fill="#185FA5" opacity="0.6"/></svg>
+      Interno — ambos os lados serrados antes de colar
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:5px">
+      <svg width="14" height="14"><rect x="0" y="0" width="14" height="14" rx="2" fill="none" stroke="#854F0B" stroke-width="1" stroke-dasharray="3,1"/></svg>
+      Aparo descartado (borda natural interna)
+    </span>`;
+  container.appendChild(nota);
+
+  const byP={};
+  resultado.forEach(r=>{
+    const k=r.painel.nome+'||'+r.painel.largura+'||'+r.painel.comprimento;
+    if(!byP[k]) byP[k]={r,count:0};
+    byP[k].count++;
   });
-  if(type==='all')    return {rows:base.filter(r=>r.aiCl!=='ok'&&r.aiCl!=='empty'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','statusAI','statusAJ','alternativo','decision'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Status AI','Impacto AJ','Alternativo (R)','Decisão'],title:'Visao_Geral_AI'};
-  if(type==='comprar')return {rows:base.filter(r=>r.decision==='comprar'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Status AI','Impacto AJ'],title:'Comprar_de_Fato'};
-  if(type==='preco')  return {rows:base.filter(r=>r.decision==='preco'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Status AI','Impacto AJ'],title:'Risco_Reajuste'};
-  if(type==='alt')    return {rows:base.filter(r=>r.decision==='alt'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','alternativo','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Alternativo (R)','Status AI','Impacto AJ'],title:'Usar_Alternativo'};
-  if(type==='pcp')    return {rows:base.filter(r=>r.decision==='pcp'),cols:['itemPai','desc','grupo','fornec','lt','saldoAG','emPedidoZ','emPedidoAA','statusAI','statusAJ'],headers:['Item','Descrição (B)','Grupo','Fornecedor','LT (dias)','Saldo AG','Em Pedido Z','Em Pedido AA','Status AI','Impacto AJ'],title:'Reduzir_Plano_PCP'};
 
-  // M1
-  const searchM1=(document.getElementById('search-m1')?.value||'').toLowerCase();
-  let baseM1=rowsM1.filter(r=>{
-    if(activeGroup!=='todos'&&r.grupo!==activeGroup)return false;
-    if(searchM1&&!r.itemPai.toLowerCase().includes(searchM1)&&!(r.desc||'').toLowerCase().includes(searchM1))return false;
-    return r.asCl!=='ok'&&r.asCl!=='empty';
+  Object.values(byP).forEach(({r,count})=>{
+    const block=document.createElement('div');
+    block.className='vis-block';
+
+    const PX=1.8, H=72;
+
+    // Calcular largura total do SVG considerando aparos visuais
+    let svgW=2;
+    r.combo.forEach((t,i)=>{
+      svgW += Math.round(t.largura*PX); // usa largura bruta para escala visual
+      if(i<r.combo.length-1) svgW += Math.max(Math.round(r.kerf*PX),3);
+    });
+
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width', svgW);
+    svg.setAttribute('height', H+36);
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${H+36}`);
+    svg.style.cssText='display:block;max-width:100%;overflow:visible';
+
+    let x=0;
+    r.combo.forEach((taco, i)=>{
+      const cor = tabuaColor(taco.nome, taco.largura);
+      const brutoPx = Math.round(taco.largura*PX);
+      const usadoPx = Math.round(taco.larguraUsada*PX);
+      const aparoPx = taco.isBorda ? 0 : Math.round(taco.aparoInterno*PX);
+
+      if(taco.isBorda){
+        // Taco de borda: retângulo cheio, bordas marcadas com ↤/↦
+        svg.appendChild(ns('rect',{x:x+1,y:0,width:brutoPx-1,height:H,fill:cor,rx:2,opacity:'0.92'}));
+        // Marcador de borda natural
+        const bordaX = i===0 ? x+1 : x+brutoPx-1;
+        svg.appendChild(ns('line',{x1:bordaX,y1:4,x2:bordaX,y2:H-4,stroke:'#fff','stroke-width':'2','stroke-dasharray':'4,3',opacity:'0.6'}));
+        // Labels
+        if(brutoPx>30){
+          const t1=ns('text',{x:x+brutoPx/2,y:H/2-6,'text-anchor':'middle',fill:'#fff','font-size':'10','font-weight':'600','font-family':'sans-serif'});
+          t1.textContent=taco.larguraUsada.toFixed(1)+'mm';
+          svg.appendChild(t1);
+          const t2=ns('text',{x:x+brutoPx/2,y:H/2+6,'text-anchor':'middle',fill:'rgba(255,255,255,.75)','font-size':'9','font-family':'sans-serif'});
+          t2.textContent=taco.nome.substring(0,11);
+          svg.appendChild(t2);
+          const t3=ns('text',{x:x+brutoPx/2,y:H/2+17,'text-anchor':'middle',fill:'rgba(255,255,255,.6)','font-size':'8','font-family':'sans-serif'});
+          t3.textContent=i===0?'↤ BORDA':'BORDA ↦';
+          svg.appendChild(t3);
+        }
+      } else {
+        // Taco interno: aparos nas bordas (tracejado) + parte útil (sólido)
+        // Aparo esquerdo
+        if(aparoPx>0){
+          svg.appendChild(ns('rect',{x:x+1,y:2,width:aparoPx-1,height:H-4,fill:cor,rx:2,opacity:'0.22'}));
+          svg.appendChild(ns('rect',{x:x+1,y:2,width:aparoPx-1,height:H-4,rx:2,fill:'none',stroke:'#854F0B','stroke-width':'1','stroke-dasharray':'3,2'}));
+          if(aparoPx>16){
+            const ap1=ns('text',{x:x+aparoPx/2,y:H/2+4,'text-anchor':'middle',fill:'#854F0B','font-size':'8','font-family':'sans-serif'});
+            ap1.textContent=taco.aparoInterno+'mm';
+            svg.appendChild(ap1);
+          }
+        }
+        // Parte útil
+        const uxStart = x+aparoPx;
+        svg.appendChild(ns('rect',{x:uxStart+1,y:0,width:usadoPx-1,height:H,fill:cor,rx:2,opacity:'0.82'}));
+        if(usadoPx>30){
+          const t1=ns('text',{x:uxStart+usadoPx/2,y:H/2-6,'text-anchor':'middle',fill:'#fff','font-size':'10','font-weight':'600','font-family':'sans-serif'});
+          t1.textContent=taco.larguraUsada.toFixed(1)+'mm';
+          svg.appendChild(t1);
+          const t2=ns('text',{x:uxStart+usadoPx/2,y:H/2+6,'text-anchor':'middle',fill:'rgba(255,255,255,.75)','font-size':'9','font-family':'sans-serif'});
+          t2.textContent=taco.nome.substring(0,11);
+          svg.appendChild(t2);
+          const t3=ns('text',{x:uxStart+usadoPx/2,y:H/2+17,'text-anchor':'middle',fill:'rgba(255,255,255,.6)','font-size':'8','font-family':'sans-serif'});
+          t3.textContent='⬡ INTERNO';
+          svg.appendChild(t3);
+        }
+        // Aparo direito
+        const adX = uxStart+usadoPx;
+        if(aparoPx>0){
+          svg.appendChild(ns('rect',{x:adX+1,y:2,width:aparoPx-1,height:H-4,fill:cor,rx:2,opacity:'0.22'}));
+          svg.appendChild(ns('rect',{x:adX+1,y:2,width:aparoPx-1,height:H-4,rx:2,fill:'none',stroke:'#854F0B','stroke-width':'1','stroke-dasharray':'3,2'}));
+          if(aparoPx>16){
+            const ap2=ns('text',{x:adX+aparoPx/2,y:H/2+4,'text-anchor':'middle',fill:'#854F0B','font-size':'8','font-family':'sans-serif'});
+            ap2.textContent=taco.aparoInterno+'mm';
+            svg.appendChild(ap2);
+          }
+        }
+      }
+      x += brutoPx;
+      // Serra
+      if(i<r.combo.length-1){
+        const kPx=Math.max(Math.round(r.kerf*PX),3);
+        svg.appendChild(ns('rect',{x:x,y:6,width:kPx,height:H-12,fill:'#ccc',opacity:'0.4'}));
+        x+=kPx;
+      }
+    });
+
+    // Linha de medida do alvo
+    const alvoPx=Math.round(r.painel.largura*PX);
+    const coladaPx=Math.round(r.larguraColada*PX);
+    const ly=H+10;
+    // Linha alvo
+    svg.appendChild(ns('line',{x1:0,y1:ly,x2:alvoPx,y2:ly,stroke:'var(--tx)','stroke-width':'1.5'}));
+    svg.appendChild(ns('line',{x1:0,y1:ly-4,x2:0,y2:ly+4,stroke:'var(--tx)','stroke-width':'1.5'}));
+    svg.appendChild(ns('line',{x1:alvoPx,y1:ly-4,x2:alvoPx,y2:ly+4,stroke:'var(--tx)','stroke-width':'1.5'}));
+    const mt=ns('text',{x:alvoPx/2,y:ly+14,'text-anchor':'middle',fill:'var(--tx)','font-size':'10','font-weight':'500','font-family':'sans-serif'});
+    mt.textContent=r.painel.largura+'mm (alvo)';
+    svg.appendChild(mt);
+    // Sobra CNC
+    if(r.sobraCNC>0.5){
+      svg.appendChild(ns('line',{x1:alvoPx,y1:ly,x2:coladaPx,y2:ly,stroke:'var(--amber-tx)','stroke-width':'1.5','stroke-dasharray':'3,2'}));
+      svg.appendChild(ns('line',{x1:coladaPx,y1:ly-4,x2:coladaPx,y2:ly+4,stroke:'var(--amber-tx)','stroke-width':'1.5'}));
+      const sc=ns('text',{x:alvoPx+(coladaPx-alvoPx)/2,y:ly+14,'text-anchor':'middle',fill:'var(--amber-tx)','font-size':'9','font-family':'sans-serif'});
+      sc.textContent='+'+r.sobraCNC.toFixed(1)+'mm CNC';
+      svg.appendChild(sc);
+    }
+
+    const titleDiv=document.createElement('div');
+    titleDiv.className='vis-title';
+    const nInt=r.combo.filter(t=>!t.isBorda).length;
+    const intInfo=nInt===0
+      ? '<span style="color:var(--green-tx)">✓ sem tacos internos</span>'
+      : `<span style="color:var(--amber-tx)">${nInt} taco${nInt>1?'s':''} interno${nInt>1?'s':''} (aparo total: ${(r.aparoInt*2*nInt).toFixed(0)}mm)</span>`;
+    titleDiv.innerHTML=`${r.painel.nome} <span style="font-weight:400;color:var(--tx2)">— ${count}× — alvo ${r.painel.largura}mm — colado ${r.larguraColada.toFixed(1)}mm — sobra CNC +${r.sobraCNC.toFixed(1)}mm — ${intInfo}</span>`;
+    block.appendChild(titleDiv);
+    block.appendChild(svg);
+    container.appendChild(block);
   });
-  if(type==='m1-all') return {rows:baseM1,cols:['itemPai','desc','grupo','lt','planoM1','saldoM1','emPedidoZ','statusAS','statusAT','alternativo'],headers:['Item','Descrição (B)','Grupo','LT (dias)','Plano M1','Saldo M1','Em Pedido Z','Status AS','Impacto AT','Alternativo (R)'],title:'M1_Todos_Pendentes'};
-  if(type==='m1-comprar') return {rows:baseM1.filter(r=>!r.alternativo||r.alternativo==='—'),cols:['itemPai','desc','grupo','lt','planoM1','saldoM1','emPedidoZ','statusAS','statusAT'],headers:['Item','Descrição (B)','Grupo','LT (dias)','Plano M1','Saldo M1','Em Pedido Z','Status AS','Impacto AT'],title:'M1_Comprar'};
-  if(type==='m1-pcp') return {rows:baseM1.filter(r=>r.saldoM1>0&&r.emPedidoZ===0),cols:['itemPai','desc','grupo','lt','planoM1','saldoM1','emPedidoZ','statusAS','statusAT'],headers:['Item','Descrição (B)','Grupo','LT (dias)','Plano M1','Saldo M1','Em Pedido Z','Status AS','Impacto AT'],title:'M1_Reduzir_Plano'};
-  return null;
 }
 
-function exportCSV(type) {
-  const d=getExportRows(type);if(!d)return;
-  const esc=v=>`"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`;
-  const csv=[d.headers.map(esc).join(','),...d.rows.map(r=>d.cols.map(c=>esc(r[c])).join(','))].join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`${d.title}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-function exportPDF(type) {
-  const d=getExportRows(type);if(!d)return;
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-  doc.setFillColor(7,9,15);doc.rect(0,0,297,210,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(220,228,240);
-  doc.text('Central de Decisão — Supply Chain Intelligence',14,12);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(107,127,163);
-  doc.text(`${d.title.replace(/_/g,' ')} | Grupo: ${activeGroup} | Gerado: ${new Date().toLocaleString('pt-BR')}`,14,19);
-  doc.autoTable({
-    startY:23,head:[d.headers],
-    body:d.rows.map(r=>d.cols.map(c=>String(r[c]===null||r[c]===undefined?'':r[c]))),
-    theme:'grid',
-    styles:{font:'helvetica',fontSize:6.5,fillColor:[12,16,24],textColor:[200,210,230],lineColor:[28,40,64],lineWidth:.18,cellPadding:1.8},
-    headStyles:{fillColor:[17,24,39],textColor:[147,197,253],fontStyle:'bold',fontSize:7},
-    alternateRowStyles:{fillColor:[15,20,30]},
-    columnStyles:{0:{fontStyle:'bold'}}
+function renderCortes(consumoFinal, resultado){
+  const container=document.getElementById('cortes-content');
+  container.innerHTML='';
+  const tacosPorTabua={};
+  resultado.forEach(r=>{
+    r.combo.forEach(taco=>{
+      const k=`${taco.nome}||${taco.largura}||${taco.comprimento}`;
+      if(!tacosPorTabua[k]) tacosPorTabua[k]=[];
+      tacosPorTabua[k].push({painel:r.painel,comp:r.painel.comprimento,largUsada:taco.larguraUsada,largBruta:taco.largura,isBorda:taco.isBorda,tacosPerPeca:taco.tacosPerPeca});
+    });
   });
-  doc.save(`${d.title}_${new Date().toISOString().slice(0,10)}.pdf`);
+  consumoFinal.forEach(cf=>{
+    const k=`${cf.tabua.nome}||${cf.tabua.largura}||${cf.tabua.comprimento}`;
+    const tacos=tacosPorTabua[k]||[];
+    const wrap=document.createElement('div');
+    wrap.className='vis-block';
+    wrap.innerHTML=`<div class="vis-title">${cf.tabua.nome} — larg. bruta ${cf.tabua.largura}mm × comp. ${cf.tabua.comprimento}mm — <strong>${cf.fisicas}</strong> tábua(s) — ${cf.tacosPerPeca} taco(s) de ${cf.compPainel}mm por tábua</div>`;
+    const PX=Math.min(560/cf.tabua.comprimento,0.55);
+    const H=34;
+    for(let fi=1;fi<=cf.fisicas;fi++){
+      const row=document.createElement('div');
+      row.className='comp-row';
+      const lbl=document.createElement('div');
+      lbl.className='comp-label';
+      lbl.textContent='Tábua #'+fi;
+      row.appendChild(lbl);
+      const svgW=Math.round(cf.tabua.comprimento*PX);
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('width',svgW);svg.setAttribute('height',H);
+      svg.setAttribute('viewBox',`0 0 ${svgW} ${H}`);
+      svg.appendChild(ns('rect',{x:0,y:0,width:svgW,height:H,fill:'#D3D1C7',rx:3}));
+      const start=(fi-1)*cf.tacosPerPeca;
+      const slice=tacos.slice(start,start+cf.tacosPerPeca);
+      let x=0;
+      slice.forEach((taco,ti)=>{
+        const tacoPx=Math.round(taco.comp*PX);
+        const cor=painelColor(taco.painel.nome);
+        svg.appendChild(ns('rect',{x:x,y:2,width:Math.max(tacoPx-1,2),height:H-4,fill:cor,rx:2,opacity:'0.85'}));
+        if(tacoPx>44){
+          const t1=ns('text',{x:x+tacoPx/2,y:H/2+1,'text-anchor':'middle',fill:'#fff','font-size':'9','font-weight':'500','font-family':'sans-serif'});
+          t1.textContent=taco.painel.nome.substring(0,10);
+          svg.appendChild(t1);
+          const t2=ns('text',{x:x+tacoPx/2,y:H/2+11,'text-anchor':'middle',fill:'rgba(255,255,255,.7)','font-size':'8','font-family':'sans-serif'});
+          t2.textContent=taco.comp+'mm comp | '+taco.largUsada.toFixed(1)+'mm larg'+(taco.isBorda?' ↤↦':' ⬡');
+          svg.appendChild(t2);
+        }
+        x+=tacoPx;
+        if(ti<slice.length-1) svg.appendChild(ns('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#fff','stroke-width':'1','opacity':'0.5'}));
+      });
+      if(x<svgW){
+        const sp=svgW-x;
+        svg.appendChild(ns('rect',{x:x,y:2,width:sp,height:H-4,fill:'#F09595',rx:2,opacity:'0.6'}));
+        const sm=cf.tabua.comprimento-slice.reduce((s,t)=>s+t.comp,0);
+        if(sp>20){const wt=ns('text',{x:x+sp/2,y:H/2+4,'text-anchor':'middle',fill:'#A32D2D','font-size':'8','font-family':'sans-serif'});wt.textContent=sm+'mm sobra';svg.appendChild(wt);}
+      }
+      row.appendChild(svg);
+      wrap.appendChild(row);
+    }
+    // Legenda
+    const leg=document.createElement('div');leg.className='legend';
+    const vistos=new Set();
+    tacos.forEach(t=>{
+      if(!vistos.has(t.painel.nome)){
+        vistos.add(t.painel.nome);
+        const item=document.createElement('div');item.className='leg-item';
+        item.innerHTML=`<span class="leg-sw" style="background:${painelColor(t.painel.nome)}"></span>${t.painel.nome} (${t.comp}mm comp × ${t.largUsada.toFixed(1)}mm larg ${t.isBorda?'↤↦':'⬡'})`;
+        leg.appendChild(item);
+      }
+    });
+    const w1=document.createElement('div');w1.className='leg-item';
+    w1.innerHTML=`<span class="leg-sw" style="background:#F09595;border:1px solid #E24B4A"></span>Sobra de comprimento`;
+    leg.appendChild(w1);
+    wrap.appendChild(leg);
+    container.appendChild(wrap);
+  });
 }
 
-/* ═══════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════ */
-function emptyRow(){
-  return`<div style="padding:28px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text3)">Nenhum item com este filtro ✓</div>`;
+function renderConsumo(consumoFinal){
+  const tb=document.getElementById('tb-consumo');
+  tb.innerHTML='';
+  consumoFinal.forEach(c=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${c.tabua.nome}</td><td>${c.tabua.largura.toFixed(1)} mm</td><td>${c.tabua.comprimento} mm</td>
+      <td>${c.estq}</td><td><strong>${c.fisicas}</strong></td>
+      <td><span class="badge ${c.sobra>=0?'ok':'bad'}">${c.sobra>=0?'+'+c.sobra:c.sobra}</span></td>
+      <td>${c.tacosPerPeca} tacos de ${c.compPainel}mm</td>`;
+    tb.appendChild(tr);
+  });
 }
 
-/* ═══════════════════════════════════════
-   INIT
-═══════════════════════════════════════ */
-loadData();
+function ns(tag,attrs){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+  return el;
+}
+
+function exportar(){
+  if(!lastResult) return;
+  const {resultado,consumoFinal,aprov}=lastResult;
+  const mont=[['Painel','Larg. alvo (mm)','Comp. (mm)','Qtd','Composição de tacos','Larg. colada (mm)','Sobra CNC (mm)','Tacos internos','Descarte aparo (mm)']];
+  const byP={};
+  resultado.forEach(r=>{
+    const k=r.painel.nome+'||'+r.painel.largura+'||'+r.painel.comprimento;
+    if(!byP[k]) byP[k]={r,count:0};
+    byP[k].count++;
+  });
+  Object.values(byP).forEach(({r,count})=>{
+    const nInt=r.combo.filter(t=>!t.isBorda).length;
+    mont.push([
+      r.painel.nome,r.painel.largura,r.painel.comprimento,count,
+      r.combo.map((t,i)=>{
+        const pos=t.isBorda?(i===0?'borda-esq':'borda-dir'):'interno';
+        const cortado=Math.abs(t.larguraUsada-t.larguraMax)>0.05;
+        return `${t.larguraUsada.toFixed(1)}mm [${t.nome}${cortado?' cortada':''}] ${pos}`;
+      }).join(' + '),
+      r.larguraColada.toFixed(1),r.sobraCNC.toFixed(1),
+      nInt,r.desperdicioAparo.toFixed(0)
+    ]);
+  });
+  const cons=[['Tipo','Larg. bruta (mm)','Comp. (mm)','Comp. painel (mm)','Tacos/tábua','Total tacos','Tábuas físicas','Estoque','Sobra estoque']];
+  consumoFinal.forEach(c=>cons.push([c.tabua.nome,c.tabua.largura,c.tabua.comprimento,c.compPainel,c.tacosPerPeca,c.totalTacos,c.fisicas,c.estq,c.sobra]));
+  cons.push([],['Aproveitamento (%)',aprov.toFixed(1)]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(mont),'Montagem painéis');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(cons),'Consumo tábuas');
+  XLSX.writeFile(wb,'plano_de_corte.xlsx');
+}
+
+// INIT
+addTabuaRow('Pinus 100','101.6','2300','100');
+addTabuaRow('teca50','127','2300','230');
+addPainelRow('Painel gaveta','290','410','10');
 </script>
 </body>
 </html>
