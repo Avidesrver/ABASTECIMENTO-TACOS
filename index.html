@@ -529,14 +529,22 @@
   <div class="tab-panel" id="panel-compare">
     <div class="card">
       <h3>Comparação de períodos</h3>
-      <div class="sub">Compare um mês específico com outro mês, ou com a média de todos os períodos disponíveis (respeita os filtros ativos)</div>
+      <div class="sub">Compare por período (com base na Dt. Entrada), por fornecedor ou por comprador — cada lado pode ser um item específico ou a média do grupo (respeita os filtros ativos)</div>
       <div class="cmp-controls">
         <div class="field">
-          <label>Período A</label>
+          <label>Comparar por</label>
+          <select id="cmpDimension" onchange="onDimensionChange()">
+            <option value="period">Período (Dt. Entrada)</option>
+            <option value="fornecedor">Fornecedor</option>
+            <option value="comprador">Comprador</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="cmpLabelA">Período A</label>
           <select id="cmpPeriodoA" onchange="renderComparativo()"></select>
         </div>
         <div class="field">
-          <label>Período B</label>
+          <label id="cmpLabelB">Período B</label>
           <select id="cmpPeriodoB" onchange="renderComparativo()"></select>
         </div>
         <button class="btn ghost" onclick="renderComparativo()">Atualizar</button>
@@ -546,7 +554,7 @@
 
     <div class="card" style="margin-top:20px;">
       <h3>Variação por conta contábil</h3>
-      <div class="sub">Maiores contas em valor, comparando o Período A com o Período B selecionados acima</div>
+      <div class="sub">Maiores contas em valor, comparando a Seleção A com a Seleção B acima</div>
       <div class="chart-box" style="height:400px;"><canvas id="chartComparativoContas"></canvas></div>
     </div>
   </div>
@@ -1564,23 +1572,54 @@ function renderPrazoPorComprador(){
   `).join('');
 }
 
-/* ============ COMPARATIVO DE PERÍODOS ============ */
+/* ============ COMPARATIVO (PERÍODO / FORNECEDOR / COMPRADOR) ============ */
+let cmpDimension = 'period';
+
+function cmpDimensionKey(row){
+  if(cmpDimension === 'fornecedor') return row.nomeFornecedor;
+  if(cmpDimension === 'comprador') return row.comprador;
+  return monthKey(row.dtEntrada); // 'period' — comparação com base na Dt. Entrada
+}
+
+function cmpAvgLabel(){
+  if(cmpDimension === 'fornecedor') return 'Média de todos os fornecedores';
+  if(cmpDimension === 'comprador') return 'Média de todos os compradores';
+  return 'Média de todos os períodos';
+}
+
+function cmpFieldLabel(){
+  if(cmpDimension === 'fornecedor') return 'Fornecedor';
+  if(cmpDimension === 'comprador') return 'Comprador';
+  return 'Período';
+}
+
 function periodLabel(key){
-  if(key === 'avg') return 'Média de todos os períodos';
-  return monthLabelAccounting(key);
+  if(key === 'avg') return cmpAvgLabel();
+  if(cmpDimension === 'period') return monthLabelAccounting(key);
+  return key;
 }
 
 function getPeriodRows(key){
   if(key === 'avg') return filteredRows;
-  return filteredRows.filter(r => monthKey(r.dtEmissao) === key);
+  return filteredRows.filter(r => cmpDimensionKey(r) === key);
 }
 
 function getPeriodDivisor(key){
   if(key === 'avg'){
-    const months = new Set(filteredRows.map(r => monthKey(r.dtEmissao)).filter(Boolean));
-    return months.size || 1;
+    const groups = new Set(filteredRows.map(r => cmpDimensionKey(r)).filter(Boolean));
+    return groups.size || 1;
   }
   return 1;
+}
+
+function onDimensionChange(){
+  cmpDimension = document.getElementById('cmpDimension').value;
+  document.getElementById('cmpLabelA').textContent = cmpFieldLabel() + ' A';
+  document.getElementById('cmpLabelB').textContent = cmpFieldLabel() + ' B';
+  document.getElementById('cmpPeriodoA').value = '';
+  document.getElementById('cmpPeriodoB').value = '';
+  populateComparativoSelects();
+  renderComparativo();
 }
 
 function populateComparativoSelects(){
@@ -1588,19 +1627,19 @@ function populateComparativoSelects(){
   const selB = document.getElementById('cmpPeriodoB');
   if(!selA || !selB) return;
 
-  const months = Array.from(new Set(filteredRows.map(r => monthKey(r.dtEmissao)).filter(Boolean))).sort();
-  const options = ['<option value="avg">Média de todos os períodos</option>']
-    .concat(months.map(m => `<option value="${m}">${monthLabelAccounting(m)}</option>`)).join('');
+  const groups = Array.from(new Set(filteredRows.map(r => cmpDimensionKey(r)).filter(Boolean))).sort();
+  const options = [`<option value="avg">${cmpAvgLabel()}</option>`]
+    .concat(groups.map(g => `<option value="${g}">${periodLabel(g)}</option>`)).join('');
 
   const prevA = selA.value, prevB = selB.value;
   selA.innerHTML = options;
   selB.innerHTML = options;
 
-  if(prevA === 'avg' || months.includes(prevA)) selA.value = prevA;
-  else selA.value = months[0] || 'avg';
+  if(prevA === 'avg' || groups.includes(prevA)) selA.value = prevA;
+  else selA.value = groups[0] || 'avg';
 
-  if(prevB === 'avg' || months.includes(prevB)) selB.value = prevB;
-  else selB.value = months[months.length - 1] || 'avg';
+  if(prevB === 'avg' || groups.includes(prevB)) selB.value = prevB;
+  else selB.value = groups[groups.length - 1] || 'avg';
 }
 
 function buildPeriodMetrics(rows, divisor){
