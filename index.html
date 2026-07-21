@@ -529,22 +529,14 @@
   <div class="tab-panel" id="panel-compare">
     <div class="card">
       <h3>Comparação de períodos</h3>
-      <div class="sub">Compare por período (com base na Dt. Entrada), por fornecedor ou por comprador — cada lado pode ser um item específico ou a média do grupo (respeita os filtros ativos)</div>
+      <div class="sub">Compare um período específico com outro, ou com a média de todos os períodos disponíveis — com base na Dt. Entrada (respeita os filtros ativos)</div>
       <div class="cmp-controls">
         <div class="field">
-          <label>Comparar por</label>
-          <select id="cmpDimension" onchange="onDimensionChange()">
-            <option value="period">Período (Dt. Entrada)</option>
-            <option value="fornecedor">Fornecedor</option>
-            <option value="comprador">Comprador</option>
-          </select>
-        </div>
-        <div class="field">
-          <label id="cmpLabelA">Período A</label>
+          <label>Período A</label>
           <select id="cmpPeriodoA" onchange="renderComparativo()"></select>
         </div>
         <div class="field">
-          <label id="cmpLabelB">Período B</label>
+          <label>Período B</label>
           <select id="cmpPeriodoB" onchange="renderComparativo()"></select>
         </div>
         <button class="btn ghost" onclick="renderComparativo()">Atualizar</button>
@@ -554,8 +546,20 @@
 
     <div class="card" style="margin-top:20px;">
       <h3>Variação por conta contábil</h3>
-      <div class="sub">Maiores contas em valor, comparando a Seleção A com a Seleção B acima</div>
+      <div class="sub">Maiores contas em valor, comparando o Período A com o Período B acima</div>
       <div class="chart-box" style="height:400px;"><canvas id="chartComparativoContas"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3>Variação por fornecedor</h3>
+      <div class="sub">Maiores fornecedores em valor, comparando o Período A com o Período B acima</div>
+      <div class="chart-box" style="height:400px;"><canvas id="chartComparativoFornecedores"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3>Variação por comprador</h3>
+      <div class="sub">Maiores compradores em valor, comparando o Período A com o Período B acima</div>
+      <div class="chart-box" style="height:400px;"><canvas id="chartComparativoCompradores"></canvas></div>
     </div>
   </div>
 
@@ -623,7 +627,7 @@ const COMPRADOR_FALLBACK_COL_INDEX = 17; // coluna R (A=0)
 
 let rawRows = [];
 let filteredRows = [];
-let charts = { count:null, total:null, evolucao:null, topFornecedores:null, fluxoCaixa:null, transitFornecedor:null, sazonalidade:null, prazoComprador:null, comparativoContas:null };
+let charts = { count:null, total:null, evolucao:null, topFornecedores:null, fluxoCaixa:null, transitFornecedor:null, sazonalidade:null, prazoComprador:null, comparativoContas:null, comparativoFornecedores:null, comparativoCompradores:null };
 let page = 1;
 const ROWS_PER_PAGE = 50;
 
@@ -1572,54 +1576,23 @@ function renderPrazoPorComprador(){
   `).join('');
 }
 
-/* ============ COMPARATIVO (PERÍODO / FORNECEDOR / COMPRADOR) ============ */
-let cmpDimension = 'period';
-
-function cmpDimensionKey(row){
-  if(cmpDimension === 'fornecedor') return row.nomeFornecedor;
-  if(cmpDimension === 'comprador') return row.comprador;
-  return monthKey(row.dtEntrada); // 'period' — comparação com base na Dt. Entrada
-}
-
-function cmpAvgLabel(){
-  if(cmpDimension === 'fornecedor') return 'Média de todos os fornecedores';
-  if(cmpDimension === 'comprador') return 'Média de todos os compradores';
-  return 'Média de todos os períodos';
-}
-
-function cmpFieldLabel(){
-  if(cmpDimension === 'fornecedor') return 'Fornecedor';
-  if(cmpDimension === 'comprador') return 'Comprador';
-  return 'Período';
-}
-
+/* ============ COMPARATIVO DE PERÍODOS ============ */
 function periodLabel(key){
-  if(key === 'avg') return cmpAvgLabel();
-  if(cmpDimension === 'period') return monthLabelAccounting(key);
-  return key;
+  if(key === 'avg') return 'Média de todos os períodos';
+  return monthLabelAccounting(key);
 }
 
 function getPeriodRows(key){
   if(key === 'avg') return filteredRows;
-  return filteredRows.filter(r => cmpDimensionKey(r) === key);
+  return filteredRows.filter(r => monthKey(r.dtEntrada) === key); // comparação com base na Dt. Entrada
 }
 
 function getPeriodDivisor(key){
   if(key === 'avg'){
-    const groups = new Set(filteredRows.map(r => cmpDimensionKey(r)).filter(Boolean));
-    return groups.size || 1;
+    const months = new Set(filteredRows.map(r => monthKey(r.dtEntrada)).filter(Boolean));
+    return months.size || 1;
   }
   return 1;
-}
-
-function onDimensionChange(){
-  cmpDimension = document.getElementById('cmpDimension').value;
-  document.getElementById('cmpLabelA').textContent = cmpFieldLabel() + ' A';
-  document.getElementById('cmpLabelB').textContent = cmpFieldLabel() + ' B';
-  document.getElementById('cmpPeriodoA').value = '';
-  document.getElementById('cmpPeriodoB').value = '';
-  populateComparativoSelects();
-  renderComparativo();
 }
 
 function populateComparativoSelects(){
@@ -1627,19 +1600,19 @@ function populateComparativoSelects(){
   const selB = document.getElementById('cmpPeriodoB');
   if(!selA || !selB) return;
 
-  const groups = Array.from(new Set(filteredRows.map(r => cmpDimensionKey(r)).filter(Boolean))).sort();
-  const options = [`<option value="avg">${cmpAvgLabel()}</option>`]
-    .concat(groups.map(g => `<option value="${g}">${periodLabel(g)}</option>`)).join('');
+  const months = Array.from(new Set(filteredRows.map(r => monthKey(r.dtEntrada)).filter(Boolean))).sort();
+  const options = ['<option value="avg">Média de todos os períodos</option>']
+    .concat(months.map(m => `<option value="${m}">${monthLabelAccounting(m)}</option>`)).join('');
 
   const prevA = selA.value, prevB = selB.value;
   selA.innerHTML = options;
   selB.innerHTML = options;
 
-  if(prevA === 'avg' || groups.includes(prevA)) selA.value = prevA;
-  else selA.value = groups[0] || 'avg';
+  if(prevA === 'avg' || months.includes(prevA)) selA.value = prevA;
+  else selA.value = months[0] || 'avg';
 
-  if(prevB === 'avg' || groups.includes(prevB)) selB.value = prevB;
-  else selB.value = groups[groups.length - 1] || 'avg';
+  if(prevB === 'avg' || months.includes(prevB)) selB.value = prevB;
+  else selB.value = months[months.length - 1] || 'avg';
 }
 
 function buildPeriodMetrics(rows, divisor){
@@ -1685,7 +1658,9 @@ function renderComparativo(){
 
   if(!rowsA.length && !rowsB.length){
     resumo.innerHTML = '<div class="stat-note">Nenhum dado disponível para os períodos selecionados.</div>';
-    renderComparativoContas(rowsA, divA, keyA, rowsB, divB, keyB);
+    renderComparativoBreakdown('chartComparativoContas', 'comparativoContas', rowsA, divA, keyA, rowsB, divB, keyB, r => r.descricaoConta);
+    renderComparativoBreakdown('chartComparativoFornecedores', 'comparativoFornecedores', rowsA, divA, keyA, rowsB, divB, keyB, r => r.nomeFornecedor);
+    renderComparativoBreakdown('chartComparativoCompradores', 'comparativoCompradores', rowsA, divA, keyA, rowsB, divB, keyB, r => r.comprador);
     return;
   }
 
@@ -1711,38 +1686,42 @@ function renderComparativo(){
     </div>
   `;
 
-  renderComparativoContas(rowsA, divA, keyA, rowsB, divB, keyB);
+  renderComparativoBreakdown('chartComparativoContas', 'comparativoContas', rowsA, divA, keyA, rowsB, divB, keyB, r => r.descricaoConta);
+  renderComparativoBreakdown('chartComparativoFornecedores', 'comparativoFornecedores', rowsA, divA, keyA, rowsB, divB, keyB, r => r.nomeFornecedor);
+  renderComparativoBreakdown('chartComparativoCompradores', 'comparativoCompradores', rowsA, divA, keyA, rowsB, divB, keyB, r => r.comprador);
 }
 
-function contaTotals(rows, divisor){
+function groupTotalsBy(rows, divisor, keyFn){
   const map = new Map();
   rows.forEach(r => {
-    map.set(r.descricaoConta, (map.get(r.descricaoConta) || 0) + r.valorTotal);
+    const k = keyFn(r);
+    map.set(k, (map.get(k) || 0) + r.valorTotal);
   });
   map.forEach((v,k) => map.set(k, v/divisor));
   return map;
 }
 
-function renderComparativoContas(rowsA, divA, keyA, rowsB, divB, keyB){
-  const canvas = document.getElementById('chartComparativoContas');
+/* Gráfico de variação genérico — usado para conta contábil, fornecedor e comprador */
+function renderComparativoBreakdown(canvasId, chartKey, rowsA, divA, keyA, rowsB, divB, keyB, keyFn){
+  const canvas = document.getElementById(canvasId);
   if(!canvas) return;
 
-  const mapA = contaTotals(rowsA, divA);
-  const mapB = contaTotals(rowsB, divB);
-  const contas = new Set([...mapA.keys(), ...mapB.keys()]);
+  const mapA = groupTotalsBy(rowsA, divA, keyFn);
+  const mapB = groupTotalsBy(rowsB, divB, keyFn);
+  const items = new Set([...mapA.keys(), ...mapB.keys()]);
 
-  const combined = Array.from(contas).map(c => {
-    const a = mapA.get(c) || 0;
-    const b = mapB.get(c) || 0;
-    return { conta:c, a, b, delta: Math.abs(b-a) };
+  const combined = Array.from(items).map(it => {
+    const a = mapA.get(it) || 0;
+    const b = mapB.get(it) || 0;
+    return { item: it, a, b, delta: Math.abs(b-a) };
   }).sort((x,y) => y.delta - x.delta).slice(0, 12).sort((x,y) => (x.a+x.b) - (y.a+y.b));
 
   const ctx = canvas.getContext('2d');
-  if(charts.comparativoContas) charts.comparativoContas.destroy();
-  charts.comparativoContas = new Chart(ctx, {
+  if(charts[chartKey]) charts[chartKey].destroy();
+  charts[chartKey] = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: combined.map(c => c.conta),
+      labels: combined.map(c => c.item),
       datasets: [
         { label: periodLabel(keyA), data: combined.map(c => c.a), backgroundColor:'#8FC7BE', borderRadius:2, maxBarThickness:18 },
         { label: periodLabel(keyB), data: combined.map(c => c.b), backgroundColor:'#127078', borderRadius:2, maxBarThickness:18 }
